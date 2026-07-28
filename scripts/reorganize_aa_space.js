@@ -88,4 +88,6 @@ function isAtTopLevel(page, homePageId) {
   return page.parentId === homePageId;
 }
 
-main().catch(e => { console.error(e); process.exit(1); });
+if (require.main === module) {
+  main().catch(e => { console.error(e); process.exit(1); });
+}

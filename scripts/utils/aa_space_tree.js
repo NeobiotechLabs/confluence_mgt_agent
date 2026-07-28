@@ -2,7 +2,6 @@
 require('dotenv').config({ path: require('path').join(__dirname, '..', '..', '.env') });
 const { confluenceRequest } = require('./confluence_api');
 
-const AA_HOME_TITLE = 'AA Home';   // AA 스페이스 홈페이지 제목
 const UNSORTED_TITLES = ['미분류', '분류 보류', 'Unsorted'];
 
 /**
@@ -98,4 +97,4 @@ function formatTreeAsText(roots, indent = 0) {
   return lines.join('\n');
 }
 
-module.exports = { fetchAATree, fetchAASpaceHomepageId, AA_HOME_TITLE, UNSORTED_TITLES };
+module.exports = { fetchAATree, fetchAASpaceHomepageId, UNSORTED_TITLES };
