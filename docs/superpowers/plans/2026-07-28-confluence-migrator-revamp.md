@@ -351,7 +351,7 @@ function matchesCategory(category, ctx) {
     if (anyList.length === 0) continue;
     const hit = anyList.some((rule) => {
       if (rule.title_patterns) {
-        const regs = rule.title_patterns.map(regexFromPattern).filter(Boolean);
+        const regs = rule.title_patterns.map((p) => regexFromPattern(p)).filter(Boolean);
         if (regs.some(r => r.test(title))) return true;
       }
       if (rule.ancestor_contains) {
@@ -363,7 +363,7 @@ function matchesCategory(category, ctx) {
   }
   if (category.exclude) {
     const exList = category.exclude.title_patterns || [];
-    const regs = exList.map(regexFromPattern).filter(Boolean);
+    const regs = exList.map((p) => regexFromPattern(p)).filter(Boolean);
     if (regs.some(r => r.test(title))) return false;
   }
   return true;
@@ -527,7 +527,7 @@ Expected: FAIL with "Cannot find module '../../scripts/classifiers/human'"
     {
       "id": "dec-2026-07-28-001",
       "match": {
-        "titleRegex": "(?i)임플란트\\s*로봇",
+        "titleRegex": "임플란트\\s*로봇",
         "sourceSpace": "Device"
       },
       "targetFolderId": "target-folder",
@@ -716,7 +716,7 @@ async function classifyWithChain(ctx, aaTree) {
     ok: true,
     source: 'fallback',
     folderId: aaTree.unsortedFolderId,
-    folderTitle: '미분류',
+    folderTitle: aaTree.unsortedFolderTitle || '미분류', // derive from aaTree so the title does not drift when the unsorted folder is renamed
     labels: ['needs-review'],
     reason: 'no-classifier-matched',
   };
@@ -1155,10 +1155,14 @@ git commit -m "feat(reorganize): add reorganize_aa_space.js with classifier chai
 const { classifyWithChain } = require('./classifiers/engine');
 const { fetchAATree } = require('./utils/aa_space_tree');
 const aaTree = await fetchAATree();
+// existingLabels derivation: the v1 CQL search in migrator.js:84 does NOT expand
+// `metadata.labels`, so read them via the v1 labels endpoint per page. This is required
+// so the human-policy classifier can see `human-classified` and `last-parent-*` labels.
+const existingLabels = await fetchPageLabels(page.id);
 const decision = await classifyWithChain({
   pageId: page.id, title: page.title, body: truncatedBody,
   ancestors: [], sourceSpace, sourceUrl: page._links?.webui || '',
-  pageDate, existingLabels: page.metadata?.labels?.results?.map(l => l.name) || [],
+  pageDate, existingLabels,
 }, aaTree);
 ```
 
