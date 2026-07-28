@@ -16,14 +16,10 @@
     "setup:aa:update:dryrun": "node scripts/setup_aa_space.js --dry-run --update",
     "clean:aa": "node scripts/clean_aa_space.js",
     "clean:aa:dryrun": "node scripts/clean_aa_space.js --dry-run",
-    "migrate:dryrun": "node scripts/migrate_to_aa_space.js --dry-run",
-    "migrate:all": "node scripts/migrate_to_aa_space.js",
-    "migrate:all:skip-attach": "node scripts/migrate_to_aa_space.js --skip-attachments",
-    "migrate:mps": "node scripts/migrate_to_aa_space.js --category=\"MPS 이력\"",
-    "migrate:project": "node scripts/migrate_to_aa_space.js --category=\"프로젝트 현황\"",
-    "migrate:tech": "node scripts/migrate_to_aa_space.js --category=\"기술 조사 & 인사이트\"",
-    "migrate:guide": "node scripts/migrate_to_aa_space.js --category=\"팀 운영 가이드\"",
-    "migrate:report": "node scripts/migrate_to_aa_space.js --category=\"주간·월간 보고 (보관)\""
+    "audit:aa": "node scripts/audit_aa_space.js",
+    "reorganize:aa": "node scripts/reorganize_aa_space.js",
+    "reorganize:aa:dryrun": "node scripts/reorganize_aa_space.js --dry-run",
+    "migrate:all": "node scripts/migrator.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.115.0",

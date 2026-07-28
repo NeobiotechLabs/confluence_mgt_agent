@@ -2,42 +2,59 @@ name: Confluence AA Space Automation
 
 on:
   schedule:
-    # 매일 자정(KST 기준 오전 9시)에 실행
     - cron: '0 15 * * *'
   workflow_dispatch:
-    # 수동 실행 버튼 활성화
 
 jobs:
-  run-automation:
+  audit-aa:
     runs-on: self-hosted
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v3
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with: { node-version: '18', cache: 'npm' }
+      - run: npm install
+      - name: Audit AA Space
+        env:
+          CONFLUENCE_EMAIL: ${{ secrets.CONFLUENCE_EMAIL }}
+          CONFLUENCE_TOKEN: ${{ secrets.CONFLUENCE_TOKEN }}
+        run: node scripts/audit_aa_space.js
+      - name: Auto-PR if decisions.json changed
+        uses: peter-evans/create-pull-request@v5
         with:
-          node-version: '18'
-          cache: 'npm'
+          commit-message: "chore(audit): auto-commit human decisions"
+          title: "[bot] Audit human moves"
+          branch: bot/audit-decisions
+          add-paths: config/classification_decisions.json
 
-      - name: Install Dependencies
-        run: npm install
-
-      - name: Run Migrator (수집기)
+  reorganize-aa:
+    needs: audit-aa
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with: { node-version: '18', cache: 'npm' }
+      - run: npm install
+      - name: Reorganize AA Space
         env:
           CONFLUENCE_EMAIL: ${{ secrets.CONFLUENCE_EMAIL }}
           CONFLUENCE_TOKEN: ${{ secrets.CONFLUENCE_TOKEN }}
-          DIFY_API_URL: ${{ secrets.DIFY_API_URL }}
-          DIFY_API_KEY: ${{ secrets.DIFY_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: node scripts/reorganize_aa_space.js
+
+  migrate:
+    needs: reorganize-aa
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with: { node-version: '18', cache: 'npm' }
+      - run: npm install
+      - name: Migrator
+        env:
+          CONFLUENCE_EMAIL: ${{ secrets.CONFLUENCE_EMAIL }}
+          CONFLUENCE_TOKEN: ${{ secrets.CONFLUENCE_TOKEN }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: node scripts/migrator.js
-
-      - name: Run Auditor (자가 정화 봇)
-        env:
-          CONFLUENCE_EMAIL: ${{ secrets.CONFLUENCE_EMAIL }}
-          CONFLUENCE_TOKEN: ${{ secrets.CONFLUENCE_TOKEN }}
-          DIFY_API_URL: ${{ secrets.DIFY_API_URL }}
-          DIFY_API_KEY: ${{ secrets.DIFY_API_KEY }}
-        run: node scripts/auditor.js
 
       - name: Notify Slack on Failure
         if: failure()
@@ -48,8 +65,6 @@ jobs:
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 
-      # 이메일 알림 연동 (실패 시 관리자에게 이메일 발송)
-      # 사용하려면 GitHub Secrets에 EMAIL_USERNAME, EMAIL_PASSWORD 등을 등록해야 합니다.
       - name: Notify via Email on Failure
         if: failure()
         uses: dawidd6/action-send-mail@v3
