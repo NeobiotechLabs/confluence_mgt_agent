@@ -173,6 +173,61 @@ const AA_SPACE_TREE = {
           },
         ],
       },
+      // ── v2 마이그레이션 추가 섹션 ──
+      {
+        title: 'DYN — 의료기기 IEC 62304 산출물',
+        body: buildSectionBody('DYN — 의료기기 IEC 62304 산출물', 'Wearable Navigation 의료기기 IEC 62304 규제 산출물 (PA/EA Gate 문서)'),
+        labels: ['doctype-regulatory', 'group-device', 'project-navigation', 'status-active'],
+        children: [],
+      },
+      {
+        title: 'DN — Dynamic Navigation',
+        body: buildSectionBody('DN — Dynamic Navigation', 'Dynamic Navigation 프로젝트 설계/요구사항/조사 문서'),
+        labels: ['group-device', 'project-navigation', 'status-active'],
+        children: [],
+      },
+      {
+        title: 'SmileArch — Smile Design v2.0',
+        body: buildSectionBody('SmileArch — Smile Design v2.0', 'SmileArch CBCT 세그멘테이션 연구 문서'),
+        labels: ['group-ai', 'project-smilearch', 'status-active'],
+        children: [],
+      },
+      {
+        title: '전사 How-To / 개발 가이드',
+        body: buildSectionBody('전사 How-To / 개발 가이드', '전사 공통 개발 가이드 및 How-To 문서'),
+        labels: ['doctype-guideline', 'group-center', 'status-evergreen'],
+        children: [],
+      },
+      {
+        title: '전사 AI 전략 / 로드맵',
+        body: buildSectionBody('전사 AI 전략 / 로드맵', 'AI 전략, 로드맵, 기술 방향 문서'),
+        labels: ['doctype-strategy', 'group-ai', 'status-active'],
+        children: [],
+      },
+      {
+        title: '기술 조사 / 시장 분석',
+        body: buildSectionBody('기술 조사 / 시장 분석', '전시회 분석, 기술 스택 조사, 시장 동향'),
+        labels: ['doctype-market-survey', 'group-center', 'status-active'],
+        children: [],
+      },
+      {
+        title: 'Device — HW 부품/업체 조사',
+        body: buildSectionBody('Device — HW 부품/업체 조사', 'Device 과제 HW 부품 및 업체 조사 문서'),
+        labels: ['doctype-survey', 'group-device', 'status-active'],
+        children: [],
+      },
+      {
+        title: '주간·월간 보고',
+        body: buildSectionBody('주간·월간 보고', '전사 주간·월간 보고 (최신 보관)'),
+        labels: ['doctype-mps-weekly', 'group-center', 'status-active'],
+        children: [],
+      },
+      {
+        title: '분류 보류',
+        body: buildSectionBody('분류 보류', '자동 분류 보류 — 휴먼 리뷰 대상 문서'),
+        labels: ['needs-review', 'group-center'],
+        children: [],
+      },
     ],
   },
 };

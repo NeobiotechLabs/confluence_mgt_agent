@@ -77,35 +77,27 @@ function normalizeLabel(label) {
   return `${mappedPrefix}-${value}`.toLowerCase().replace(/\s+/g, '-');
 }
 
-// ─── SD → AA 카테고리-서브카테고리 → AA 부모 페이지 매핑 ─────────────────────
+// ─── v2 카테고리 → AA 부모 페이지 매핑 (flat) ─────────────────────────────
+// analysis_rules.json v2의 categories[].name (= migration_candidates.md의 ### 헤더)
+// → AA 스페이스의 부모 페이지 제목. 1:1 flat 매핑.
+// 매핑에 없는 카테고리는 AA 스페이스 루트(홈페이지) 아래에 생성됩니다.
 
 const CATEGORY_TO_AA_PARENT = {
-  'MPS 이력': {
-    '연간 MPS':       '연간 MPS',
-    '2025년 월간·주간': '2025년 월간·주간',
-    '2026년 월간·주간': '2026년 월간·주간',
-    '2024년 월간·주간': '2025년 월간·주간',
-  },
-  '프로젝트 현황': {
-    '정부과제':        '정부과제',
-    'AI 프로젝트':     'AI 프로젝트',
-    'SW 프로젝트':     'SW 프로젝트',
-    'Device 프로젝트': 'Device 프로젝트',
-    'Solution 프로젝트': 'Solution 프로젝트',
-  },
-  '기술 조사 & 인사이트': {
-    'AI·ML 기술':     'AI·ML 기술',
-    '제품·시장 조사':  '제품·시장 조사',
-    '기술 표준 & 아키텍처': '기술 표준 & 아키텍처',
-    '특허·논문 분석':  '특허·논문 분석',
-  },
-  '팀 운영 가이드': {
-    '개발 가이드라인': '팀 운영 가이드',
-  },
-  '주간·월간 보고 (보관)': {
-    '2025년': '2025년 보고',
-    '2026년': '2026년 보고',
-  },
+  // 과제 NAVIGATION
+  'DYN — 의료기기 IEC 62304 산출물 (Wearable Navigation)': 'DYN — 의료기기 IEC 62304 산출물',
+  'DN — Dynamic Navigation': 'DN — Dynamic Navigation',
+  // 과제 SMILEARCH
+  'SmileArch — Smile Design v2.0': 'SmileArch — Smile Design v2.0',
+  // 과제 MPS (전사)
+  'MPS 이력 (전사)': 'MPS 이력',
+  // 과제 UNSORTED / 기타
+  '전사 How-To / 개발 가이드': '전사 How-To / 개발 가이드',
+  '전사 AI 전략 / 로드맵': '전사 AI 전략 / 로드맵',
+  '기술 조사 / 시장 분석': '기술 조사 / 시장 분석',
+  'Device — HW 부품/업체 조사': 'Device — HW 부품/업체 조사',
+  '주간·월간 보고 (전사, 보관)': '주간·월간 보고',
+  '정부과제': '정부과제',
+  '기타 (분류 보류 — 휴먼 큐 대상)': '분류 보류',
 };
 
 // ─── 이관 로그 관리 ───────────────────────────────────────────────────────────
@@ -542,40 +534,49 @@ function parseMigrationCandidatesMd() {
   const content = fs.readFileSync(mdPath, 'utf8').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
   const lines = content.split('\n');
   const candidates = [];
-  let currentCategory = null;
-  let currentSubCategory = null;
+  let currentProject = null;   // ## 과제 X (v2 프로젝트 그룹)
+  let currentCategory = null;  // ### 서브카테고리 (v2 실제 카테고리)
   let inTable = false;
 
   for (const rawLine of lines) {
     const line = rawLine.trim();
     if (!line) continue;
 
-    const catMatch = line.match(/^## (.+?) \(\d+개\)/);
-    if (catMatch) { currentCategory = catMatch[1].trim(); currentSubCategory = null; inTable = false; continue; }
+    // v2 프로젝트 그룹 헤더: ## 과제 NAVIGATION (37개)
+    const projMatch = line.match(/^## 과제 (.+?) \(\d+개\)/);
+    if (projMatch) { currentProject = projMatch[1].trim(); currentCategory = null; inTable = false; continue; }
 
-    const subCatMatch = line.match(/^### (.+?) \(\d+개\)/);
-    if (subCatMatch) { currentSubCategory = subCatMatch[1].trim(); inTable = false; continue; }
+    // v2 카테고리 헤더: ### DN — Dynamic Navigation (29개)
+    const catMatch = line.match(/^### (.+?) \(\d+개\)/);
+    if (catMatch) { currentCategory = catMatch[1].trim(); inTable = false; continue; }
 
-    if (line.startsWith('| 제목') || line.startsWith('|---')) { inTable = true; continue; }
+    if (line.startsWith('| 출처') || line.startsWith('|---')) { inTable = true; continue; }
     if (line.startsWith('#')) { inTable = false; continue; }
 
-    if (inTable && currentCategory && currentSubCategory && line.startsWith('|')) {
-      const cols = line.split('|').map(c => c.trim()).filter((_, i) => i > 0);
+    if (inTable && currentCategory && line.startsWith('|')) {
+      // v2 테이블: | 출처 | 제목 | 최종수정 | 레이블 |
+      const cols = line.split('|').map(c => c.trim()).filter(Boolean);
       if (cols.length < 4) continue;
 
-      const titleUrlMatch = cols[0].match(/^\[(.+?)\]\((.+?)\)$/);
+      // cols: [0]=source, [1]=title, [2]=lastModified, [3]=labels
+      const titleUrlMatch = cols[1].match(/^\[(.+?)\]\((.+?)\)$/);
       if (!titleUrlMatch) continue;
 
       const title = titleUrlMatch[1].trim();
       const url = titleUrlMatch[2].trim();
-      const lastModified = cols[1].trim();
-      const labelStr = cols[3] ? cols[3].replace(/\|$/, '').trim() : '';
-      const labels = labelStr.split(',').map(l => l.trim()).filter(Boolean);
+      const sourceSpace = cols[0].trim();
+      const lastModified = cols[2].trim();
+      const labels = cols[3] ? cols[3].split(',').map(l => l.trim()).filter(Boolean) : [];
       const idMatch = url.match(/\/pages\/(\d+)/);
       const id = idMatch ? idMatch[1] : null;
 
       if (id && title) {
-        candidates.push({ id, title, url, lastModified, labels, category: currentCategory, subCategory: currentSubCategory });
+        candidates.push({
+          id, title, url, lastModified, labels, sourceSpace,
+          project: currentProject,
+          category: currentCategory,
+          subCategory: currentCategory,
+        });
       }
     }
   }
@@ -587,12 +588,9 @@ function parseMigrationCandidatesMd() {
 // ─── 섹션 페이지 캐시 ────────────────────────────────────────────────────────
 
 async function buildSectionPageCache() {
-  const sectionTitles = [
-    '연간 MPS', '2025년 월간·주간', '2026년 월간·주간',
-    '정부과제', 'AI 프로젝트', 'SW 프로젝트', 'Device 프로젝트', 'Solution 프로젝트',
-    'AI·ML 기술', '제품·시장 조사', '기술 표준 & 아키텍처', '특허·논문 분석',
-    '팀 운영 가이드', '2025년 보고', '2026년 보고',
-  ];
+  // v2 flat 매핑: 카테고리 → AA 부모 페이지 제목
+  // 중복 제거된 부모 페이지 제목 목록을 조회
+  const sectionTitles = [...new Set(Object.values(CATEGORY_TO_AA_PARENT))];
 
   const cache = new Map();
   console.log('  AA 스페이스 섹션 페이지 ID 조회 중...');
@@ -603,7 +601,7 @@ async function buildSectionPageCache() {
       cache.set(title, pageId);
       console.log(`    ✅ "${title}" → ID: ${pageId}`);
     } else {
-      console.warn(`    ⚠️  "${title}" 페이지를 찾을 수 없습니다. setup_aa_space.js를 먼저 실행하세요.`);
+      console.warn(`    ⚠️  "${title}" 페이지를 찾을 수 없습니다. AA 스페이스에 먼저 생성하세요.`);
     }
     await sleep(300);
   }
@@ -614,12 +612,9 @@ async function buildSectionPageCache() {
 // ─── 단일 페이지 이관 ────────────────────────────────────────────────────────
 
 async function migrateSinglePage(candidate, spaceId, sectionCache) {
-  // 1. 부모 페이지 ID 결정
-  const catMap = CATEGORY_TO_AA_PARENT[candidate.category];
-  if (!catMap) return { success: false, error: `알 수 없는 카테고리: ${candidate.category}` };
-
-  const parentTitle = catMap[candidate.subCategory];
-  if (!parentTitle) return { success: false, error: `알 수 없는 서브카테고리: ${candidate.subCategory}` };
+  // 1. 부모 페이지 ID 결정 (v2 flat 매핑)
+  const parentTitle = CATEGORY_TO_AA_PARENT[candidate.category];
+  if (!parentTitle) return { success: false, error: `알 수 없는 카테고리: ${candidate.category}` };
 
   const parentId = sectionCache.get(parentTitle);
   if (!parentId) return { success: false, error: `부모 페이지 ID 없음: "${parentTitle}"` };
