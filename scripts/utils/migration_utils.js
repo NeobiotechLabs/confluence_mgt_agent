@@ -135,18 +135,20 @@ async function deleteLabel(pageId, labelName) {
   });
 }
 
+const PROTECTED_LABELS = ['is-folder', 'human-classified'];
+
 async function syncLabels(pageId, desiredLabels) {
   const currentLabels = await getLabels(pageId);
   const desired = new Set(desiredLabels);
   const current = new Set(currentLabels);
 
   const toAdd = desiredLabels.filter(l => !current.has(l));
-  const toRemove = currentLabels.filter(l => !desired.has(l));
+  const toRemove = currentLabels.filter(l => !desired.has(l) && !PROTECTED_LABELS.includes(l));
 
   for (const label of toRemove) {
-    // is-folder 는 감사/동기화 시 건드리지 않는 것이 원칙 (일반 문서는 애초에 is-folder가 없으므로 제거 대상에 포함됨)
-    // 하지만 폴더인 경우 is-folder를 빼면 안되니 예외처리 (Auditor는 일반문서만 돌리므로 무관하지만 안전을 위해)
-    if (label === 'is-folder') continue; 
+    // PROTECTED_LABELS (is-folder, human-classified)는 동기화/감정화 시 제거하지 않음
+    // 휴먼 분류 결과나 폴더 마커를 봇이 함부로 지우면 안 되기 때문.
+    if (PROTECTED_LABELS.includes(label)) continue;
     await deleteLabel(pageId, label);
     await sleep(200);
   }

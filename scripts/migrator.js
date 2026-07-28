@@ -3,7 +3,8 @@ require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') }
 const fs = require('fs');
 const path = require('path');
 const { confluenceRequest, fetchAASpaceTreeText } = require('./utils/confluence_api');
-const { getPageClassificationFromDify } = require('./utils/dify_api');
+const { fetchAATree } = require('./utils/aa_space_tree');
+const { classifyWithChain } = require('./classifiers/engine');
 
 const { 
   fetchPageDetail, 
@@ -38,6 +39,9 @@ async function runMigrator() {
   console.log('📡 [1/3] AA 스페이스의 최신 폴더 구조(context_tree)를 수집합니다...');
   const contextTree = await fetchAASpaceTreeText();
   if (!contextTree) return console.error('❌ 컨텍스트 트리를 가져오지 못해 작업을 중단합니다.');
+
+  // ClassifierChain용 트리 객체도 함께 로드 (chain은 folders 배열/트리 메타를 필요로 함)
+  const aaTree = await fetchAATree();
   console.log('✅ 컨텍스트 트리 수집 완료.\n');
 
   // AA 스페이스 ID 조회
@@ -104,8 +108,36 @@ async function runMigrator() {
           const srcMeta = await fetchPageDetail(page.id);
           const pageDate = srcMeta.createdAt ? srcMeta.createdAt.substring(0, 10) : ''; 
 
-          const decision = await getPageClassificationFromDify(page.title, truncatedBody, contextTree, sourceSpace, pageDate);
-        console.log(`🤖 Dify 판단: 유효성(${decision.is_valid}) | 목적지(${decision.target_folder_id})`);
+          // ClassifierChain 결과는 { ok, source, folderId, folderTitle, labels, reason } 모양.
+          // 하위 호환을 위해 Dify-like 모양으로 브릿지 (lines 108-120 그대로 동작).
+          const chainResult = await classifyWithChain({
+            pageId: page.id,
+            title: page.title,
+            body: truncatedBody,
+            ancestors: [],
+            sourceSpace,
+            sourceUrl: page._links?.webui || '',
+            pageDate,
+            existingLabels: (page.metadata?.labels?.results || []).map(l => l.name),
+          }, aaTree);
+
+          const decision = chainResult.ok ? {
+            is_valid: true,
+            target_folder_id: chainResult.folderId,
+            target_folder_title: chainResult.folderTitle,
+            needs_new_category: false,
+            suggested_new_folder: null,
+            reason: chainResult.reason,
+            labels: chainResult.labels,
+            classifier_source: chainResult.source,
+          } : {
+            is_valid: false,
+            target_folder_id: null,
+            needs_new_category: false,
+            reason: chainResult.reason || 'no-classifier-matched',
+          };
+
+        console.log(`🤖 Chain 판단[${decision.classifier_source || 'miss'}]: 유효성(${decision.is_valid}) | 목적지(${decision.target_folder_id})`);
 
         if (decision.needs_new_category) {
           console.log(`🚨 [예외] 적절한 폴더가 없습니다! 제안: ${decision.suggested_new_folder} / 사유: ${decision.reason}`);
