@@ -21,6 +21,18 @@ const AA_SPACE_KEY = 'AA';
 // API Rate Limit 방지를 위한 대기 함수
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
+// v1 search 응답은 expand=body.storage만 포함하므로 metadata.labels는 비어 있음.
+// 휴먼 분류기(human-classified 태그) 등이 existingLabels를 신뢰해야 하므로
+// 별도 라벨 엔드포인트로 페이지별로 조회.
+async function fetchPageLabels(pageId) {
+  try {
+    const res = await confluenceRequest('GET', `/wiki/rest/api/content/${pageId}/label?limit=50`);
+    return (res.results || []).map(l => l.name);
+  } catch (_) {
+    return [];
+  }
+}
+
 async function runMigrator() {
   console.log(`🚀 [Migrator] 다중 스페이스 이관 작업을 시작합니다.`);
 
@@ -110,6 +122,7 @@ async function runMigrator() {
 
           // ClassifierChain 결과는 { ok, source, folderId, folderTitle, labels, reason } 모양.
           // 하위 호환을 위해 Dify-like 모양으로 브릿지 (lines 108-120 그대로 동작).
+          const existingLabels = await fetchPageLabels(page.id);
           const chainResult = await classifyWithChain({
             pageId: page.id,
             title: page.title,
@@ -118,7 +131,7 @@ async function runMigrator() {
             sourceSpace,
             sourceUrl: page._links?.webui || '',
             pageDate,
-            existingLabels: (page.metadata?.labels?.results || []).map(l => l.name),
+            existingLabels,
           }, aaTree);
 
           const decision = chainResult.ok ? {

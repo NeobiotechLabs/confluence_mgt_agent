@@ -146,9 +146,6 @@ async function syncLabels(pageId, desiredLabels) {
   const toRemove = currentLabels.filter(l => !desired.has(l) && !PROTECTED_LABELS.includes(l));
 
   for (const label of toRemove) {
-    // PROTECTED_LABELS (is-folder, human-classified)는 동기화/감정화 시 제거하지 않음
-    // 휴먼 분류 결과나 폴더 마커를 봇이 함부로 지우면 안 되기 때문.
-    if (PROTECTED_LABELS.includes(label)) continue;
     await deleteLabel(pageId, label);
     await sleep(200);
   }
