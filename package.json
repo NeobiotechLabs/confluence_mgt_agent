@@ -26,7 +26,7 @@
     "migrate:report": "node scripts/migrate_to_aa_space.js --category=\"주간·월간 보고 (보관)\""
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.115.0",
     "dotenv": "^17.4.2"
   }
 }
-
