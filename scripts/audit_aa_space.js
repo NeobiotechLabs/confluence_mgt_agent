@@ -4,9 +4,8 @@ require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') }
 const fs = require('fs');
 const path = require('path');
 const { confluenceRequest } = require('./utils/confluence_api');
-const { fetchAATree } = require('./utils/aa_space_tree');
+const { fetchAATree, fetchAASpaceHomepageId } = require('./utils/aa_space_tree');
 const { ruleClassifier } = require('./classifiers/rule');
-const { loadDecisions } = require('./classifiers/human');
 
 const DECISIONS_PATH = path.join(__dirname, '..', 'config', 'classification_decisions.json');
 const REPORT_DIR = path.join(__dirname, '..', '.github', 'reports');
@@ -42,9 +41,9 @@ async function detectMove(page) {
   return { from: lastParentId, to: page.parentId };
 }
 
-async function shouldCommitHumanDecision(page, move, aaTree) {
+async function shouldCommitHumanDecision(page, move, aaTree, homePageId) {
   // 1) 최상위 → 특정 폴더로 이동 (Rule이 매칭 못 했을 가능성)
-  if (move.from === aaTree.flat[0]?.parentId || !move.from) return true;
+  if (move.from === homePageId || !move.from) return true;
   // 2) RuleClassifier가 모르는 카테고리
   const ruleResult = await ruleClassifier.classify({
     pageId: page.id, title: page.title, body: '', ancestors: [],
@@ -85,14 +84,15 @@ async function stampLastParent(pageId, parentId) {
 async function main() {
   console.log('=== Audit AA Space ===');
   const aaTree = await fetchAATree();
+  const homePageId = await fetchAASpaceHomepageId('AA');
   const pages = await listAAPages();
   const topLevel = [];
   const moves = [];
 
   for (const p of pages) {
-    if (p.parentId === aaTree.flat[0]?.parentId) topLevel.push(p);
+    if (homePageId && p.parentId === homePageId) topLevel.push(p);
     const move = await detectMove(p);
-    if (move && await shouldCommitHumanDecision(p, move, aaTree)) {
+    if (move && await shouldCommitHumanDecision(p, move, aaTree, homePageId)) {
       await commitDecision(p, move);
       moves.push({ page: p.title, move });
     }

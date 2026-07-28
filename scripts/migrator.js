@@ -2,7 +2,7 @@
 require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
 const fs = require('fs');
 const path = require('path');
-const { confluenceRequest, fetchAASpaceTreeText } = require('./utils/confluence_api');
+const { confluenceRequest } = require('./utils/confluence_api');
 const { fetchAATree } = require('./utils/aa_space_tree');
 const { classifyWithChain } = require('./classifiers/engine');
 
@@ -49,11 +49,11 @@ async function runMigrator() {
   }
 
   console.log('📡 [1/3] AA 스페이스의 최신 폴더 구조(context_tree)를 수집합니다...');
-  const contextTree = await fetchAASpaceTreeText();
-  if (!contextTree) return console.error('❌ 컨텍스트 트리를 가져오지 못해 작업을 중단합니다.');
-
-  // ClassifierChain용 트리 객체도 함께 로드 (chain은 folders 배열/트리 메타를 필요로 함)
+  // ClassifierChain용 트리 객체 (chain은 folders 배열/트리 메타를 필요로 함).
+  // 텍스트 렌더링도 동일한 트리에서 파생 (aaTree.toText()).
   const aaTree = await fetchAATree();
+  const contextTree = aaTree.toText();
+  if (!contextTree) return console.error('❌ 컨텍스트 트리를 가져오지 못해 작업을 중단합니다.');
   console.log('✅ 컨텍스트 트리 수집 완료.\n');
 
   // AA 스페이스 ID 조회

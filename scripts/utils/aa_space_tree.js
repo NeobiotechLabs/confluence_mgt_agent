@@ -5,6 +5,16 @@ const { confluenceRequest } = require('./confluence_api');
 const AA_HOME_TITLE = 'AA Home';   // AA 스페이스 홈페이지 제목
 const UNSORTED_TITLES = ['미분류', '분류 보류', 'Unsorted'];
 
+/**
+ * AA 스페이스의 홈페이지 page ID를 명시적으로 조회.
+ * v2 pagination 순서가 정의되지 않은 문제를 회피하기 위해
+ * `aaTree.flat[0]?.parentId` 같은 우회 대신 공식 v2 엔드포인트를 사용한다.
+ */
+async function fetchAASpaceHomepageId(spaceKey = 'AA') {
+  const res = await confluenceRequest('GET', `/wiki/api/v2/spaces/${spaceKey}/homepage`);
+  return res?.id || null;
+}
+
 async function fetchAATree() {
   // 1) AA 스페이스의 모든 페이지 (IS-FOLDER 라벨 가진 페이지만)
   const folders = await fetchAllFolders();
@@ -88,4 +98,4 @@ function formatTreeAsText(roots, indent = 0) {
   return lines.join('\n');
 }
 
-module.exports = { fetchAATree, AA_HOME_TITLE, UNSORTED_TITLES };
+module.exports = { fetchAATree, fetchAASpaceHomepageId, AA_HOME_TITLE, UNSORTED_TITLES };

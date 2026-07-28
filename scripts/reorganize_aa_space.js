@@ -2,7 +2,7 @@
 'use strict';
 require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
 const { confluenceRequest } = require('./utils/confluence_api');
-const { fetchAATree } = require('./utils/aa_space_tree');
+const { fetchAATree, fetchAASpaceHomepageId } = require('./utils/aa_space_tree');
 const { classifyWithChain } = require('./classifiers/engine');
 const { movePage } = require('./utils/migration_utils');
 
@@ -48,6 +48,7 @@ async function fetchAncestors(pageId, byId) {
 async function main() {
   console.log(`=== Reorganize AA Space (${DRY_RUN ? 'DRY-RUN' : 'EXEC'}) ===`);
   const aaTree = await fetchAATree();
+  const homePageId = await fetchAASpaceHomepageId('AA');
   const pages = await listAAPages();
   const byId = new Map(pages.map(p => [p.id, p]));
 
@@ -56,7 +57,7 @@ async function main() {
     // Skip folders themselves
     if (p.labels.includes('is-folder')) continue;
     // Skip if already in valid folder (heuristic: not at top level)
-    if (p.parentId && !isAtTopLevel(p, aaTree)) continue;
+    if (p.parentId && !isAtTopLevel(p, homePageId)) continue;
 
     const ancestors = await fetchAncestors(p.id, byId);
     const ctx = {
@@ -82,10 +83,9 @@ async function main() {
   console.log(`\n${DRY_RUN ? '[DRY] would move' : 'Moved'}: ${moved} pages`);
 }
 
-function isAtTopLevel(page, aaTree) {
-  const home = aaTree.flat[0];
-  if (!home) return false;
-  return page.parentId === home.parentId || !page.parentId;
+function isAtTopLevel(page, homePageId) {
+  if (!homePageId) return !page.parentId;
+  return page.parentId === homePageId;
 }
 
 main().catch(e => { console.error(e); process.exit(1); });

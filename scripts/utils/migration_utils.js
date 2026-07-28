@@ -135,7 +135,10 @@ async function deleteLabel(pageId, labelName) {
   });
 }
 
-const PROTECTED_LABELS = ['is-folder', 'human-classified'];
+const isProtectedLabel = (label) =>
+  label === 'is-folder' ||
+  label === 'human-classified' ||
+  label.startsWith('last-parent-');
 
 async function syncLabels(pageId, desiredLabels) {
   const currentLabels = await getLabels(pageId);
@@ -143,7 +146,7 @@ async function syncLabels(pageId, desiredLabels) {
   const current = new Set(currentLabels);
 
   const toAdd = desiredLabels.filter(l => !current.has(l));
-  const toRemove = currentLabels.filter(l => !desired.has(l) && !PROTECTED_LABELS.includes(l));
+  const toRemove = currentLabels.filter(l => !desired.has(l) && !isProtectedLabel(l));
 
   for (const label of toRemove) {
     await deleteLabel(pageId, label);
