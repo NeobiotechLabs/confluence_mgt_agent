@@ -1,0 +1,18 @@
+{
+  "$schema_version": "1.0",
+  "decisions": [
+    {
+      "id": "dec-2026-07-28-001",
+      "match": {
+        "titleRegex": "임플란트\\s*로봇",
+        "sourceSpace": "Device"
+      },
+      "targetFolderId": "target-folder",
+      "targetFolderTitle": "기구설계 > Implant Robot",
+      "labels": ["group-device", "project-implant-robot"],
+      "decidedBy": "jaehwan.sim",
+      "decidedAt": "2026-07-28T10:00:00Z",
+      "source": "human-ui-move"
+    }
+  ]
+}
