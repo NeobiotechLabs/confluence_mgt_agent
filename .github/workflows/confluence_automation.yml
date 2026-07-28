@@ -1,8 +1,12 @@
 name: Confluence AA Space Automation
 
+permissions:
+  contents: write
+  pull-requests: write
+
 on:
   schedule:
-    - cron: '0 15 * * *'
+    - cron: '0 0 * * *'
   workflow_dispatch:
 
 jobs:
@@ -24,6 +28,7 @@ jobs:
           commit-message: "chore(audit): auto-commit human decisions"
           title: "[bot] Audit human moves"
           branch: bot/audit-decisions
+          branch-suffix: timestamp
           add-paths: config/classification_decisions.json
 
   reorganize-aa:
@@ -56,8 +61,12 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: node scripts/migrator.js
 
+  notify-failure:
+    needs: [audit-aa, reorganize-aa, migrate]
+    if: failure()
+    runs-on: self-hosted
+    steps:
       - name: Notify Slack on Failure
-        if: failure()
         uses: 8398a7/action-slack@v3
         with:
           status: ${{ job.status }}
@@ -66,7 +75,6 @@ jobs:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 
       - name: Notify via Email on Failure
-        if: failure()
         uses: dawidd6/action-send-mail@v3
         with:
           server_address: smtp.gmail.com
@@ -76,4 +84,4 @@ jobs:
           subject: 🚨 [Confluence 봇] 자동화 작업 실패 알림
           to: ${{ secrets.NOTIFY_EMAIL_TO }}
           from: Confluence Automation Bot
-          body: 자정 문서 정화(Auditor) 작업 중 오류가 발생했습니다. GitHub Actions 로그를 확인해 주세요.
+          body: audit / reorganize / migrate 단계 중 하나에서 오류가 발생했습니다. GitHub Actions 로그를 확인해 주세요.
