@@ -1,46 +1,72 @@
 name: Confluence AA Space Automation
 
+permissions:
+  contents: write
+  pull-requests: write
+
 on:
   schedule:
-    # 매일 자정(KST 기준 오전 9시)에 실행
-    - cron: '0 15 * * *'
+    - cron: '0 0 * * *'
   workflow_dispatch:
-    # 수동 실행 버튼 활성화
 
 jobs:
-  run-automation:
+  audit-aa:
     runs-on: self-hosted
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v3
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'
-          cache: 'npm'
-
-      - name: Install Dependencies
-        run: npm install
-
-      - name: Run Migrator (수집기)
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with: { node-version: '18', cache: 'npm' }
+      - run: npm install
+      - name: Audit AA Space
         env:
           CONFLUENCE_EMAIL: ${{ secrets.CONFLUENCE_EMAIL }}
           CONFLUENCE_TOKEN: ${{ secrets.CONFLUENCE_TOKEN }}
-          DIFY_API_URL: ${{ secrets.DIFY_API_URL }}
-          DIFY_API_KEY: ${{ secrets.DIFY_API_KEY }}
+        run: node scripts/audit_aa_space.js
+      - name: Auto-PR if decisions.json changed
+        uses: peter-evans/create-pull-request@v5
+        with:
+          commit-message: "chore(audit): auto-commit human decisions"
+          title: "[bot] Audit human moves"
+          branch: bot/audit-decisions
+          branch-suffix: timestamp
+          add-paths: config/classification_decisions.json
+
+  reorganize-aa:
+    needs: audit-aa
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with: { node-version: '18', cache: 'npm' }
+      - run: npm install
+      - name: Reorganize AA Space
+        env:
+          CONFLUENCE_EMAIL: ${{ secrets.CONFLUENCE_EMAIL }}
+          CONFLUENCE_TOKEN: ${{ secrets.CONFLUENCE_TOKEN }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: node scripts/reorganize_aa_space.js
+
+  migrate:
+    needs: reorganize-aa
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with: { node-version: '18', cache: 'npm' }
+      - run: npm install
+      - name: Migrator
+        env:
+          CONFLUENCE_EMAIL: ${{ secrets.CONFLUENCE_EMAIL }}
+          CONFLUENCE_TOKEN: ${{ secrets.CONFLUENCE_TOKEN }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: node scripts/migrator.js
 
-      - name: Run Auditor (자가 정화 봇)
-        env:
-          CONFLUENCE_EMAIL: ${{ secrets.CONFLUENCE_EMAIL }}
-          CONFLUENCE_TOKEN: ${{ secrets.CONFLUENCE_TOKEN }}
-          DIFY_API_URL: ${{ secrets.DIFY_API_URL }}
-          DIFY_API_KEY: ${{ secrets.DIFY_API_KEY }}
-        run: node scripts/auditor.js
-
+  notify-failure:
+    needs: [audit-aa, reorganize-aa, migrate]
+    if: failure()
+    runs-on: self-hosted
+    steps:
       - name: Notify Slack on Failure
-        if: failure()
         uses: 8398a7/action-slack@v3
         with:
           status: ${{ job.status }}
@@ -48,10 +74,7 @@ jobs:
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 
-      # 이메일 알림 연동 (실패 시 관리자에게 이메일 발송)
-      # 사용하려면 GitHub Secrets에 EMAIL_USERNAME, EMAIL_PASSWORD 등을 등록해야 합니다.
       - name: Notify via Email on Failure
-        if: failure()
         uses: dawidd6/action-send-mail@v3
         with:
           server_address: smtp.gmail.com
@@ -61,4 +84,4 @@ jobs:
           subject: 🚨 [Confluence 봇] 자동화 작업 실패 알림
           to: ${{ secrets.NOTIFY_EMAIL_TO }}
           from: Confluence Automation Bot
-          body: 자정 문서 정화(Auditor) 작업 중 오류가 발생했습니다. GitHub Actions 로그를 확인해 주세요.
+          body: audit / reorganize / migrate 단계 중 하나에서 오류가 발생했습니다. GitHub Actions 로그를 확인해 주세요.

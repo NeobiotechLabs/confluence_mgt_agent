@@ -1,0 +1,386 @@
+{
+  "$schema_version": "2.0",
+  "$description": "AA 스페이스 이관 후보 분류 룰 v2 — 과제 기반. 정책은 dify/space_rules_knowledge.md와 동기화. 어떤 카테고리에도 매칭 안 되는 페이지는 'catch_all_known' (알려진 패턴이지만 분류 보류)로 잡혀서 누락 없이 human queue 로 보냄. v2부터 '포용적 수집'이 원칙이며 제외는 명백한 noise만.",
+  "global": {
+    "cutoff_date": "2024-01-01",
+    "default_labels_to_add": [
+      "rag-source"
+    ],
+    "team_label_map": {
+      "AI MPS": "group-ai",
+      "SW MPS": "group-sw",
+      "Device MPS": "group-device",
+      "Solution MPS": "group-solution",
+      "R&D MPS": "group-rnd",
+      "default": "group-center"
+    },
+    "exclude_patterns": {
+      "archived_prefix": "^Archived\\s",
+      "daily_scrum": "Daily Scrum",
+      "weekly_date_record": "^\\d{4}-\\d{2}-\\d{2}\\s*[~\\-]\\s*\\d{4}-\\d{2}"
+    },
+    "year_regex": "(20[2-9]\\d)"
+  },
+  "categories": [
+    {
+      "id": "mps_history",
+      "name": "MPS 이력 (전사)",
+      "match": {
+        "title_patterns": [
+          "월간\\s*MPS",
+          "연간\\s*MPS",
+          "MPS\\s*\\d{4}",
+          "\\d{4}[년\\-]\\s*\\d{1,2}[월\\-]",
+          "AI MPS",
+          "SW MPS",
+          "Device\\s*MPS",
+          "Solution\\s*MPS",
+          "R&D\\s*MPS",
+          "MPS.*Planning",
+          "MPS.*Evaluation",
+          "Weekly MPS"
+        ]
+      },
+      "fields": {
+        "subCategory_annual": "연간 MPS",
+        "subCategory_periodic_template": "{year}년 월간·주간",
+        "doctype_map": {
+          "연간": "doctype-mps-annual",
+          "월간": "doctype-mps-monthly",
+          "주간|Weekly": "doctype-mps-weekly",
+          "default": "doctype-mps-monthly"
+        },
+        "labels_template": [
+          "{team}",
+          "{doctype}",
+          "year-{year}",
+          "status-completed",
+          "project-mps"
+        ]
+      }
+    },
+    {
+      "id": "weekly_report_archive",
+      "name": "주간·월간 보고 (전사, 보관)",
+      "match": {
+        "title_patterns": [
+          "주간\\s*업무\\s*공유",
+          "디지털개발실\\s*주간"
+        ]
+      },
+      "condition": "year >= 2025",
+      "fields": {
+        "subCategory_template": "{year}년",
+        "labels_template": [
+          "group-center",
+          "doctype-mps-weekly",
+          "year-{year}",
+          "status-active",
+          "project-mps"
+        ]
+      }
+    },
+    {
+      "id": "dn_dynamic_nav",
+      "name": "DN — Dynamic Navigation",
+      "match": {
+        "any": [
+          {
+            "ancestor_contains": "DN_Dynamic Navigation"
+          },
+          {
+            "ancestor_contains": "DN_"
+          },
+          {
+            "title_patterns": [
+              "DN_",
+              "^Dynamic Navigation",
+              "Dynamic Navigation_",
+              "IR\\s*마커|IR\\s*Marker",
+              "IR 카메라",
+              "IR 카메라 마운트",
+              "Surgical.*Mode|Planning.*Mode|Surgical\\s*[12]",
+              "캘리브레이션|Calibration",
+              "IOS\\s*정합|Splint\\s*정합",
+              "실시간.*임플란트.*내비게이션",
+              "DN.*설문|설문지|제품화\\s*검토",
+              "기능별.*참고\\s*영상|기능별\\s*참고",
+              "^설정\\s*페이지|설정\\s*페이지$",
+              "^Nerve\\s*기능|^Curve\\s*기능|기능\\s*$",
+              "^Implant\\s*Planning|^Planning\\s*화면",
+              "Nerve|Curve"
+            ]
+          }
+        ]
+      },
+      "fields": {
+        "doctype_map": {
+          "요구사항|Requirement|Spec": "doctype-requirement",
+          "설계|Design|도면|기구|회로|PCB": "doctype-design",
+          "설문|조사|업체|시장|경쟁": "doctype-survey",
+          "가이드|Guide|설정": "doctype-config",
+          "기능.*정의|기능별|Feature": "doctype-feature-spec",
+          "default": "doctype-design"
+        },
+        "labels_template": [
+          "group-device",
+          "project-navigation",
+          "{doctype}",
+          "year-{year}",
+          "status-active"
+        ]
+      }
+    },
+    {
+      "id": "smilearch_segmentation",
+      "name": "SmileArch — Smile Design v2.0",
+      "match": {
+        "any": [
+          {
+            "ancestor_contains": "Smile Design"
+          },
+          {
+            "ancestor_contains": "SmileArch"
+          },
+          {
+            "title_patterns": [
+              "SmileArch",
+              "Smile Design",
+              "세그멘테이션",
+              "신경관",
+              "CBCT",
+              "치아\\s*세그",
+              "Diffusion\\s*모델|STL\\s*신경관|딥러닝.*Smile"
+            ]
+          }
+        ]
+      },
+      "fields": {
+        "doctype_map": {
+          "계획서|Plan|계획\\s*\\(draft\\)": "doctype-plan",
+          "평가.*보고서|평가\\s*보고서|Performance": "doctype-report",
+          "성능.*비교|비교.*실험": "doctype-report",
+          "데이터.*구축|학습.*계획|학습.*보고서": "doctype-data",
+          "default": "doctype-research"
+        },
+        "labels_template": [
+          "group-ai",
+          "project-smilearch",
+          "doctype-{doctype}",
+          "year-{year}",
+          "status-active"
+        ]
+      }
+    },
+    {
+      "id": "dyn_med_device_sop",
+      "name": "DYN — 의료기기 IEC 62304 산출물 (Wearable Navigation)",
+      "match": {
+        "any": [
+          {
+            "ancestor_contains": "Wearable Navigation Dev"
+          },
+          {
+            "title_patterns": [
+              "위험관리\\s*보고서|위험관리\\s*계획서|Risk\\s*Management|RMR|FMEA",
+              "System\\s*Requirements\\s*Specification|SysRS",
+              "사용목적\\s*정의서|Intended\\s*Use",
+              "의료기기\\s*분류|MDR\\s*분류|Classification",
+              "형상관리\\s*계획서|Configuration\\s*Management",
+              "보안관리\\s*계획서|Security\\s*Management",
+              "소프트웨어\\s*개발.*유지보수\\s*계획서|Software\\s*Development",
+              "\\(DYN-\\d+\\)"
+            ]
+          }
+        ]
+      },
+      "fields": {
+        "doctype_map": {
+          "위험관리.*보고서|Risk\\s*Management\\s*Report|FMEA": "doctype-rmr",
+          "위험관리.*계획서|Risk\\s*Management\\s*Plan": "doctype-rmp",
+          "System\\s*Requirements|SysRS": "doctype-syrs",
+          "사용목적|Intended\\s*Use": "doctype-iu",
+          "의료기기\\s*분류|Classification": "doctype-classification",
+          "형상관리|Configuration": "doctype-cmp",
+          "보안관리|Security": "doctype-smp",
+          "유지보수|Maintenance": "doctype-sdmp",
+          "default": "doctype-regulatory"
+        },
+        "labels_template": [
+          "group-device",
+          "project-navigation",
+          "{doctype}",
+          "year-{year}",
+          "status-active",
+          "gate-{gate}"
+        ]
+      }
+    },
+    {
+      "id": "device_hw_survey",
+      "name": "Device — HW 부품/업체 조사",
+      "match": {
+        "any": [
+          {
+            "ancestor_contains": "DN_요구사항 정의서"
+          },
+          {
+            "title_patterns": [
+              "업체\\s*조사|부품\\s*조사|파트너\\s*조사",
+              "IR\\s*카메라\\s*마운트",
+              "DN_.*\\s*업체",
+              "가공\\s*업체|조립\\s*업체",
+              "HW.*요구|HW.*설계|기구\\s*설계"
+            ]
+          }
+        ]
+      },
+      "fields": {
+        "labels_template": [
+          "group-device",
+          "project-navigation",
+          "doctype-survey",
+          "year-{year}",
+          "status-active"
+        ]
+      }
+    },
+    {
+      "id": "howto_dev_guide",
+      "name": "전사 How-To / 개발 가이드",
+      "match": {
+        "any": [
+          {
+            "ancestor_contains": "How To Develop"
+          },
+          {
+            "title_patterns": [
+              "Organization.*전역.*AI\\s*PR\\s*자동\\s*리뷰",
+              "Git.*전략|Branch\\s*Strategy|CI/CD",
+              "형상관리|Configuration\\s*Management",
+              "MPS\\s*작성\\s*Process",
+              "PR\\s*리뷰\\s*가이드|코딩\\s*컨벤션"
+            ]
+          }
+        ]
+      },
+      "fields": {
+        "labels_template": [
+          "group-center",
+          "doctype-guideline",
+          "year-{year}",
+          "status-evergreen"
+        ]
+      }
+    },
+    {
+      "id": "org_ai_strategy",
+      "name": "전사 AI 전략 / 로드맵",
+      "match": {
+        "any": [
+          {
+            "ancestor_contains": "R&D AI"
+          },
+          {
+            "ancestor_contains": "AI Evangelist"
+          },
+          {
+            "title_patterns": [
+              "AI\\s*로드맵|AI\\s*전략|AI\\s*Evangelist",
+              "Agent2Agent|A2A|MCP\\s*서버|MCP\\b",
+              "RAG|Fine-tuning|sLM|LLM\\s*전략|딥러닝.*전략"
+            ]
+          }
+        ]
+      },
+      "exclude": {
+        "title_patterns": [
+          "회의록|ToDo|WIP"
+        ]
+      },
+      "fields": {
+        "labels_template": [
+          "group-ai",
+          "doctype-strategy",
+          "year-{year}",
+          "status-active"
+        ]
+      }
+    },
+    {
+      "id": "tech_research_survey",
+      "name": "기술 조사 / 시장 분석",
+      "match": {
+        "title_patterns": [
+          "IDS\\s*\\d{4}|KDX\\s*\\d{4}|SIDEX",
+          "전시회.*분석|Exhibition.*분석",
+          "AI\\s*의료\\s*영상\\s*분석",
+          "기술\\s*스택\\s*조사|시장\\s*조사"
+        ]
+      },
+      "fields": {
+        "labels_template": [
+          "group-center",
+          "doctype-market-survey",
+          "year-{year}",
+          "status-active"
+        ]
+      }
+    },
+    {
+      "id": "gov_project",
+      "name": "정부과제",
+      "match": {
+        "any": [
+          {
+            "ancestor_contains": "정부과제"
+          },
+          {
+            "title_patterns": [
+              "강원지역혁신클러스터",
+              "글로벌기업산업기술",
+              "중기부\\s*소부장",
+              "지역혁신클러스터",
+              "2026.*강원|2026.*글로벌|2026.*소부장"
+            ]
+          }
+        ]
+      },
+      "fields": {
+        "phase_map": {
+          "기획|계획": "phase-planning",
+          "구현|개발|검증": "phase-implementation",
+          "완료|릴리스|종료": "status-completed",
+          "default": "status-active"
+        },
+        "labels_template": [
+          "group-rnd",
+          "doctype-gov-project",
+          "year-{year}",
+          "{phase}",
+          "rag-source"
+        ]
+      }
+    },
+    {
+      "id": "catch_all_known",
+      "name": "기타 (분류 보류 — 휴먼 큐 대상)",
+      "match": {},
+      "is_catch_all": true,
+      "fields": {
+        "labels_template": [
+          "needs-review",
+          "year-{year}"
+        ]
+      }
+    }
+  ],
+  "snapshot": {
+    "$description": "refresh_result_json.js가 사용하는 스냅샷 수집 설정",
+    "page_size": 100,
+    "max_pages_per_file": 100,
+    "output_dir": "scripts/result_json",
+    "filename_template": "{space}_v2_p{index}.json",
+    "expand": "ancestors,body.storage,version,metadata.labels,space"
+  }
+}

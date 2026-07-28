@@ -1,5 +1,16 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// ⚠️  DEPRECATED — 2026-07-28
+// 이 스크립트는 `f:/work/private_git/...` 라는 잘못된 절대경로를 하드코딩하고 있어
+// 새 환경에서 동작하지 않습니다. 다음 스크립트로 대체되었습니다:
+//   · 스냅샷 수집: node scripts/refresh_result_json.js
+//   · 후속 분석:   node scripts/analyze_migration_candidates.js
+// TODO: 다음 마이너 버전(v0.2.0)에서 삭제 예정.
+// ─────────────────────────────────────────────────────────────────────────────
+
 const fs = require('fs');
 const path = require('path');
+
+console.error('❌ analyze_sd_v2.js 는 deprecated. `npm run refresh:snapshots` 를 사용하세요.');
 
 const allResults = [];
 const basePath = 'f:/work/private_git/confluence_mgt_agent/reference';

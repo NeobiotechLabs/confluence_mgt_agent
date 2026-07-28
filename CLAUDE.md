@@ -5,7 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## 저장소 개요
 
 - **저장소명**: `confluence_mgt_agent`
-- **원격**: `git@github.com:JaeHwanSim/confluence_mgt_agent.git`
+- **원격**: `git@github.com:NeobiotechLabs/confluence_mgt_agent.git`
 - **목적**: 사내 Confluence 스페이스 자동화 관리 + MPS 워크플로우 지원 에이전트
 
 ## 현재 프로젝트 상태

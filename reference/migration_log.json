@@ -1,6 +1,6 @@
 {
-  "lastRun": "2026-06-16T01:44:00.961Z",
-  "totalMigrated": 133,
+  "lastRun": "2026-07-28T05:30:00.000Z",
+  "totalMigrated": 175,
   "log": [
     {
       "sourcePageId": "3342338",
@@ -2286,6 +2286,1193 @@
       ],
       "attachmentCount": 0,
       "migratedAt": "2026-06-16T01:44:00.961Z"
+    },
+    {
+      "sourcePageId": "478183425",
+      "sourcePageTitle": "위험관리 보고서 (Risk Management Report) — FMEA",
+      "sourcePageUrl": "https://neobiotech.atlassian.net/wiki/spaces/WND/pages/478183425/Risk+Management+Report+FMEA",
+      "category": "DYN — 의료기기 IEC 62304 산출물 (Wearable Navigation)",
+      "subCategory": "DYN — 의료기기 IEC 62304 산출물 (Wearable Navigation)",
+      "error": "부모 페이지 ID 없음: \"DYN — 의료기기 IEC 62304 산출물\"",
+      "migratedAt": "2026-07-28T04:03:40.169Z",
+      "failed": true
+    },
+    {
+      "sourcePageId": "463142913",
+      "sourcePageTitle": "System Requirements Specification (SysRS) (DYN-9)",
+      "sourcePageUrl": "https://neobiotech.atlassian.net/wiki/spaces/WND/pages/463142913/System+Requirements+Specification+SysRS+DYN-9",
+      "category": "DYN — 의료기기 IEC 62304 산출물 (Wearable Navigation)",
+      "subCategory": "DYN — 의료기기 IEC 62304 산출물 (Wearable Navigation)",
+      "error": "부모 페이지 ID 없음: \"DYN — 의료기기 IEC 62304 산출물\"",
+      "migratedAt": "2026-07-28T04:03:40.989Z",
+      "failed": true
+    },
+    {
+      "sourcePageId": "469467162",
+      "sourcePageTitle": "위험관리 계획서 (DYN-12)",
+      "sourcePageUrl": "https://neobiotech.atlassian.net/wiki/spaces/WND/pages/469467162/DYN-12",
+      "category": "DYN — 의료기기 IEC 62304 산출물 (Wearable Navigation)",
+      "subCategory": "DYN — 의료기기 IEC 62304 산출물 (Wearable Navigation)",
+      "error": "부모 페이지 ID 없음: \"DYN — 의료기기 IEC 62304 산출물\"",
+      "migratedAt": "2026-07-28T04:03:41.800Z",
+      "failed": true
+    },
+    {
+      "sourcePageId": "456458250",
+      "sourcePageTitle": "사용목적 정의서 (DYN-8)",
+      "sourcePageUrl": "https://neobiotech.atlassian.net/wiki/spaces/WND/pages/456458250/DYN-8",
+      "category": "DYN — 의료기기 IEC 62304 산출물 (Wearable Navigation)",
+      "subCategory": "DYN — 의료기기 IEC 62304 산출물 (Wearable Navigation)",
+      "error": "부모 페이지 ID 없음: \"DYN — 의료기기 IEC 62304 산출물\"",
+      "migratedAt": "2026-07-28T04:03:42.602Z",
+      "failed": true
+    },
+    {
+      "sourcePageId": "456359950",
+      "sourcePageTitle": "의료기기 분류 문서 (DYN-10)",
+      "sourcePageUrl": "https://neobiotech.atlassian.net/wiki/spaces/WND/pages/456359950/DYN-10",
+      "category": "DYN — 의료기기 IEC 62304 산출물 (Wearable Navigation)",
+      "subCategory": "DYN — 의료기기 IEC 62304 산출물 (Wearable Navigation)",
+      "error": "부모 페이지 ID 없음: \"DYN — 의료기기 IEC 62304 산출물\"",
+      "migratedAt": "2026-07-28T04:03:43.411Z",
+      "failed": true
+    },
+    {
+      "sourcePageId": "469434369",
+      "sourcePageTitle": "형상관리 계획서 (DYN-14)",
+      "sourcePageUrl": "https://neobiotech.atlassian.net/wiki/spaces/WND/pages/469434369/DYN-14",
+      "category": "DYN — 의료기기 IEC 62304 산출물 (Wearable Navigation)",
+      "subCategory": "DYN — 의료기기 IEC 62304 산출물 (Wearable Navigation)",
+      "error": "부모 페이지 ID 없음: \"DYN — 의료기기 IEC 62304 산출물\"",
+      "migratedAt": "2026-07-28T04:03:44.215Z",
+      "failed": true
+    },
+    {
+      "sourcePageId": "471531555",
+      "sourcePageTitle": "보안관리 계획서 (DYN-13)",
+      "sourcePageUrl": "https://neobiotech.atlassian.net/wiki/spaces/WND/pages/471531555/DYN-13",
+      "category": "DYN — 의료기기 IEC 62304 산출물 (Wearable Navigation)",
+      "subCategory": "DYN — 의료기기 IEC 62304 산출물 (Wearable Navigation)",
+      "error": "부모 페이지 ID 없음: \"DYN — 의료기기 IEC 62304 산출물\"",
+      "migratedAt": "2026-07-28T04:03:45.025Z",
+      "failed": true
+    },
+    {
+      "sourcePageId": "301727746",
+      "sourcePageTitle": "소프트웨어 개발 및 유지보수 계획서 (DYN-11)",
+      "sourcePageUrl": "https://neobiotech.atlassian.net/wiki/spaces/WND/pages/301727746/DYN-11",
+      "category": "DYN — 의료기기 IEC 62304 산출물 (Wearable Navigation)",
+      "subCategory": "DYN — 의료기기 IEC 62304 산출물 (Wearable Navigation)",
+      "error": "부모 페이지 ID 없음: \"DYN — 의료기기 IEC 62304 산출물\"",
+      "migratedAt": "2026-07-28T04:03:45.839Z",
+      "failed": true
+    },
+    {
+      "sourcePageId": "464355332",
+      "sourcePageTitle": "DN_가공 업체",
+      "sourcePageUrl": "https://neobiotech.atlassian.net/wiki/spaces/Device/pages/464355332/DN_",
+      "category": "DN — Dynamic Navigation",
+      "subCategory": "DN — Dynamic Navigation",
+      "error": "부모 페이지 ID 없음: \"DN — Dynamic Navigation\"",
+      "migratedAt": "2026-07-28T04:03:46.646Z",
+      "failed": true
+    },
+    {
+      "sourcePageId": "477888519",
+      "sourcePageTitle": "IR마커 검증",
+      "sourcePageUrl": "https://neobiotech.atlassian.net/wiki/spaces/Device/pages/477888519/IR",
+      "category": "DN — Dynamic Navigation",
+      "subCategory": "DN — Dynamic Navigation",
+      "error": "부모 페이지 ID 없음: \"DN — Dynamic Navigation\"",
+      "migratedAt": "2026-07-28T04:03:47.456Z",
+      "failed": true
+    },
+    {
+      "sourcePageId": "474677269",
+      "sourcePageTitle": "Dynamic Navigation_설정_ 일반 설정",
+      "sourcePageUrl": "https://neobiotech.atlassian.net/wiki/spaces/Device/pages/474677269/Dynamic+Navigation_+_",
+      "category": "DN — Dynamic Navigation",
+      "subCategory": "DN — Dynamic Navigation",
+      "error": "부모 페이지 ID 없음: \"DN — Dynamic Navigation\"",
+      "migratedAt": "2026-07-28T04:03:48.267Z",
+      "failed": true
+    },
+    {
+      "sourcePageId": "476643330",
+      "sourcePageTitle": "DN_작업 일정",
+      "sourcePageUrl": "https://neobiotech.atlassian.net/wiki/spaces/Device/pages/476643330/DN_",
+      "category": "DN — Dynamic Navigation",
+      "subCategory": "DN — Dynamic Navigation",
+      "error": "부모 페이지 ID 없음: \"DN — Dynamic Navigation\"",
+      "migratedAt": "2026-07-28T04:03:49.082Z",
+      "failed": true
+    },
+    {
+      "sourcePageId": "452001794",
+      "sourcePageTitle": "DN_캘리브레이션 시나리오 조사",
+      "sourcePageUrl": "https://neobiotech.atlassian.net/wiki/spaces/Device/pages/452001794/DN_",
+      "category": "DN — Dynamic Navigation",
+      "subCategory": "DN — Dynamic Navigation",
+      "error": "부모 페이지 ID 없음: \"DN — Dynamic Navigation\"",
+      "migratedAt": "2026-07-28T04:03:49.892Z",
+      "failed": true
+    },
+    {
+      "sourcePageId": "445480961",
+      "sourcePageTitle": "DN_레포트 상세 구성",
+      "sourcePageUrl": "https://neobiotech.atlassian.net/wiki/spaces/Device/pages/445480961/DN_",
+      "category": "DN — Dynamic Navigation",
+      "subCategory": "DN — Dynamic Navigation",
+      "error": "부모 페이지 ID 없음: \"DN — Dynamic Navigation\"",
+      "migratedAt": "2026-07-28T04:03:50.694Z",
+      "failed": true
+    },
+    {
+      "sourcePageId": "441385052",
+      "sourcePageTitle": "DN_Surgical Report 조사",
+      "sourcePageUrl": "https://neobiotech.atlassian.net/wiki/spaces/Device/pages/441385052/DN_Surgical+Report",
+      "category": "DN — Dynamic Navigation",
+      "subCategory": "DN — Dynamic Navigation",
+      "error": "부모 페이지 ID 없음: \"DN — Dynamic Navigation\"",
+      "migratedAt": "2026-07-28T04:03:51.499Z",
+      "failed": true
+    },
+    {
+      "sourcePageId": "445480975",
+      "sourcePageTitle": "DN_레포트",
+      "sourcePageUrl": "https://neobiotech.atlassian.net/wiki/spaces/Device/pages/445480975/DN_",
+      "category": "DN — Dynamic Navigation",
+      "subCategory": "DN — Dynamic Navigation",
+      "error": "부모 페이지 ID 없음: \"DN — Dynamic Navigation\"",
+      "migratedAt": "2026-07-28T04:03:52.310Z",
+      "failed": true
+    },
+    {
+      "sourcePageId": "406585430",
+      "sourcePageTitle": "DN_화면설계",
+      "sourcePageUrl": "https://neobiotech.atlassian.net/wiki/spaces/Device/pages/406585430/DN_",
+      "category": "DN — Dynamic Navigation",
+      "subCategory": "DN — Dynamic Navigation",
+      "error": "부모 페이지 ID 없음: \"DN — Dynamic Navigation\"",
+      "migratedAt": "2026-07-28T04:03:53.117Z",
+      "failed": true
+    },
+    {
+      "sourcePageId": "471531521",
+      "sourcePageTitle": "DN_화면설계서",
+      "sourcePageUrl": "https://neobiotech.atlassian.net/wiki/spaces/Device/pages/471531521/DN_",
+      "category": "DN — Dynamic Navigation",
+      "subCategory": "DN — Dynamic Navigation",
+      "error": "부모 페이지 ID 없음: \"DN — Dynamic Navigation\"",
+      "migratedAt": "2026-07-28T04:03:53.932Z",
+      "failed": true
+    },
+    {
+      "sourcePageId": "437780504",
+      "sourcePageTitle": "DN_기능 정리",
+      "sourcePageUrl": "https://neobiotech.atlassian.net/wiki/spaces/Device/pages/437780504/DN_",
+      "category": "DN — Dynamic Navigation",
+      "subCategory": "DN — Dynamic Navigation",
+      "error": "부모 페이지 ID 없음: \"DN — Dynamic Navigation\"",
+      "migratedAt": "2026-07-28T04:03:54.739Z",
+      "failed": true
+    },
+    {
+      "sourcePageId": "475332612",
+      "sourcePageTitle": "기능별 참고 영상",
+      "sourcePageUrl": "https://neobiotech.atlassian.net/wiki/spaces/Device/pages/475332612",
+      "category": "DN — Dynamic Navigation",
+      "subCategory": "DN — Dynamic Navigation",
+      "error": "부모 페이지 ID 없음: \"DN — Dynamic Navigation\"",
+      "migratedAt": "2026-07-28T04:03:55.541Z",
+      "failed": true
+    },
+    {
+      "sourcePageId": "409993237",
+      "sourcePageTitle": "IR 카메라 마운트 업체 조사",
+      "sourcePageUrl": "https://neobiotech.atlassian.net/wiki/spaces/Device/pages/409993237/IR",
+      "category": "DN — Dynamic Navigation",
+      "subCategory": "DN — Dynamic Navigation",
+      "error": "부모 페이지 ID 없음: \"DN — Dynamic Navigation\"",
+      "migratedAt": "2026-07-28T04:03:56.344Z",
+      "failed": true
+    },
+    {
+      "sourcePageId": "474611716",
+      "sourcePageTitle": "Dynamic Navigation 자동 기능 세분화 및 설정(Settings) 옵션 적용안",
+      "sourcePageUrl": "https://neobiotech.atlassian.net/wiki/spaces/Device/pages/474611716/Dynamic+Navigation+Settings",
+      "category": "DN — Dynamic Navigation",
+      "subCategory": "DN — Dynamic Navigation",
+      "error": "부모 페이지 ID 없음: \"DN — Dynamic Navigation\"",
+      "migratedAt": "2026-07-28T04:03:57.160Z",
+      "failed": true
+    },
+    {
+      "sourcePageId": "474415113",
+      "sourcePageTitle": "설정 페이지",
+      "sourcePageUrl": "https://neobiotech.atlassian.net/wiki/spaces/Device/pages/474415113",
+      "category": "DN — Dynamic Navigation",
+      "subCategory": "DN — Dynamic Navigation",
+      "error": "부모 페이지 ID 없음: \"DN — Dynamic Navigation\"",
+      "migratedAt": "2026-07-28T04:03:57.970Z",
+      "failed": true
+    },
+    {
+      "sourcePageId": "454983683",
+      "sourcePageTitle": "DN_캘리브레이션 블럭 초안",
+      "sourcePageUrl": "https://neobiotech.atlassian.net/wiki/spaces/Device/pages/454983683/DN_",
+      "category": "DN — Dynamic Navigation",
+      "subCategory": "DN — Dynamic Navigation",
+      "error": "부모 페이지 ID 없음: \"DN — Dynamic Navigation\"",
+      "migratedAt": "2026-07-28T04:03:58.786Z",
+      "failed": true
+    },
+    {
+      "sourcePageId": "471662641",
+      "sourcePageTitle": "DN_화면설계 참고 자료",
+      "sourcePageUrl": "https://neobiotech.atlassian.net/wiki/spaces/Device/pages/471662641/DN_",
+      "category": "DN — Dynamic Navigation",
+      "subCategory": "DN — Dynamic Navigation",
+      "error": "부모 페이지 ID 없음: \"DN — Dynamic Navigation\"",
+      "migratedAt": "2026-07-28T04:03:59.598Z",
+      "failed": true
+    },
+    {
+      "sourcePageId": "473169977",
+      "sourcePageTitle": "Nerve 기능",
+      "sourcePageUrl": "https://neobiotech.atlassian.net/wiki/spaces/Device/pages/473169977/Nerve",
+      "category": "DN — Dynamic Navigation",
+      "subCategory": "DN — Dynamic Navigation",
+      "error": "부모 페이지 ID 없음: \"DN — Dynamic Navigation\"",
+      "migratedAt": "2026-07-28T04:04:00.413Z",
+      "failed": true
+    },
+    {
+      "sourcePageId": "473169985",
+      "sourcePageTitle": "Surgical Mode",
+      "sourcePageUrl": "https://neobiotech.atlassian.net/wiki/spaces/Device/pages/473169985/Surgical+Mode",
+      "category": "DN — Dynamic Navigation",
+      "subCategory": "DN — Dynamic Navigation",
+      "error": "부모 페이지 ID 없음: \"DN — Dynamic Navigation\"",
+      "migratedAt": "2026-07-28T04:04:01.220Z",
+      "failed": true
+    },
+    {
+      "sourcePageId": "473301055",
+      "sourcePageTitle": "Calibration",
+      "sourcePageUrl": "https://neobiotech.atlassian.net/wiki/spaces/Device/pages/473301055/Calibration",
+      "category": "DN — Dynamic Navigation",
+      "subCategory": "DN — Dynamic Navigation",
+      "error": "부모 페이지 ID 없음: \"DN — Dynamic Navigation\"",
+      "migratedAt": "2026-07-28T04:04:02.033Z",
+      "failed": true
+    },
+    {
+      "sourcePageId": "473497624",
+      "sourcePageTitle": "Implant Planning",
+      "sourcePageUrl": "https://neobiotech.atlassian.net/wiki/spaces/Device/pages/473497624/Implant+Planning",
+      "category": "DN — Dynamic Navigation",
+      "subCategory": "DN — Dynamic Navigation",
+      "error": "부모 페이지 ID 없음: \"DN — Dynamic Navigation\"",
+      "migratedAt": "2026-07-28T04:04:02.845Z",
+      "failed": true
+    },
+    {
+      "sourcePageId": "473727021",
+      "sourcePageTitle": "IOS 정합",
+      "sourcePageUrl": "https://neobiotech.atlassian.net/wiki/spaces/Device/pages/473727021/IOS",
+      "category": "DN — Dynamic Navigation",
+      "subCategory": "DN — Dynamic Navigation",
+      "error": "부모 페이지 ID 없음: \"DN — Dynamic Navigation\"",
+      "migratedAt": "2026-07-28T04:04:03.646Z",
+      "failed": true
+    },
+    {
+      "sourcePageId": "473301045",
+      "sourcePageTitle": "Splint 정합",
+      "sourcePageUrl": "https://neobiotech.atlassian.net/wiki/spaces/Device/pages/473301045/Splint",
+      "category": "DN — Dynamic Navigation",
+      "subCategory": "DN — Dynamic Navigation",
+      "error": "부모 페이지 ID 없음: \"DN — Dynamic Navigation\"",
+      "migratedAt": "2026-07-28T04:04:04.457Z",
+      "failed": true
+    },
+    {
+      "sourcePageId": "473792528",
+      "sourcePageTitle": "Curve 기능",
+      "sourcePageUrl": "https://neobiotech.atlassian.net/wiki/spaces/Device/pages/473792528/Curve",
+      "category": "DN — Dynamic Navigation",
+      "subCategory": "DN — Dynamic Navigation",
+      "error": "부모 페이지 ID 없음: \"DN — Dynamic Navigation\"",
+      "migratedAt": "2026-07-28T04:04:05.261Z",
+      "failed": true
+    },
+    {
+      "sourcePageId": "458522634",
+      "sourcePageTitle": "실시간 임플란트 수술 내비게이션 시스템 제품화 검토 설문지",
+      "sourcePageUrl": "https://neobiotech.atlassian.net/wiki/spaces/Device/pages/458522634",
+      "category": "DN — Dynamic Navigation",
+      "subCategory": "DN — Dynamic Navigation",
+      "error": "부모 페이지 ID 없음: \"DN — Dynamic Navigation\"",
+      "migratedAt": "2026-07-28T04:04:06.066Z",
+      "failed": true
+    },
+    {
+      "sourcePageId": "409141252",
+      "sourcePageTitle": "DN_풋 스위치 업체",
+      "sourcePageUrl": "https://neobiotech.atlassian.net/wiki/spaces/Device/pages/409141252/DN_",
+      "category": "DN — Dynamic Navigation",
+      "subCategory": "DN — Dynamic Navigation",
+      "error": "부모 페이지 ID 없음: \"DN — Dynamic Navigation\"",
+      "migratedAt": "2026-07-28T04:04:06.880Z",
+      "failed": true
+    },
+    {
+      "sourcePageId": "470253578",
+      "sourcePageTitle": "Surgical 2 화면 풋스위치 기능 및 버튼 구성 설명",
+      "sourcePageUrl": "https://neobiotech.atlassian.net/wiki/spaces/Device/pages/470253578/Surgical+2",
+      "category": "DN — Dynamic Navigation",
+      "subCategory": "DN — Dynamic Navigation",
+      "error": "부모 페이지 ID 없음: \"DN — Dynamic Navigation\"",
+      "migratedAt": "2026-07-28T04:04:07.697Z",
+      "failed": true
+    },
+    {
+      "sourcePageId": "470581249",
+      "sourcePageTitle": "Surgical 1 화면 풋스위치 기능 및 버튼 구성 안내",
+      "sourcePageUrl": "https://neobiotech.atlassian.net/wiki/spaces/Device/pages/470581249/Surgical+1",
+      "category": "DN — Dynamic Navigation",
+      "subCategory": "DN — Dynamic Navigation",
+      "error": "부모 페이지 ID 없음: \"DN — Dynamic Navigation\"",
+      "migratedAt": "2026-07-28T04:04:08.507Z",
+      "failed": true
+    },
+    {
+      "sourcePageId": "470351874",
+      "sourcePageTitle": "Planning 화면의 풋스위치 기능 및 버튼 구성 설명",
+      "sourcePageUrl": "https://neobiotech.atlassian.net/wiki/spaces/Device/pages/470351874/Planning",
+      "category": "DN — Dynamic Navigation",
+      "subCategory": "DN — Dynamic Navigation",
+      "error": "부모 페이지 ID 없음: \"DN — Dynamic Navigation\"",
+      "migratedAt": "2026-07-28T04:04:09.314Z",
+      "failed": true
+    },
+    {
+      "sourcePageId": "476938250",
+      "sourcePageTitle": "개별 치아 세그멘테이션 파이프라인 성능 비교 실험 계획서",
+      "sourcePageUrl": "https://neobiotech.atlassian.net/wiki/spaces/SmileArch/pages/476938250",
+      "category": "SmileArch — Smile Design v2.0",
+      "subCategory": "SmileArch — Smile Design v2.0",
+      "error": "부모 페이지 ID 없음: \"SmileArch — Smile Design v2.0\"",
+      "migratedAt": "2026-07-28T04:04:10.117Z",
+      "failed": true
+    },
+    {
+      "sourcePageId": "475627533",
+      "sourcePageTitle": "신경관 세그멘테이션 파이프라인 비교 및 평가 계획 (draft)",
+      "sourcePageUrl": "https://neobiotech.atlassian.net/wiki/spaces/SmileArch/pages/475627533/draft",
+      "category": "SmileArch — Smile Design v2.0",
+      "subCategory": "SmileArch — Smile Design v2.0",
+      "error": "부모 페이지 ID 없음: \"SmileArch — Smile Design v2.0\"",
+      "migratedAt": "2026-07-28T04:04:10.930Z",
+      "failed": true
+    },
+    {
+      "sourcePageId": "475660307",
+      "sourcePageTitle": "대규모 CBCT 통합 세그멘테이션 데이터 구축 및 모델 학습 계획",
+      "sourcePageUrl": "https://neobiotech.atlassian.net/wiki/spaces/SmileArch/pages/475660307/CBCT",
+      "category": "SmileArch — Smile Design v2.0",
+      "subCategory": "SmileArch — Smile Design v2.0",
+      "error": "부모 페이지 ID 없음: \"SmileArch — Smile Design v2.0\"",
+      "migratedAt": "2026-07-28T04:04:11.744Z",
+      "failed": true
+    },
+    {
+      "sourcePageId": "473333789",
+      "sourcePageTitle": "CBCT 해부 구조 통합 세그멘테이션 모델 성능 평가 보고서",
+      "sourcePageUrl": "https://neobiotech.atlassian.net/wiki/spaces/SmileArch/pages/473333789/CBCT",
+      "category": "SmileArch — Smile Design v2.0",
+      "subCategory": "SmileArch — Smile Design v2.0",
+      "error": "부모 페이지 ID 없음: \"SmileArch — Smile Design v2.0\"",
+      "migratedAt": "2026-07-28T04:04:12.560Z",
+      "failed": true
+    },
+    {
+      "sourcePageId": "471400476",
+      "sourcePageTitle": "Organization 전역 AI PR 자동 리뷰 시스템 구축 가이드 (Qodo Merge)",
+      "sourcePageUrl": "https://neobiotech.atlassian.net/wiki/spaces/SD/pages/471400476/Organization+AI+PR+Qodo+Merge",
+      "category": "전사 How-To / 개발 가이드",
+      "subCategory": "전사 How-To / 개발 가이드",
+      "error": "부모 페이지 ID 없음: \"전사 How-To / 개발 가이드\"",
+      "migratedAt": "2026-07-28T04:04:13.375Z",
+      "failed": true
+    },
+    {
+      "sourcePageId": "478183425",
+      "sourcePageTitle": "위험관리 보고서 (Risk Management Report) — FMEA",
+      "sourcePageUrl": "https://neobiotech.atlassian.net/wiki/spaces/WND/pages/478183425/Risk+Management+Report+FMEA",
+      "newPageId": "478543923",
+      "newPageUrl": "https://neobiotech.atlassian.net/wiki/spaces/AA/pages/478543923/Risk+Management+Report+FMEA",
+      "category": "DYN — 의료기기 IEC 62304 산출물 (Wearable Navigation)",
+      "subCategory": "DYN — 의료기기 IEC 62304 산출물 (Wearable Navigation)",
+      "labels": [
+        "group-device",
+        "project-navigation",
+        "doctype-rmr",
+        "year-2026",
+        "status-active",
+        "gate-"
+      ],
+      "attachmentCount": 0,
+      "migratedAt": "2026-07-28T04:06:22.214Z"
+    },
+    {
+      "sourcePageId": "463142913",
+      "sourcePageTitle": "System Requirements Specification (SysRS) (DYN-9)",
+      "sourcePageUrl": "https://neobiotech.atlassian.net/wiki/spaces/WND/pages/463142913/System+Requirements+Specification+SysRS+DYN-9",
+      "newPageId": "479232047",
+      "newPageUrl": "https://neobiotech.atlassian.net/wiki/spaces/AA/pages/479232047/System+Requirements+Specification+SysRS+DYN-9",
+      "category": "DYN — 의료기기 IEC 62304 산출물 (Wearable Navigation)",
+      "subCategory": "DYN — 의료기기 IEC 62304 산출물 (Wearable Navigation)",
+      "labels": [
+        "group-device",
+        "project-navigation",
+        "doctype-syrs",
+        "year-2026",
+        "status-active",
+        "gate-"
+      ],
+      "attachmentCount": 0,
+      "migratedAt": "2026-07-28T04:06:24.865Z"
+    },
+    {
+      "sourcePageId": "469467162",
+      "sourcePageTitle": "위험관리 계획서 (DYN-12)",
+      "sourcePageUrl": "https://neobiotech.atlassian.net/wiki/spaces/WND/pages/469467162/DYN-12",
+      "newPageId": "479068165",
+      "newPageUrl": "https://neobiotech.atlassian.net/wiki/spaces/AA/pages/479068165/DYN-12",
+      "category": "DYN — 의료기기 IEC 62304 산출물 (Wearable Navigation)",
+      "subCategory": "DYN — 의료기기 IEC 62304 산출물 (Wearable Navigation)",
+      "labels": [
+        "group-device",
+        "project-navigation",
+        "doctype-rmp",
+        "year-2026",
+        "status-active",
+        "gate-"
+      ],
+      "attachmentCount": 0,
+      "migratedAt": "2026-07-28T04:06:27.139Z"
+    },
+    {
+      "sourcePageId": "456458250",
+      "sourcePageTitle": "사용목적 정의서 (DYN-8)",
+      "sourcePageUrl": "https://neobiotech.atlassian.net/wiki/spaces/WND/pages/456458250/DYN-8",
+      "newPageId": "478642198",
+      "newPageUrl": "https://neobiotech.atlassian.net/wiki/spaces/AA/pages/478642198/DYN-8",
+      "category": "DYN — 의료기기 IEC 62304 산출물 (Wearable Navigation)",
+      "subCategory": "DYN — 의료기기 IEC 62304 산출물 (Wearable Navigation)",
+      "labels": [
+        "group-device",
+        "project-navigation",
+        "doctype-iu",
+        "year-2026",
+        "status-active",
+        "gate-"
+      ],
+      "attachmentCount": 0,
+      "migratedAt": "2026-07-28T04:06:29.364Z"
+    },
+    {
+      "sourcePageId": "456359950",
+      "sourcePageTitle": "의료기기 분류 문서 (DYN-10)",
+      "sourcePageUrl": "https://neobiotech.atlassian.net/wiki/spaces/WND/pages/456359950/DYN-10",
+      "newPageId": "478642225",
+      "newPageUrl": "https://neobiotech.atlassian.net/wiki/spaces/AA/pages/478642225/DYN-10",
+      "category": "DYN — 의료기기 IEC 62304 산출물 (Wearable Navigation)",
+      "subCategory": "DYN — 의료기기 IEC 62304 산출물 (Wearable Navigation)",
+      "labels": [
+        "group-device",
+        "project-navigation",
+        "doctype-classification",
+        "year-2026",
+        "status-active",
+        "gate-"
+      ],
+      "attachmentCount": 0,
+      "migratedAt": "2026-07-28T04:06:31.593Z"
+    },
+    {
+      "sourcePageId": "469434369",
+      "sourcePageTitle": "형상관리 계획서 (DYN-14)",
+      "sourcePageUrl": "https://neobiotech.atlassian.net/wiki/spaces/WND/pages/469434369/DYN-14",
+      "newPageId": "479035423",
+      "newPageUrl": "https://neobiotech.atlassian.net/wiki/spaces/AA/pages/479035423/DYN-14",
+      "category": "DYN — 의료기기 IEC 62304 산출물 (Wearable Navigation)",
+      "subCategory": "DYN — 의료기기 IEC 62304 산출물 (Wearable Navigation)",
+      "labels": [
+        "group-device",
+        "project-navigation",
+        "doctype-cmp",
+        "year-2026",
+        "status-active",
+        "gate-"
+      ],
+      "attachmentCount": 0,
+      "migratedAt": "2026-07-28T04:06:33.835Z"
+    },
+    {
+      "sourcePageId": "471531555",
+      "sourcePageTitle": "보안관리 계획서 (DYN-13)",
+      "sourcePageUrl": "https://neobiotech.atlassian.net/wiki/spaces/WND/pages/471531555/DYN-13",
+      "newPageId": "479100943",
+      "newPageUrl": "https://neobiotech.atlassian.net/wiki/spaces/AA/pages/479100943/DYN-13",
+      "category": "DYN — 의료기기 IEC 62304 산출물 (Wearable Navigation)",
+      "subCategory": "DYN — 의료기기 IEC 62304 산출물 (Wearable Navigation)",
+      "labels": [
+        "group-device",
+        "project-navigation",
+        "doctype-smp",
+        "year-2026",
+        "status-active",
+        "gate-"
+      ],
+      "attachmentCount": 0,
+      "migratedAt": "2026-07-28T04:06:36.091Z"
+    },
+    {
+      "sourcePageId": "301727746",
+      "sourcePageTitle": "소프트웨어 개발 및 유지보수 계획서 (DYN-11)",
+      "sourcePageUrl": "https://neobiotech.atlassian.net/wiki/spaces/WND/pages/301727746/DYN-11",
+      "newPageId": "478642252",
+      "newPageUrl": "https://neobiotech.atlassian.net/wiki/spaces/AA/pages/478642252/DYN-11",
+      "category": "DYN — 의료기기 IEC 62304 산출물 (Wearable Navigation)",
+      "subCategory": "DYN — 의료기기 IEC 62304 산출물 (Wearable Navigation)",
+      "labels": [
+        "group-device",
+        "project-navigation",
+        "doctype-sdmp",
+        "year-2026",
+        "status-active",
+        "gate-"
+      ],
+      "attachmentCount": 1,
+      "migratedAt": "2026-07-28T04:06:41.470Z"
+    },
+    {
+      "sourcePageId": "464355332",
+      "sourcePageTitle": "DN_가공 업체",
+      "sourcePageUrl": "https://neobiotech.atlassian.net/wiki/spaces/Device/pages/464355332/DN_",
+      "newPageId": "479002666",
+      "newPageUrl": "https://neobiotech.atlassian.net/wiki/spaces/AA/pages/479002666/DN_",
+      "category": "DN — Dynamic Navigation",
+      "subCategory": "DN — Dynamic Navigation",
+      "labels": [
+        "group-device",
+        "project-navigation",
+        "doctype-survey",
+        "year-2026",
+        "status-active"
+      ],
+      "attachmentCount": 0,
+      "migratedAt": "2026-07-28T04:06:43.706Z"
+    },
+    {
+      "sourcePageId": "477888519",
+      "sourcePageTitle": "IR마커 검증",
+      "sourcePageUrl": "https://neobiotech.atlassian.net/wiki/spaces/Device/pages/477888519/IR",
+      "newPageId": "479166482",
+      "newPageUrl": "https://neobiotech.atlassian.net/wiki/spaces/AA/pages/479166482/IR",
+      "category": "DN — Dynamic Navigation",
+      "subCategory": "DN — Dynamic Navigation",
+      "labels": [
+        "group-device",
+        "project-navigation",
+        "doctype-design",
+        "year-2026",
+        "status-active"
+      ],
+      "attachmentCount": 3,
+      "migratedAt": "2026-07-28T04:06:53.540Z"
+    },
+    {
+      "sourcePageId": "474677269",
+      "sourcePageTitle": "Dynamic Navigation_설정_ 일반 설정",
+      "sourcePageUrl": "https://neobiotech.atlassian.net/wiki/spaces/Device/pages/474677269/Dynamic+Navigation_+_",
+      "newPageId": "478740547",
+      "newPageUrl": "https://neobiotech.atlassian.net/wiki/spaces/AA/pages/478740547/Dynamic+Navigation_+_",
+      "category": "DN — Dynamic Navigation",
+      "subCategory": "DN — Dynamic Navigation",
+      "labels": [
+        "group-device",
+        "project-navigation",
+        "doctype-config",
+        "year-2026",
+        "status-active"
+      ],
+      "attachmentCount": 1,
+      "migratedAt": "2026-07-28T04:06:58.929Z"
+    },
+    {
+      "sourcePageId": "476643330",
+      "sourcePageTitle": "DN_작업 일정",
+      "sourcePageUrl": "https://neobiotech.atlassian.net/wiki/spaces/Device/pages/476643330/DN_",
+      "newPageId": "479199250",
+      "newPageUrl": "https://neobiotech.atlassian.net/wiki/spaces/AA/pages/479199250/DN_",
+      "category": "DN — Dynamic Navigation",
+      "subCategory": "DN — Dynamic Navigation",
+      "labels": [
+        "group-device",
+        "project-navigation",
+        "doctype-design",
+        "year-2026",
+        "status-active"
+      ],
+      "attachmentCount": 0,
+      "migratedAt": "2026-07-28T04:07:01.208Z"
+    },
+    {
+      "sourcePageId": "452001794",
+      "sourcePageTitle": "DN_캘리브레이션 시나리오 조사",
+      "sourcePageUrl": "https://neobiotech.atlassian.net/wiki/spaces/Device/pages/452001794/DN_",
+      "newPageId": "479068201",
+      "newPageUrl": "https://neobiotech.atlassian.net/wiki/spaces/AA/pages/479068201/DN_",
+      "category": "DN — Dynamic Navigation",
+      "subCategory": "DN — Dynamic Navigation",
+      "labels": [
+        "group-device",
+        "project-navigation",
+        "doctype-survey",
+        "year-2026",
+        "status-active"
+      ],
+      "attachmentCount": 33,
+      "migratedAt": "2026-07-28T04:08:33.757Z"
+    },
+    {
+      "sourcePageId": "445480961",
+      "sourcePageTitle": "DN_레포트 상세 구성",
+      "sourcePageUrl": "https://neobiotech.atlassian.net/wiki/spaces/Device/pages/445480961/DN_",
+      "newPageId": "479068232",
+      "newPageUrl": "https://neobiotech.atlassian.net/wiki/spaces/AA/pages/479068232/DN_",
+      "category": "DN — Dynamic Navigation",
+      "subCategory": "DN — Dynamic Navigation",
+      "labels": [
+        "group-device",
+        "project-navigation",
+        "doctype-design",
+        "year-2026",
+        "status-active"
+      ],
+      "attachmentCount": 2,
+      "migratedAt": "2026-07-28T04:08:41.722Z"
+    },
+    {
+      "sourcePageId": "441385052",
+      "sourcePageTitle": "DN_Surgical Report 조사",
+      "sourcePageUrl": "https://neobiotech.atlassian.net/wiki/spaces/Device/pages/441385052/DN_Surgical+Report",
+      "newPageId": "479068265",
+      "newPageUrl": "https://neobiotech.atlassian.net/wiki/spaces/AA/pages/479068265/DN_Surgical+Report",
+      "category": "DN — Dynamic Navigation",
+      "subCategory": "DN — Dynamic Navigation",
+      "labels": [
+        "group-device",
+        "project-navigation",
+        "doctype-survey",
+        "year-2026",
+        "status-active"
+      ],
+      "attachmentCount": 8,
+      "migratedAt": "2026-07-28T04:09:04.996Z"
+    },
+    {
+      "sourcePageId": "445480975",
+      "sourcePageTitle": "DN_레포트",
+      "sourcePageUrl": "https://neobiotech.atlassian.net/wiki/spaces/Device/pages/445480975/DN_",
+      "newPageId": "479002731",
+      "newPageUrl": "https://neobiotech.atlassian.net/wiki/spaces/AA/pages/479002731/DN_",
+      "category": "DN — Dynamic Navigation",
+      "subCategory": "DN — Dynamic Navigation",
+      "labels": [
+        "group-device",
+        "project-navigation",
+        "doctype-design",
+        "year-2026",
+        "status-active"
+      ],
+      "attachmentCount": 0,
+      "migratedAt": "2026-07-28T04:09:06.936Z"
+    },
+    {
+      "sourcePageId": "406585430",
+      "sourcePageTitle": "DN_화면설계",
+      "sourcePageUrl": "https://neobiotech.atlassian.net/wiki/spaces/Device/pages/406585430/DN_",
+      "newPageId": "478544020",
+      "newPageUrl": "https://neobiotech.atlassian.net/wiki/spaces/AA/pages/478544020/DN_",
+      "category": "DN — Dynamic Navigation",
+      "subCategory": "DN — Dynamic Navigation",
+      "labels": [
+        "group-device",
+        "project-navigation",
+        "doctype-design",
+        "year-2026",
+        "status-active"
+      ],
+      "attachmentCount": 3,
+      "migratedAt": "2026-07-28T04:09:17.732Z"
+    },
+    {
+      "sourcePageId": "471531521",
+      "sourcePageTitle": "DN_화면설계서",
+      "sourcePageUrl": "https://neobiotech.atlassian.net/wiki/spaces/Device/pages/471531521/DN_",
+      "newPageId": "478937135",
+      "newPageUrl": "https://neobiotech.atlassian.net/wiki/spaces/AA/pages/478937135/DN_",
+      "category": "DN — Dynamic Navigation",
+      "subCategory": "DN — Dynamic Navigation",
+      "labels": [
+        "group-device",
+        "project-navigation",
+        "doctype-design",
+        "year-2026",
+        "status-active"
+      ],
+      "attachmentCount": 6,
+      "migratedAt": "2026-07-28T04:10:06.594Z"
+    },
+    {
+      "sourcePageId": "437780504",
+      "sourcePageTitle": "DN_기능 정리",
+      "sourcePageUrl": "https://neobiotech.atlassian.net/wiki/spaces/Device/pages/437780504/DN_",
+      "newPageId": "478544043",
+      "newPageUrl": "https://neobiotech.atlassian.net/wiki/spaces/AA/pages/478544043/DN_",
+      "category": "DN — Dynamic Navigation",
+      "subCategory": "DN — Dynamic Navigation",
+      "labels": [
+        "group-device",
+        "project-navigation",
+        "doctype-design",
+        "year-2026",
+        "status-active"
+      ],
+      "attachmentCount": 5,
+      "migratedAt": "2026-07-28T04:10:20.472Z"
+    },
+    {
+      "sourcePageId": "475332612",
+      "sourcePageTitle": "기능별 참고 영상",
+      "sourcePageUrl": "https://neobiotech.atlassian.net/wiki/spaces/Device/pages/475332612",
+      "newPageId": "479068302",
+      "newPageUrl": "https://neobiotech.atlassian.net/wiki/spaces/AA/pages/479068302",
+      "category": "DN — Dynamic Navigation",
+      "subCategory": "DN — Dynamic Navigation",
+      "labels": [
+        "group-device",
+        "project-navigation",
+        "doctype-feature-spec",
+        "year-2026",
+        "status-active"
+      ],
+      "attachmentCount": 3,
+      "migratedAt": "2026-07-28T04:10:41.904Z"
+    },
+    {
+      "sourcePageId": "409993237",
+      "sourcePageTitle": "IR 카메라 마운트 업체 조사",
+      "sourcePageUrl": "https://neobiotech.atlassian.net/wiki/spaces/Device/pages/409993237/IR",
+      "newPageId": "439582811",
+      "newPageUrl": "https://neobiotech.atlassian.net/wiki/spaces/AA/pages/439582811/IR",
+      "category": "DN — Dynamic Navigation",
+      "subCategory": "DN — Dynamic Navigation",
+      "labels": [
+        "group-device",
+        "project-navigation",
+        "doctype-survey",
+        "year-2026",
+        "status-active"
+      ],
+      "attachmentCount": 6,
+      "migratedAt": "2026-07-28T04:10:43.118Z",
+      "resolvedAt": "2026-07-28T05:30:00.000Z",
+      "resolution": "기존 AA 페이지에 원본 최신 내용 덮어쓰기 + DN 하위 이동 + 첨부파일 6개 추가 복사"
+    },
+    {
+      "sourcePageId": "474611716",
+      "sourcePageTitle": "Dynamic Navigation 자동 기능 세분화 및 설정(Settings) 옵션 적용안",
+      "sourcePageUrl": "https://neobiotech.atlassian.net/wiki/spaces/Device/pages/474611716/Dynamic+Navigation+Settings",
+      "newPageId": "479101011",
+      "newPageUrl": "https://neobiotech.atlassian.net/wiki/spaces/AA/pages/479101011/Dynamic+Navigation+Settings",
+      "category": "DN — Dynamic Navigation",
+      "subCategory": "DN — Dynamic Navigation",
+      "labels": [
+        "group-device",
+        "project-navigation",
+        "doctype-config",
+        "year-2026",
+        "status-active"
+      ],
+      "attachmentCount": 1,
+      "migratedAt": "2026-07-28T04:10:49.900Z"
+    },
+    {
+      "sourcePageId": "474415113",
+      "sourcePageTitle": "설정 페이지",
+      "sourcePageUrl": "https://neobiotech.atlassian.net/wiki/spaces/Device/pages/474415113",
+      "newPageId": "479101036",
+      "newPageUrl": "https://neobiotech.atlassian.net/wiki/spaces/AA/pages/479101036",
+      "category": "DN — Dynamic Navigation",
+      "subCategory": "DN — Dynamic Navigation",
+      "labels": [
+        "group-device",
+        "project-navigation",
+        "doctype-config",
+        "year-2026",
+        "status-active"
+      ],
+      "attachmentCount": 11,
+      "migratedAt": "2026-07-28T04:11:17.943Z"
+    },
+    {
+      "sourcePageId": "454983683",
+      "sourcePageTitle": "DN_캘리브레이션 블럭 초안",
+      "sourcePageUrl": "https://neobiotech.atlassian.net/wiki/spaces/Device/pages/454983683/DN_",
+      "newPageId": "479199309",
+      "newPageUrl": "https://neobiotech.atlassian.net/wiki/spaces/AA/pages/479199309/DN_",
+      "category": "DN — Dynamic Navigation",
+      "subCategory": "DN — Dynamic Navigation",
+      "labels": [
+        "group-device",
+        "project-navigation",
+        "doctype-design",
+        "year-2026",
+        "status-active"
+      ],
+      "attachmentCount": 7,
+      "migratedAt": "2026-07-28T04:11:36.983Z"
+    },
+    {
+      "sourcePageId": "471662641",
+      "sourcePageTitle": "DN_화면설계 참고 자료",
+      "sourcePageUrl": "https://neobiotech.atlassian.net/wiki/spaces/Device/pages/471662641/DN_",
+      "newPageId": "479101079",
+      "newPageUrl": "https://neobiotech.atlassian.net/wiki/spaces/AA/pages/479101079/DN_",
+      "category": "DN — Dynamic Navigation",
+      "subCategory": "DN — Dynamic Navigation",
+      "labels": [
+        "group-device",
+        "project-navigation",
+        "doctype-design",
+        "year-2026",
+        "status-active"
+      ],
+      "attachmentCount": 2,
+      "migratedAt": "2026-07-28T04:11:45.401Z"
+    },
+    {
+      "sourcePageId": "473169977",
+      "sourcePageTitle": "Nerve 기능",
+      "sourcePageUrl": "https://neobiotech.atlassian.net/wiki/spaces/Device/pages/473169977/Nerve",
+      "newPageId": "479002782",
+      "newPageUrl": "https://neobiotech.atlassian.net/wiki/spaces/AA/pages/479002782/Nerve",
+      "category": "DN — Dynamic Navigation",
+      "subCategory": "DN — Dynamic Navigation",
+      "labels": [
+        "group-device",
+        "project-navigation",
+        "doctype-design",
+        "year-2026",
+        "status-active"
+      ],
+      "attachmentCount": 2,
+      "migratedAt": "2026-07-28T04:11:53.062Z"
+    },
+    {
+      "sourcePageId": "473169985",
+      "sourcePageTitle": "Surgical Mode",
+      "sourcePageUrl": "https://neobiotech.atlassian.net/wiki/spaces/Device/pages/473169985/Surgical+Mode",
+      "newPageId": "479297553",
+      "newPageUrl": "https://neobiotech.atlassian.net/wiki/spaces/AA/pages/479297553/Surgical+Mode",
+      "category": "DN — Dynamic Navigation",
+      "subCategory": "DN — Dynamic Navigation",
+      "labels": [
+        "group-device",
+        "project-navigation",
+        "doctype-design",
+        "year-2026",
+        "status-active"
+      ],
+      "attachmentCount": 0,
+      "migratedAt": "2026-07-28T04:11:55.277Z"
+    },
+    {
+      "sourcePageId": "473301055",
+      "sourcePageTitle": "Calibration",
+      "sourcePageUrl": "https://neobiotech.atlassian.net/wiki/spaces/Device/pages/473301055/Calibration",
+      "newPageId": "479232156",
+      "newPageUrl": "https://neobiotech.atlassian.net/wiki/spaces/AA/pages/479232156/Calibration",
+      "category": "DN — Dynamic Navigation",
+      "subCategory": "DN — Dynamic Navigation",
+      "labels": [
+        "group-device",
+        "project-navigation",
+        "doctype-design",
+        "year-2026",
+        "status-active"
+      ],
+      "attachmentCount": 0,
+      "migratedAt": "2026-07-28T04:11:57.420Z"
+    },
+    {
+      "sourcePageId": "473497624",
+      "sourcePageTitle": "Implant Planning",
+      "sourcePageUrl": "https://neobiotech.atlassian.net/wiki/spaces/Device/pages/473497624/Implant+Planning",
+      "newPageId": "478642358",
+      "newPageUrl": "https://neobiotech.atlassian.net/wiki/spaces/AA/pages/478642358/Implant+Planning",
+      "category": "DN — Dynamic Navigation",
+      "subCategory": "DN — Dynamic Navigation",
+      "labels": [
+        "group-device",
+        "project-navigation",
+        "doctype-design",
+        "year-2026",
+        "status-active"
+      ],
+      "attachmentCount": 0,
+      "migratedAt": "2026-07-28T04:11:59.492Z"
+    },
+    {
+      "sourcePageId": "473727021",
+      "sourcePageTitle": "IOS 정합",
+      "sourcePageUrl": "https://neobiotech.atlassian.net/wiki/spaces/Device/pages/473727021/IOS",
+      "newPageId": "479101102",
+      "newPageUrl": "https://neobiotech.atlassian.net/wiki/spaces/AA/pages/479101102/IOS",
+      "category": "DN — Dynamic Navigation",
+      "subCategory": "DN — Dynamic Navigation",
+      "labels": [
+        "group-device",
+        "project-navigation",
+        "doctype-design",
+        "year-2026",
+        "status-active"
+      ],
+      "attachmentCount": 0,
+      "migratedAt": "2026-07-28T04:12:01.671Z"
+    },
+    {
+      "sourcePageId": "473301045",
+      "sourcePageTitle": "Splint 정합",
+      "sourcePageUrl": "https://neobiotech.atlassian.net/wiki/spaces/Device/pages/473301045/Splint",
+      "newPageId": "479166579",
+      "newPageUrl": "https://neobiotech.atlassian.net/wiki/spaces/AA/pages/479166579/Splint",
+      "category": "DN — Dynamic Navigation",
+      "subCategory": "DN — Dynamic Navigation",
+      "labels": [
+        "group-device",
+        "project-navigation",
+        "doctype-design",
+        "year-2026",
+        "status-active"
+      ],
+      "attachmentCount": 0,
+      "migratedAt": "2026-07-28T04:12:03.696Z"
+    },
+    {
+      "sourcePageId": "473792528",
+      "sourcePageTitle": "Curve 기능",
+      "sourcePageUrl": "https://neobiotech.atlassian.net/wiki/spaces/Device/pages/473792528/Curve",
+      "newPageId": "479297576",
+      "newPageUrl": "https://neobiotech.atlassian.net/wiki/spaces/AA/pages/479297576/Curve",
+      "category": "DN — Dynamic Navigation",
+      "subCategory": "DN — Dynamic Navigation",
+      "labels": [
+        "group-device",
+        "project-navigation",
+        "doctype-design",
+        "year-2026",
+        "status-active"
+      ],
+      "attachmentCount": 0,
+      "migratedAt": "2026-07-28T04:12:05.716Z"
+    },
+    {
+      "sourcePageId": "458522634",
+      "sourcePageTitle": "실시간 임플란트 수술 내비게이션 시스템 제품화 검토 설문지",
+      "sourcePageUrl": "https://neobiotech.atlassian.net/wiki/spaces/Device/pages/458522634",
+      "newPageId": "479035499",
+      "newPageUrl": "https://neobiotech.atlassian.net/wiki/spaces/AA/pages/479035499",
+      "category": "DN — Dynamic Navigation",
+      "subCategory": "DN — Dynamic Navigation",
+      "labels": [
+        "group-device",
+        "project-navigation",
+        "doctype-survey",
+        "year-2026",
+        "status-active"
+      ],
+      "attachmentCount": 1,
+      "migratedAt": "2026-07-28T04:12:12.396Z"
+    },
+    {
+      "sourcePageId": "409141252",
+      "sourcePageTitle": "DN_풋 스위치 업체",
+      "sourcePageUrl": "https://neobiotech.atlassian.net/wiki/spaces/Device/pages/409141252/DN_",
+      "newPageId": "439975961",
+      "newPageUrl": "https://neobiotech.atlassian.net/wiki/spaces/AA/pages/439975961/DN_",
+      "category": "DN — Dynamic Navigation",
+      "subCategory": "DN — Dynamic Navigation",
+      "labels": [
+        "group-device",
+        "project-navigation",
+        "doctype-survey",
+        "year-2026",
+        "status-active"
+      ],
+      "attachmentCount": 7,
+      "migratedAt": "2026-07-28T04:12:13.559Z",
+      "resolvedAt": "2026-07-28T05:30:00.000Z",
+      "resolution": "기존 AA 페이지에 원본 최신 내용 덮어쓰기 + DN 하위 이동 + 첨부파일 7개 추가 복사"
+    },
+    {
+      "sourcePageId": "470253578",
+      "sourcePageTitle": "Surgical 2 화면 풋스위치 기능 및 버튼 구성 설명",
+      "sourcePageUrl": "https://neobiotech.atlassian.net/wiki/spaces/Device/pages/470253578/Surgical+2",
+      "newPageId": "479002809",
+      "newPageUrl": "https://neobiotech.atlassian.net/wiki/spaces/AA/pages/479002809/Surgical+2",
+      "category": "DN — Dynamic Navigation",
+      "subCategory": "DN — Dynamic Navigation",
+      "labels": [
+        "group-device",
+        "project-navigation",
+        "doctype-design",
+        "year-2026",
+        "status-active"
+      ],
+      "attachmentCount": 0,
+      "migratedAt": "2026-07-28T04:12:15.697Z"
+    },
+    {
+      "sourcePageId": "470581249",
+      "sourcePageTitle": "Surgical 1 화면 풋스위치 기능 및 버튼 구성 안내",
+      "sourcePageUrl": "https://neobiotech.atlassian.net/wiki/spaces/Device/pages/470581249/Surgical+1",
+      "newPageId": "479166609",
+      "newPageUrl": "https://neobiotech.atlassian.net/wiki/spaces/AA/pages/479166609/Surgical+1",
+      "category": "DN — Dynamic Navigation",
+      "subCategory": "DN — Dynamic Navigation",
+      "labels": [
+        "group-device",
+        "project-navigation",
+        "doctype-design",
+        "year-2026",
+        "status-active"
+      ],
+      "attachmentCount": 0,
+      "migratedAt": "2026-07-28T04:12:17.739Z"
+    },
+    {
+      "sourcePageId": "470351874",
+      "sourcePageTitle": "Planning 화면의 풋스위치 기능 및 버튼 구성 설명",
+      "sourcePageUrl": "https://neobiotech.atlassian.net/wiki/spaces/Device/pages/470351874/Planning",
+      "newPageId": "478544093",
+      "newPageUrl": "https://neobiotech.atlassian.net/wiki/spaces/AA/pages/478544093/Planning",
+      "category": "DN — Dynamic Navigation",
+      "subCategory": "DN — Dynamic Navigation",
+      "labels": [
+        "group-device",
+        "project-navigation",
+        "doctype-design",
+        "year-2026",
+        "status-active"
+      ],
+      "attachmentCount": 0,
+      "migratedAt": "2026-07-28T04:12:19.813Z"
+    },
+    {
+      "sourcePageId": "476938250",
+      "sourcePageTitle": "개별 치아 세그멘테이션 파이프라인 성능 비교 실험 계획서",
+      "sourcePageUrl": "https://neobiotech.atlassian.net/wiki/spaces/SmileArch/pages/476938250",
+      "newPageId": "479297605",
+      "newPageUrl": "https://neobiotech.atlassian.net/wiki/spaces/AA/pages/479297605",
+      "category": "SmileArch — Smile Design v2.0",
+      "subCategory": "SmileArch — Smile Design v2.0",
+      "labels": [
+        "group-ai",
+        "project-smilearch",
+        "doctype-doctype-plan",
+        "year-2026",
+        "status-active"
+      ],
+      "attachmentCount": 1,
+      "migratedAt": "2026-07-28T04:12:24.819Z"
+    },
+    {
+      "sourcePageId": "475627533",
+      "sourcePageTitle": "신경관 세그멘테이션 파이프라인 비교 및 평가 계획 (draft)",
+      "sourcePageUrl": "https://neobiotech.atlassian.net/wiki/spaces/SmileArch/pages/475627533/draft",
+      "newPageId": "478707843",
+      "newPageUrl": "https://neobiotech.atlassian.net/wiki/spaces/AA/pages/478707843/draft",
+      "category": "SmileArch — Smile Design v2.0",
+      "subCategory": "SmileArch — Smile Design v2.0",
+      "labels": [
+        "group-ai",
+        "project-smilearch",
+        "doctype-doctype-plan",
+        "year-2026",
+        "status-active"
+      ],
+      "attachmentCount": 0,
+      "migratedAt": "2026-07-28T04:12:26.983Z"
+    },
+    {
+      "sourcePageId": "475660307",
+      "sourcePageTitle": "대규모 CBCT 통합 세그멘테이션 데이터 구축 및 모델 학습 계획",
+      "sourcePageUrl": "https://neobiotech.atlassian.net/wiki/spaces/SmileArch/pages/475660307/CBCT",
+      "newPageId": "478544116",
+      "newPageUrl": "https://neobiotech.atlassian.net/wiki/spaces/AA/pages/478544116/CBCT",
+      "category": "SmileArch — Smile Design v2.0",
+      "subCategory": "SmileArch — Smile Design v2.0",
+      "labels": [
+        "group-ai",
+        "project-smilearch",
+        "doctype-doctype-data",
+        "year-2026",
+        "status-active"
+      ],
+      "attachmentCount": 1,
+      "migratedAt": "2026-07-28T04:12:32.517Z"
+    },
+    {
+      "sourcePageId": "473333789",
+      "sourcePageTitle": "CBCT 해부 구조 통합 세그멘테이션 모델 성능 평가 보고서",
+      "sourcePageUrl": "https://neobiotech.atlassian.net/wiki/spaces/SmileArch/pages/473333789/CBCT",
+      "newPageId": "478740634",
+      "newPageUrl": "https://neobiotech.atlassian.net/wiki/spaces/AA/pages/478740634/CBCT",
+      "category": "SmileArch — Smile Design v2.0",
+      "subCategory": "SmileArch — Smile Design v2.0",
+      "labels": [
+        "group-ai",
+        "project-smilearch",
+        "doctype-doctype-report",
+        "year-2026",
+        "status-active"
+      ],
+      "attachmentCount": 1,
+      "migratedAt": "2026-07-28T04:12:37.844Z"
+    },
+    {
+      "sourcePageId": "471400476",
+      "sourcePageTitle": "Organization 전역 AI PR 자동 리뷰 시스템 구축 가이드 (Qodo Merge)",
+      "sourcePageUrl": "https://neobiotech.atlassian.net/wiki/spaces/SD/pages/471400476/Organization+AI+PR+Qodo+Merge",
+      "newPageId": "478707877",
+      "newPageUrl": "https://neobiotech.atlassian.net/wiki/spaces/AA/pages/478707877/Organization+AI+PR+Qodo+Merge",
+      "category": "전사 How-To / 개발 가이드",
+      "subCategory": "전사 How-To / 개발 가이드",
+      "labels": [
+        "group-center",
+        "doctype-guideline",
+        "year-2026",
+        "status-evergreen"
+      ],
+      "attachmentCount": 0,
+      "migratedAt": "2026-07-28T04:12:39.939Z"
     }
   ]
 }
