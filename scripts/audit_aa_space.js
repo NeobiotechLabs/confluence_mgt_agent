@@ -11,10 +11,19 @@ const DECISIONS_PATH = path.join(__dirname, '..', 'config', 'classification_deci
 const REPORT_DIR = path.join(__dirname, '..', '.github', 'reports');
 
 async function listAAPages() {
+  // AA 스페이스로 한정하지 않으면 전 인스턴스 페이지를 순회하며,
+  // 타 스페이스 페이지에 last-parent-* 라벨을 찍고 그 이동을 human decision으로
+  // commit하는 부작용이 발생한다. v2 GET /pages는 space-id로만 space 필터를 받는다.
+  const sp = await confluenceRequest('GET', '/wiki/api/v2/spaces?keys=AA');
+  const spaceId = sp?.results?.[0]?.id;
+  if (!spaceId) {
+    console.warn('⚠️ AA space id not found; listAAPages returns [] to avoid cross-space mutation.');
+    return [];
+  }
   let cursor = null;
   const all = [];
   do {
-    const params = new URLSearchParams({ limit: '100' });
+    const params = new URLSearchParams({ 'space-id': spaceId, limit: '100' });
     if (cursor) params.set('cursor', cursor);
     const res = await confluenceRequest('GET', `/wiki/api/v2/pages?${params}`);
     for (const p of (res.results || [])) {
