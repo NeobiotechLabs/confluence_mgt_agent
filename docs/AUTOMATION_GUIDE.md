@@ -1,6 +1,6 @@
 # Confluence AA Space 자동화 가이드
 
-> 작성일: 2026-07-28
+> 작성일: 2026-07-28 · 최종 수정: 2026-07-29
 > 대상: confluence_mgt_agent 운영자 및 신규 합류자
 > 자동화 파이프라인(`audit-aa → reorganize-aa → migrate`)을 처음 세팅하거나, 일상적으로 운영할 때 참고
 
@@ -27,9 +27,10 @@
 └─────────────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────────────┐
-│ Confluence Cloud (자동)                                              │
-│  • 부모 변경 시 자동으로 last-parent-{oldFolderId} 라벨 부여         │
-│  • is-folder, human-classified 라벨 관리                            │
+│ Confluence Cloud (AA 스페이스 · 데이터 저장소)                       │
+│  • 작업자의 페이지 이동(부모 변경)이 그대로 저장됨                   │
+│  • last-parent-* / is-folder / human-classified 라벨 보유            │
+│    (라벨을 붙이는 주체는 Confluence가 아니라 아래 audit 봇)          │
 └─────────────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────────────┐
@@ -68,9 +69,15 @@ npm install
 
 | Secret 이름 | 용도 | 어디서 발급 |
 |-------------|------|------------|
-| `CONFLUENCE_EMAIL` | Confluence 계정 이메일 | 본인 Atlassian 계정 |
-| `CONFLUENCE_TOKEN` | Confluence API 토큰 | https://id.atlassian.com/manage-profile/security/api-tokens |
-| `ANTHROPIC_API_KEY` | Claude API 키 (claude-haiku-4-5-20251001) | https://console.anthropic.com/ |
+| `CONFLUENCE_EMAIL` | Confluence 계정 이메일 (audit/reorganize/migrate) | 본인 Atlassian 계정 |
+| `CONFLUENCE_TOKEN` | Confluence API 토큰 (audit/reorganize/migrate) | https://id.atlassian.com/manage-profile/security/api-tokens |
+| `ANTHROPIC_API_KEY` | Claude API 키 — claude-haiku-4-5-20251001 (reorganize/migrate) | https://console.anthropic.com/ |
+| `SLACK_WEBHOOK_URL` | 실패 알림 Slack 웹훅 (notify-failure) | Slack Incoming Webhooks |
+| `EMAIL_USERNAME` | 실패 알림 발송 Gmail 계정 (notify-failure) | Gmail |
+| `EMAIL_PASSWORD` | Gmail 앱 비밀번호 (notify-failure) | Google 계정 → 앱 비밀번호 |
+| `NOTIFY_EMAIL_TO` | 실패 알림 수신자 (notify-failure) | — |
+
+> ℹ️ 하단 4개 notify Secret은 실패 알림 전용입니다. 미등록해도 자동화 본체는 정상 동작하며, 실패 시 알림만 누락됩니다.
 
 > ⚠️ 토큰은 절대 코드/문서에 커밋하지 말 것. `.env` 로컬용, GitHub Secrets 원격용으로 분리.
 
@@ -95,8 +102,8 @@ GitHub Actions의 `runs-on: self-hosted`는 사내 러너가 등록돼 있어야
 
 cron을 기다리지 말고 Actions 탭에서 `Confluence AA Space Automation` → Run workflow로 수동 실행:
 
-1. `audit-aa` job → 로그에서 "휴먼 이동 0건 감지" 또는 "N건 감지, PR 생성됨" 확인
-2. `reorganize-aa` job → 로그에서 분류 체인 호출 결과 확인
+1. `audit-aa` job → 로그에서 `Top-level pages: N`, `Human moves committed: N` 확인
+2. `reorganize-aa` job → 로그에서 분류 체인 호출 결과(`Moved: N pages`) 확인
 3. `migrate` job → 로그에서 페이지 이동 결과 확인
 
 모두 성공하면 세팅 완료.
@@ -111,6 +118,8 @@ cron을 기다리지 말고 Actions 탭에서 `Confluence AA Space Automation` �
 UTC 00:00 = KST 09:00 (cron: '0 0 * * *')
 ```
 
+> ⚠️ GitHub `schedule` 이벤트는 **기본 브랜치(default branch, 현재 `main`)** 의 워크플로우 파일 기준으로만 발생합니다. 다른 브랜치에서 워크플로우를 고쳐도 main에 머지되어야 cron에 반영됩니다.
+
 | Job | 하는 일 | 실패 시 |
 |------|--------|---------|
 | `audit-aa` | AA 스페이스의 모든 페이지 훑기, 휴먼 이동 감지, `config/classification_decisions.json` 갱신, Auto-PR 생성 | `notify-failure` Slack/Email 발송 |
@@ -119,24 +128,38 @@ UTC 00:00 = KST 09:00 (cron: '0 0 * * *')
 
 ### 3.2 휴먼 이동 자동 감지 메커니즘
 
-Confluence Cloud는 페이지의 부모 폴더가 변경되면 **자동으로** `last-parent-{oldFolderId}` 라벨을 부여합니다.
+감지는 **실시간 이벤트가 아니라, 매일 cron이 도는 시점의 폴링(라벨 스냅샷 diff)** 입니다.
+Confluence의 자동 기능·웹훅이 아니라, **audit 스크립트 자신이 라벨을 찍고 다음 실행에서 비교**합니다.
+
+동작 원리 (`scripts/audit_aa_space.js`):
+
+1. audit 실행마다 모든 AA 페이지의 **현재 부모 폴더 ID**를 `last-parent-{현재parentId}` 라벨로 저장합니다 (`stampLastParent`). → "이번 실행 시점의 부모" 스냅샷.
+2. 다음 audit 실행에서 페이지의 `last-parent-{oldId}` 라벨(=지난 실행 시점 부모)과 현재 `parentId`를 비교합니다 (`detectMove`).
+3. 두 값이 다르면 → 그 사이에 사람이 UI에서 페이지를 옮긴 것으로 판단.
+4. 그 이동이 기존 규칙과 어긋나거나(사람이 정책과 다르게 옮김) 규칙이 모르는 경우 → 사람 의도를 우선으로 인정해 `config/classification_decisions.json`에 학습합니다 (`commitDecision`).
+5. 현재 부모로 `last-parent` 라벨을 갱신 (다음 비교용 스냅샷).
+6. 변경분이 있으면 Auto-PR 생성.
 
 예시:
 ```
-[작업자가 UI에서 "덴탈AI 보고서" 페이지를 "26 보고서" 폴더로 드래그]
-  ↓
-Confluence가 자동으로 last-parent-123456 (예: 옛 폴더 ID) 라벨 부여
-  ↓
-다음 audit 실행 (KST 09:00)
-  ↓
-scripts/audit_aa_space.js가 이 라벨 읽음
-  ↓
-휴먼 의도로 판단 → config/classification_decisions.json에 매핑 추가
-  ↓
-Auto-PR 생성 (bot/audit-decisions-{timestamp})
+[1일차 audit] "덴탈AI 보고서" 페이지 부모=A → last-parent-A 라벨 저장
+        ↓
+[작업자가 UI에서 A → "26 보고서"(B) 폴더로 드래그]   ← 이 시점엔 시스템 동작 없음
+        ↓
+[2일차 audit (KST 09:00)] last-parent-A 라벨 vs 현재 부모=B 비교 → 이동 감지
+        ↓
+사람 의도로 판단 → config/classification_decisions.json에 매핑 추가 (B를 정답으로 학습)
+        ↓
+Auto-PR 생성 (bot/audit-decisions-{timestamp}) + last-parent-B 로 갱신
 ```
 
 **작업자가 추가로 알려줘야 하는 경우는 거의 없음.**
+
+**감지 한계**
+- 실시간이 아니라 매일 1회(cron) 또는 수동 실행 시점에 감지됩니다.
+- 두 실행 사이에 옮겼다 제자리로 돌려놓으면(net-zero 이동) 감지되지 않습니다.
+- 폴더 자체 이동은 직접 감지되지 않습니다(`last-parent`는 페이지 전용). 단, 안의 페이지들은 다음 실행에서 부모 변경으로 감지됩니다. (§5.4 참고)
+- 현재 코드는 `last-parent-*` 라벨을 갱신할 때 기존 라벨을 제거하지 않아 여러 개 쌓일 수 있습니다(감지는 첫 매칭 하나만 사용).
 
 ### 3.3 Auto-PR 처리
 
@@ -151,7 +174,7 @@ audit job이 생성하는 PR은 작업자가 검토 후 머지:
 
 ### 3.4 보호 라벨 (절대 제거하지 말 것)
 
-`scripts/utils/migration_utils.js`의 `isProtected()` 함수로 보호됩니다:
+`scripts/utils/migration_utils.js`의 `isProtectedLabel()` 함수로 보호됩니다:
 
 - `is-folder` — 폴더 식별
 - `human-classified` — 휴먼 정책으로 확정된 페이지
@@ -267,11 +290,11 @@ node --test "tests/**/*.test.js"
 
 ### 7.5 라벨이 사라졌다
 
-`migration_utils.js`의 `isProtected()` 가드를 우회하는 코드가 들어갔을 수 있음.
+`migration_utils.js`의 `isProtectedLabel()` 가드를 우회하는 코드가 들어갔을 수 있음.
 
 조치:
 1. `git log`에서 최근 변경 확인
-2. `git grep "labels.toRemove"`로 syncLabels 로직 점검
+2. `git grep -n "toRemove" scripts/utils/migration_utils.js`로 syncLabels 로직 점검
 3. 필요 시 수동으로 보호 라벨 재부여
 
 ---
@@ -290,3 +313,4 @@ node --test "tests/**/*.test.js"
 | 날짜 | 변경 |
 |------|------|
 | 2026-07-28 | 초안 작성 (Plan `2026-07-28-confluence-migrator-revamp` 완료 후) |
+| 2026-07-29 | §1·§3.2 감지 메커니즘 사실관계 정정("Confluence 자동 라벨" → audit 봇의 `last-parent` 스냅샷 폴링 + 감지 한계 명시), §2.2 notify Secret 4종 보완, §3.1 cron의 default-branch 기준 명시, §3.4·§7.5 함수명(`isProtectedLabel`)·로그 문자열 정정 |
