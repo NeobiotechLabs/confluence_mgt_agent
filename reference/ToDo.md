@@ -41,6 +41,31 @@
         . 일정 기간 (6개월) 지난 페이지는 신규 스페이스에서 이동필요한 지, 파악할 수 있도록 작성자에게 알림.
             * 내용의 성격에 따라 계속 참고해야 할 수 도 있어. 이런건 특정 레이블이 필요할거 같아.
 
+## 일일 자동 리포트 (Phase 1) — 2026-07-29 구현 완료
+
+자동화 출력 채널을 "GitHub 파일 커밋 + Auto-PR"에서 **Confluence 일일 리포트 페이지**로 전환했습니다.
+스펙: `docs/spec_auto_report.md` (DRAFT v0.2), 운영 가이드: `docs/AUTOMATION_GUIDE.md`
+
+### 구현 내용
+
+- **심박 신호**: 매일 KST 09:00 cron 실행이 Confluence AA 스페이스 "자동화 리포트" 폴더에 리포트 1장을 반드시 생성(빈 실행도). audit/reorganize가 실패해도 리포트 POST는 무조건 실행, exit code는 POST 성패로만 결정. "오늘 리포트 없음 = 장애".
+- **Auto-PR 제거**: `peter-evans/create-pull-request` 삭제, 워크플로우 `permissions: contents: read`로 축소. `audit-aa`+`reorganize-aa` 2 job → `daily-report` 1 job 통합(`scripts/report_aa_daily.js`).
+- **리포트 구성**: 헤더, §1 요약 계수(전일 delta), §3 루프 B 이동 로그(실패 포함), §5 조건부 관리자 알림, §6 실행 메타(runId·정책 해시·코드 SHA), §7 기계 부록(JSON, 다음 실행의 diff 원천). §2 루프 A 상세·§4 AI 권고는 Phase 2 자리표시.
+- **보관**: 31일 초과분 매일 자동 삭제(최근 7개 무조건 보존) + 관리자 수동 삭제 병행.
+- **버그 수정**: `stampLastParent`의 stale `last-parent-*` 라벨 누적(오탐지 원인) 제거, reorganize dry-run 카운트 오표시 해소, audit 최상위 고아 계수에서 `is-folder` 제외.
+    - 특히 dry-run 검증에서 **스페이스 홈페이지**(`parentId=null`)가 자동 이동 대상으로 분류되는 중대 결함을 발견·수정 — 홈페이지 명시 제외 + 홈페이지 ID 미해결 시 이동 전체 스킵(degraded, 리포트 경고로 표면화), 회귀 테스트 3건 추가.
+- **테스트**: `tests/report/` 4종 추가, `npm test` 39/39 PASS.
+
+### 남은 검증 (사용자 협업 필요)
+
+- [x] LLM 체인 점검: `npm run check:llm` → 게이트웨이 연결·분류기 tool_use 스모크 PASS (2026-07-29, 모델 하드코드 결함 수정 후)
+- [ ] `.env` 로컬 실실행: `npm run report:aa` → Confluence에 폴더·페이지·라벨·마커 생성 확인
+- [ ] 즉시 재실행 → `_2` 접미 제목 + delta/seenCount diff 확인
+- [ ] 하위호환: `npm run audit:aa`, `npm run reorganize:aa:dryrun` 정상 동작 확인
+- [ ] PR 머지(main 보호) → Actions `workflow_dispatch` 수동 트리거 → 다음 날 cron 리포트로 최종 확인
+
+---
+
 ## 현재 마이그레이션 이후 문제 및 해결 상태
 
 - 이전 스크립트 기반으로 마이그레이션이 되었고, 이후 신규 계층구조로 업데이트 해서, update 옵션으로 정리 했으나 아래 문제들이 발견되어 **초기화 후 재마이그레이션**을 결정했습니다. (`npm run clean:aa` 후 `npm run migrate:all` 진행)

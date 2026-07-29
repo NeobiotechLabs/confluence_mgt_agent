@@ -3,46 +3,16 @@
 require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
 const fs = require('fs');
 const path = require('path');
-const { confluenceRequest, nextPagePath } = require('./utils/confluence_api');
+const { confluenceRequest } = require('./utils/confluence_api');
 const { fetchAATree, fetchAASpaceHomepageId } = require('./utils/aa_space_tree');
+const { listAAPages } = require('./utils/aa_pages');
+const { deleteLabel } = require('./utils/migration_utils');
 const { ruleClassifier } = require('./classifiers/rule');
 
 const DECISIONS_PATH = path.join(__dirname, '..', 'config', 'classification_decisions.json');
 const REPORT_DIR = path.join(__dirname, '..', '.github', 'reports');
 
-async function listAAPages() {
-  // AA 스페이스로 한정하지 않으면 전 인스턴스 페이지를 순회하며,
-  // 타 스페이스 페이지에 last-parent-* 라벨을 찍고 그 이동을 human decision으로
-  // commit하는 부작용이 발생한다. v2 GET /pages는 space-id로만 space 필터를 받는다.
-  const sp = await confluenceRequest('GET', '/wiki/api/v2/spaces?keys=AA');
-  const spaceId = sp?.results?.[0]?.id;
-  if (!spaceId) {
-    console.warn('⚠️ AA space id not found; listAAPages returns [] to avoid cross-space mutation.');
-    return [];
-  }
-  const all = [];
-  // v2 pagination: `_links.next`는 전체 경로+쿼리라 그 자체를 cursor 값으로 쓰면
-  // 400(INVALID_REQUEST_PARAMETER)이 난다. next 링크를 다음 요청 endpoint로 그대로 사용.
-  let next = `/wiki/api/v2/pages?space-id=${spaceId}&limit=100`;
-  while (next) {
-    const res = await confluenceRequest('GET', next);
-    for (const p of (res.results || [])) {
-      const labels = await fetchLabels(p.id);
-      all.push({ id: p.id, title: p.title, parentId: p.parentId, labels });
-    }
-    next = nextPagePath(res);
-  }
-  return all;
-}
-
-async function fetchLabels(pageId) {
-  try {
-    const res = await confluenceRequest('GET', `/wiki/rest/api/content/${pageId}/label?limit=50`);
-    return (res.results || []).map(l => l.name);
-  } catch { return []; }
-}
-
-async function detectMove(page) {
+function detectMove(page) {
   const lastParentLabel = page.labels.find(l => l.startsWith('last-parent-'));
   if (!lastParentLabel) return null;
   const lastParentId = lastParentLabel.replace('last-parent-', '');
@@ -63,7 +33,7 @@ async function shouldCommitHumanDecision(page, move, aaTree, homePageId) {
   return ruleResult.folderId !== move.to;
 }
 
-async function commitDecision(page, move) {
+function commitDecision(page, move) {
   const data = JSON.parse(fs.readFileSync(DECISIONS_PATH, 'utf8'));
   const newEntry = {
     id: `dec-${new Date().toISOString().slice(0, 10)}-${Date.now()}`,
@@ -83,49 +53,102 @@ function escapeRegex(s) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-async function stampLastParent(pageId, parentId) {
-  // 라벨 페이지 부여 (v1 API)
-  await confluenceRequest('POST', `/wiki/rest/api/content/${pageId}/label`, {
-    prefix: 'global', name: `last-parent-${parentId}`,
-  }).catch(() => {});
+/**
+ * 페이지의 last-parent 라벨을 현재 parentId로 갱신.
+ * 옛 last-parent-* 라벨을 먼저 제거하지 않으면 라벨이 누적되어
+ * detectMove가 오래된 라벨에 먼저 매칭 → 허위 이동 감지/허위 학습이 난다.
+ * currentLabels는 listAAPages가 이미 가져온 in-memory 라벨을 그대로 쓴다(추가 GET 없음).
+ *
+ * deps는 테스트용 주입 포인트(기본: 실 API).
+ */
+async function stampLastParent(pageId, parentId, currentLabels = [], deps = {}) {
+  const del = deps.deleteLabel || deleteLabel;
+  const post = deps.postLabel || ((pid, name) =>
+    confluenceRequest('POST', `/wiki/rest/api/content/${pid}/label`, { prefix: 'global', name }));
+
+  const target = `last-parent-${parentId}`;
+  const stale = (currentLabels || []).filter(l => l.startsWith('last-parent-') && l !== target);
+  for (const old of stale) {
+    await del(pageId, old).catch(() => {});
+  }
+  if (!(currentLabels || []).includes(target)) {
+    await post(pageId, target).catch(() => {});
+  }
+}
+
+/**
+ * AA 스페이스 감사: 최상위 고아 페이지 집계 + 휴먼 이동 감지/학습.
+ *
+ * @param {Object} [opts]
+ * @param {boolean} [opts.dryRun=false] - true면 쓰기 일체 금지(commitDecision, stampLastParent)
+ * @param {Array}   [opts.pages] - 이미 가져온 페이지 목록(오케스트레이터 공유, 중복 fetch 방지)
+ * @param {Object}  [opts.aaTree]
+ * @param {string}  [opts.homePageId]
+ * @param {Object}  [opts.deps] - stampLastParent용 주입(테스트)
+ * @returns {Promise<{topLevel: Array, humanMoves: Array, pages: Array, aaTree: Object, homePageId: string|null, errors: Array}>}
+ *
+ * - topLevel: 홈페이지 직속 고아 페이지. is-folder(정상 구조)와 bot-report(자가 출력, P6) 제외.
+ * - commitDecision은 `!dryRun && !process.env.CI`일 때만(CI는 체크아웃 리셋으로 파일이 휘발되므로 무의미).
+ * - stampLastParent는 dryRun이 아니면 항상 실행(CI에서도 라벨을 갱신해야 같은 이동이 재보고되지 않음).
+ */
+async function runAudit({ dryRun = false, pages, aaTree, homePageId, deps } = {}) {
+  aaTree = aaTree || await fetchAATree();
+  homePageId = homePageId || await fetchAASpaceHomepageId('AA');
+  pages = pages || await listAAPages();
+
+  const topLevel = [];
+  const humanMoves = [];
+  const errors = [];
+  const shouldCommit = !dryRun && !process.env.CI;
+
+  for (const p of pages) {
+    // P6 자기 배제: 봇이 생성한 리포트 페이지는 감사 대상이 아니다.
+    if (p.labels.includes('bot-report')) continue;
+    // 홈페이지 직속 is-folder는 정상 폴더 구조지 고아가 아니다.
+    if (homePageId && p.parentId === homePageId && !p.labels.includes('is-folder')) {
+      topLevel.push(p);
+    }
+    try {
+      const move = detectMove(p);
+      if (move && await shouldCommitHumanDecision(p, move, aaTree, homePageId)) {
+        if (shouldCommit) commitDecision(p, move);
+        humanMoves.push({ page: p, move, committed: shouldCommit });
+      }
+      if (p.parentId && !dryRun) {
+        await stampLastParent(p.id, p.parentId, p.labels, deps);
+      }
+    } catch (e) {
+      errors.push({ pageId: p.id, title: p.title, error: e.message });
+    }
+  }
+
+  return { topLevel, humanMoves, pages, aaTree, homePageId, errors };
 }
 
 async function main() {
   console.log('=== Audit AA Space ===');
-  const aaTree = await fetchAATree();
-  const homePageId = await fetchAASpaceHomepageId('AA');
-  const pages = await listAAPages();
-  const topLevel = [];
-  const moves = [];
-
-  for (const p of pages) {
-    if (homePageId && p.parentId === homePageId) topLevel.push(p);
-    const move = await detectMove(p);
-    if (move && await shouldCommitHumanDecision(p, move, aaTree, homePageId)) {
-      await commitDecision(p, move);
-      moves.push({ page: p.title, move });
-    }
-    if (p.parentId) await stampLastParent(p.id, p.parentId);
-  }
+  const { topLevel, humanMoves } = await runAudit();
 
   fs.mkdirSync(REPORT_DIR, { recursive: true });
   const date = new Date().toISOString().slice(0, 10);
   const reportPath = path.join(REPORT_DIR, `audit-${date}.md`);
-  fs.writeFileSync(reportPath, renderReport(topLevel, moves), 'utf8');
+  fs.writeFileSync(reportPath, renderReport(topLevel, humanMoves), 'utf8');
   console.log(`✅ Report: ${reportPath}`);
   console.log(`   Top-level pages: ${topLevel.length}`);
-  console.log(`   Human moves committed: ${moves.length}`);
+  console.log(`   Human moves committed: ${humanMoves.length}`);
 }
 
-function renderReport(topLevel, moves) {
+function renderReport(topLevel, humanMoves) {
   const lines = ['# AA Space Audit Report', '', `Date: ${new Date().toISOString()}`, ''];
   lines.push(`## Top-level pages (${topLevel.length})`, '');
   for (const p of topLevel) lines.push(`- ${p.title} (id: ${p.id})`);
-  lines.push('', `## Human moves auto-committed (${moves.length})`, '');
-  for (const m of moves) lines.push(`- ${m.page}: ${m.move.from} → ${m.move.to}`);
+  lines.push('', `## Human moves auto-committed (${humanMoves.length})`, '');
+  for (const m of humanMoves) lines.push(`- ${m.page.title}: ${m.move.from} → ${m.move.to}`);
   return lines.join('\n');
 }
 
 if (require.main === module) {
   main().catch(e => { console.error(e); process.exit(1); });
 }
+
+module.exports = { runAudit, detectMove, shouldCommitHumanDecision, stampLastParent };

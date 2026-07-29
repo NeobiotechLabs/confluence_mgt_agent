@@ -19,7 +19,13 @@
     "audit:aa": "node scripts/audit_aa_space.js",
     "reorganize:aa": "node scripts/reorganize_aa_space.js",
     "reorganize:aa:dryrun": "node scripts/reorganize_aa_space.js --dry-run",
-    "migrate:all": "node scripts/migrator.js"
+    "report:aa": "node scripts/report_aa_daily.js",
+    "report:aa:dryrun": "node scripts/report_aa_daily.js --dry-run",
+    "migrate:all": "node scripts/migrator.js",
+    "ci:local": "node scripts/report_aa_daily.js && node scripts/migrator.js",
+    "ci:local:dryrun": "node scripts/report_aa_daily.js --dry-run && echo [DRY] report render only. migrator has no dry-run - migration step skipped (actual run: npm run migrate:all)",
+    "check:llm": "node scripts/check_llm_env.js",
+    "test": "node --test \"tests/**/*.test.js\""
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.115.0",

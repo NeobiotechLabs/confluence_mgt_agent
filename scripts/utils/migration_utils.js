@@ -329,5 +329,6 @@ module.exports = {
   addLabels,
   copyAttachments,
   buildBanner,
-  fixBodyReferences
+  fixBodyReferences,
+  escapeHtml
 };

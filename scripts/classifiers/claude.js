@@ -1,11 +1,15 @@
 'use strict';
 const fs = require('fs');
 const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '..', '..', '.env') });
 
 const SYSTEM_PROMPT_PATH = path.join(__dirname, '..', '..', 'dify', 'system_prompt.md');
 const KNOWLEDGE_PATH = path.join(__dirname, '..', '..', 'dify', 'space_rules_knowledge.md');
 
-const MODEL = 'claude-haiku-4-5-20251001';
+// 모델은 env 로 오버라이드 가능 (기본: Claude Haiku).
+// 사내 LLM 게이트웨이(예: Alibaba MaaS) 사용 시 해당 게이트웨이가 제공하는
+// 모델명(예: qwen3.8-max-preview)을 ANTHROPIC_MODEL 로 지정해야 한다.
+const MODEL = process.env.ANTHROPIC_MODEL || 'claude-haiku-4-5-20251001';
 
 async function classify(ctx, aaTree) {
   if (!process.env.ANTHROPIC_API_KEY) return { ok: false, source: 'miss' };
@@ -74,4 +78,4 @@ Pick the best folder, or omit folderId if none fit.`;
 
 const claudeClassifier = { name: 'claude', classify };
 
-module.exports = { claudeClassifier, classify };
+module.exports = { claudeClassifier, classify, MODEL };
