@@ -9,10 +9,18 @@ const { movePage } = require('./utils/migration_utils');
 const DRY_RUN = process.argv.includes('--dry-run');
 
 async function listAAPages() {
+  // AA 스페이스로 한정하지 않으면 전 인스턴스 페이지를 순회하며,
+  // parentId가 없는 타 스페이스 루트 페이지를 AA 폴더로 movePage 시도하는 부작용이 난다.
+  const sp = await confluenceRequest('GET', '/wiki/api/v2/spaces?keys=AA');
+  const spaceId = sp?.results?.[0]?.id;
+  if (!spaceId) {
+    console.warn('⚠️ AA space id not found; listAAPages returns [] to avoid cross-space mutation.');
+    return [];
+  }
   let cursor = null;
   const all = [];
   do {
-    const params = new URLSearchParams({ limit: '100' });
+    const params = new URLSearchParams({ 'space-id': spaceId, limit: '100' });
     if (cursor) params.set('cursor', cursor);
     const res = await confluenceRequest('GET', `/wiki/api/v2/pages?${params}`);
     for (const p of (res.results || [])) {
