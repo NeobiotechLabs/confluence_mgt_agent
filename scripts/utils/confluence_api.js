@@ -51,6 +51,19 @@ async function confluenceRequest(method, endpoint, body = null) {
 }
 
 /**
+ * v2 API 응답의 `_links.next`(relative/absolute URL)에서 path+query만 추출.
+ * `_links.next`는 전체 경로+쿼리 문자열이라, 이걸 그대로 `cursor` 파라미터 값으로
+ * 쓰면 400(INVALID_REQUEST_PARAMETER: not the correct type)이 난다.
+ * 반환값을 그대로 다음 confluenceRequest의 endpoint로 쓰는 것이 Atlassian v2 권장 방식.
+ */
+function nextPagePath(res) {
+  const next = res && res._links && res._links.next;
+  if (!next) return null;
+  const u = new URL(next, BASE_URL);
+  return u.pathname + u.search;
+}
+
+/**
  * AA 스페이스의 최신 폴더 트리 구조(ID 및 Title)를 재귀적으로 가져와 텍스트 포맷으로 반환
  * System Design 정책 (3-2)에 따라 'is-folder' 레이블이 부착된 페이지만 폴더(컨테이너)로 취급합니다.
  */
@@ -143,5 +156,6 @@ module.exports = {
   BASE_URL,
   AUTH_HEADER,
   confluenceRequest,
+  nextPagePath,
   fetchAASpaceTreeText
 };

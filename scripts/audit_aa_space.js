@@ -3,7 +3,7 @@
 require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
 const fs = require('fs');
 const path = require('path');
-const { confluenceRequest } = require('./utils/confluence_api');
+const { confluenceRequest, nextPagePath } = require('./utils/confluence_api');
 const { fetchAATree, fetchAASpaceHomepageId } = require('./utils/aa_space_tree');
 const { ruleClassifier } = require('./classifiers/rule');
 
@@ -20,18 +20,18 @@ async function listAAPages() {
     console.warn('⚠️ AA space id not found; listAAPages returns [] to avoid cross-space mutation.');
     return [];
   }
-  let cursor = null;
   const all = [];
-  do {
-    const params = new URLSearchParams({ 'space-id': spaceId, limit: '100' });
-    if (cursor) params.set('cursor', cursor);
-    const res = await confluenceRequest('GET', `/wiki/api/v2/pages?${params}`);
+  // v2 pagination: `_links.next`는 전체 경로+쿼리라 그 자체를 cursor 값으로 쓰면
+  // 400(INVALID_REQUEST_PARAMETER)이 난다. next 링크를 다음 요청 endpoint로 그대로 사용.
+  let next = `/wiki/api/v2/pages?space-id=${spaceId}&limit=100`;
+  while (next) {
+    const res = await confluenceRequest('GET', next);
     for (const p of (res.results || [])) {
       const labels = await fetchLabels(p.id);
       all.push({ id: p.id, title: p.title, parentId: p.parentId, labels });
     }
-    cursor = res._links?.next;
-  } while (cursor);
+    next = nextPagePath(res);
+  }
   return all;
 }
 
