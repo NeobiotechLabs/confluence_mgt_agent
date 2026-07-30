@@ -33,6 +33,30 @@ async function fetchPageLabels(pageId) {
   }
 }
 
+// CQL 문자열 리터럴 이스케이프 (백슬래시 + 큰따옴표).
+const cqlEscape = (s) => String(s).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+
+// AA 스페이스에 동일 제목 페이지가 이미 존재하는지 조회.
+// Confluence Cloud는 스페이스 내 페이지 제목 유일성을 강제하므로, 이 조회 결과가
+// 재이관 시 400 title-collision 대신 "제자리 덮어쓰기 동기화" 분기의 근거가 된다.
+// 조회 실패 시 null 반환 → 호출부는 일반 create 흐름으로 폴백(충돌은 per-page catch가 흡수).
+// deps.confluenceRequest 주입 가능(테스트 밀폐).
+async function findPageByTitleInAA(title, deps = {}) {
+  const req = deps.confluenceRequest || confluenceRequest;
+  const cql = encodeURIComponent(`space="${AA_SPACE_KEY}" AND type="page" AND title="${cqlEscape(title)}"`);
+  try {
+    const res = await req('GET', `/wiki/rest/api/content/search?cql=${cql}&limit=5`);
+    const hits = (res.results || []).filter(r => r.status === 'current' && r.title === title);
+    if (hits.length > 1) {
+      console.warn(`⚠️ [동기화] AA에 동명 페이지 ${hits.length}건 — 첫 번째(id=${hits[0].id})를 사용합니다.`);
+    }
+    return hits[0] || null;
+  } catch (e) {
+    console.warn(`⚠️ [동기화] 동명 페이지 조회 실패: ${e.message} — 일반 생성 흐름으로 진행합니다.`);
+    return null;
+  }
+}
+
 async function runMigrator() {
   console.log(`🚀 [Migrator] 다중 스페이스 이관 작업을 시작합니다.`);
 
@@ -162,16 +186,45 @@ async function runMigrator() {
           continue;
         }
         
-        console.log(`✨ [복사 진행] 새 페이지 껍데기 생성 중...`);
-        const newPage = await createPage(targetSpaceId, decision.target_folder_id, srcMeta.title, '<p>복사 중...</p>');
-        
-        console.log(`✨ [복사 진행] 첨부파일 복사 중...`);
-        const { skippedVideos } = await copyAttachments(page.id, newPage.id);
+        // 멱등성 보장: AA에 동명 페이지가 이미 있으면(이전 이관분) 새로 만들지 않고
+        // 제자리 덮어쓰기 동기화(본문·배너·첨부·라벨 갱신). 폴더 이동은 하지 않는다 —
+        // 재배치는 audit/reorganize(루프 B)의 책임이며, 분류기 판단 변동으로 기존 페이지를
+        // 옮기면 루프 B의 휴먼 이동 학습이 오염될 수 있다.
+        const existing = await findPageByTitleInAA(srcMeta.title);
+        const isSync = !!existing;
+        const stepTag = isSync ? '동기화 진행' : '복사 진행';
+
+        let destId;
+        let destTitle;
+        let destRef;
+
+        if (isSync) {
+          destId = existing.id;
+          destTitle = existing.title;
+          destRef = `"${existing.title}" (AA 페이지 id=${existing.id})`;
+          console.log(`🔄 [동기화] AA에 동명 페이지 존재 (id=${destId}) — 새 내용으로 제자리 덮어쓰기.`);
+          // 현재 폴더가 체인 판단과 다르면 로그만 남기고 이동하지 않음(선택적 조회, 실패 무시).
+          try {
+            const destMeta = await confluenceRequest('GET', `/wiki/api/v2/pages/${destId}`);
+            if (destMeta.parentId && String(destMeta.parentId) !== String(decision.target_folder_id)) {
+              console.log(`ℹ️ [동기화] 현재 폴더(${destMeta.parentId}) ≠ 체인 판단(${decision.target_folder_id}) — 내용만 동기화하고 이동하지 않습니다.`);
+            }
+          } catch (_) { /* 부모 폴더 정보는 부가 정보일 뿐 */ }
+        } else {
+          console.log(`✨ [복사 진행] 새 페이지 껍데기 생성 중...`);
+          const newPage = await createPage(targetSpaceId, decision.target_folder_id, srcMeta.title, '<p>복사 중...</p>');
+          destId = newPage.id;
+          destTitle = newPage.title;
+          destRef = newPage.webUrl;
+        }
+
+        console.log(`✨ [${stepTag}] 첨부파일 복사 중...`);
+        const { skippedVideos } = await copyAttachments(page.id, destId);
 
         const config = require('../spaces_config.json');
         const globalRuleVersion = config.GLOBAL_RULE_VERSION || '1.0';
 
-        console.log(`✨ [복사 진행] 본문 변환 및 배너 삽입 중...`);
+        console.log(`✨ [${stepTag}] 본문 변환 및 배너 삽입 중...`);
         const bannerHtml = buildBanner({
           ruleVersion: globalRuleVersion,
           pageVersion: '1',
@@ -183,16 +236,16 @@ async function runMigrator() {
           labels: decision.labels
         }, skippedVideos);
 
-        let newBody = fixBodyReferences(srcMeta.body, page.id, newPage.id);
+        let newBody = fixBodyReferences(srcMeta.body, page.id, destId);
         newBody = bannerHtml + newBody;
-        await updatePageBody(newPage.id, newPage.title, newBody);
+        await updatePageBody(destId, destTitle, newBody);
 
-        console.log(`✨ [복사 진행] 레이블 부착 중...`);
+        console.log(`✨ [${stepTag}] 레이블 부착 중...`);
         if (decision.labels && decision.labels.length > 0) {
-          await addLabels(newPage.id, decision.labels);
+          await addLabels(destId, decision.labels);
         }
 
-        console.log(`✅ 이관 성공: ${newPage.webUrl}`);
+        console.log(`✅ ${isSync ? '동기화' : '이관'} 성공: ${destRef}`);
       } catch (e) {
         console.error(`❌ [오류] '${page.title}' 처리 중 에러 발생:`, e.message);
       }
@@ -204,4 +257,8 @@ async function runMigrator() {
   console.log(`\n🎉 [Migrator] 모든 작업이 완료되었습니다!`);
 }
 
-runMigrator();
+if (require.main === module) {
+  runMigrator();
+}
+
+module.exports = { runMigrator, findPageByTitleInAA, cqlEscape };
