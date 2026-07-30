@@ -88,4 +88,67 @@ rule → inline-llm(Anthropic) → fallback(unsortedFolderId, needs-review)
 ## 7. 향후 작업 (Phase 2 자리표시)
 
 - 일별 cron이 자동으로 룰 변경을 흡수하지만, 비용 모니터링·샘셋 비교는 Phase 2.
-- 사내 LLM 게이트웨이(`INTERNAL_LLM_URL`)가 도입되면 `llm_api.js`에 adapter 추가 — Dify 호환 불필요.
+- ~~사내 LLM 게이트웨이(`INTERNAL_LLM_URL`)가 도입되면 `llm_api.js`에 adapter 추가 — Dify 호환 불필요.~~ 사용자 명시 지시(2026-07-30)로 **폐기** — 사내 LLM 미도입 상태가 유지됨. 공식 Anthropic SDK 경로만 사용.
+
+## 8. AI 권고판 (작업 9, Phase 2-A)
+
+봇이 자동 실행하지 않고, **사람이 정책 결정을 내릴 수 있도록 권고만** 하는 채널. §4 섹션으로 매일 부록(`advisories`)에 등장한다.
+
+### 8-1. 권고 항목 스키마
+
+부록 `advisories[]` 항목은 다음 두 형태를 허용한다.
+
+- **문자열 권고**(기존): `⚠️ 룰 변경 감지: ...`, `audit 실행 실패: ...` 등 1줄 텍스트.
+- **구조화 권고**(Phase 2-A 추가):
+  ```js
+  {
+    kind: 'misplacement-suspect',
+    pageId: string,
+    title: string,
+    currentFolderId: string,
+    currentFolderTitle: string?,  // 옵션 — 라벨 폴더 제목이 모호하면 생략 가능
+    suggestedFolderId: string,
+    suggestedFolderTitle: string?,
+    confidence: number,           // 0~1
+    confidenceReason: string,     // 'keywords: 일치, 정확히' 같은 트레이스
+    seenCount: number,            // 1이면 신규 의심, ≥3이면 반복 권고
+    firstSeen: string,            // 'YYYY-MM-DD'
+    lastSeen: string,
+  }
+  ```
+
+### 8-2. 신뢰도 산출 (사용자 결정 2026-07-30)
+
+LLM `reason` 문자열에서 어휘 가중치로 점수를 매긴다. 결정적·테스트 가능·LLM이 일관된 어휘를 쓴다는 전제.
+
+| 어휘 | 가중치 |
+|---|---|
+| `정확히` / `일치` / `정확` / `매칭됨` | +0.35 |
+| `유사` / `probably` / `likely` | +0.20 |
+| `maybe` / `could be` / `아마` / `모호` | +0.05 |
+| `불확실` / `unknown` / `분류 불가` | -0.20 |
+| 그 외 | 가산 없음 |
+
+`confidence = clamp(0, 1, base 0.5 + Σ가중치)`. `base=0.5`(아무 키워드도 매칭되지 않으면 "중립 의심" 의미).
+
+**임계치**:
+- `confidence ≥ 0.5`: 부록 진입(`misplacement-suspect`).
+- `confidence < 0.5`: 부록 진입 안 함. 내부적으로 잡음 제거 — LLM이 명확히 "잘 모르겠다"고 답한 경우는 권고하지 않는다.
+
+### 8-3. 반복 애매 항목 임계치 (사용자 결정 2026-07-30)
+
+seenCount = 오늘 부록 진입 횟수. **3회 이상**이면 "반복 권고" → §4 헤드 영역이 아닌 별도 강조(별도 강조는 Phase 3 이후 자리표시).
+
+- 1~2회: 일시적 의심. 운영자가 참고만 함.
+- **3회 이상**: 같은 페이지가 3일 연속 의심 폴더에 머무름 → 사람이 정책 결정 권고.
+- "한 주 안에 결정 안 된 항목 = 진짜 애매" — 주 5일 cron 기준 3영업일 ≈ 3일.
+
+### 8-4. 정책 합의
+
+- 봇은 **자동 이동하지 않음** (사람이 결정).
+- 추천 폴더는 SSOT 카테고리 룰에서 떨어지지 않는 경우만 — 즉, 이미 카테고리는 알고 있지만 부모 폴더가 다를 때만 의심. 카테고리 자체가 `unknown`이면 "폴더 생성 제안"으로 별도 처리(Phase 3 자리표시).
+- 신뢰도는 부록에 그대로 노출 — 운영자가 LLM 어휘 변화를 추적할 수 있도록.
+
+### 8-5. Phase 2-B 자리표시 (§2 루프 A 실데이터)
+
+부록 `kind:'move-a'`(외부→AA 이관) 항목의 seenCount + 권고. 범위는 별도 작업.

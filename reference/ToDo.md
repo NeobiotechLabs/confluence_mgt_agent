@@ -1,6 +1,6 @@
 # 프로젝트 할일 / 진행 상황 (ToDo)
 
-> 마지막 갱신: 2026-07-30 (작업 8 완료 — 룰 매칭 추적/누락 가시화)
+> 마지막 갱신: 2026-07-30 (작업 9 — §4 AI 권고판 (Phase 2-A) TDD 시작)
 >
 > 이 문서는 **현재 정책과 상태**를 기준으로 작성되었습니다. 옛 정책(Dify, human 큐, v1 폴더 규칙 등)은 더 이상 사실이 아니므로 이 문서에 남아 있지 않습니다.
 
@@ -10,8 +10,8 @@
 
 - **목표**: 사내 Confluence 신규 스페이스(AA)를 잘 구조화해서, MPS(Planning/Evaluation) 작성용 RAG 원천으로 유지.
 - **현재 상태**: AA 스페이스 이관 + 일일 자동 리포트 + 자가 정화(audit·reorganize) 동작 중. 분류 체인은 **rule → inline-llm(Anthropic) → fallback** 단일 흐름으로 단순화 완료. 룰 매칭 추적(작업 8) — `reference/unmatched_pages.json` SSOT에 `kind:'unmatched'` append-only 머지로 매일 누락 가시화.
-- **다음 큰 작업**: 사내 LLM 엔드포인트 연동(작업 6, 옵션). 룰 변경 자동화(작업 5)는 ✅ 완료 — 직전 리포트 부록의 policyHash와 오늘 hash를 비교해 변경 시 §5 advisory 1줄을 자동으로 추가하는 형태로 이미 동작 중.
-- **다음 큰 작업(후속)**: 작업 9(미정). 후보: Phase 2 §2/§4 활성화 — §2 루프 A 실데이터, §4 AI 권고판.
+- **다음 큰 작업**: **작업 9 — §4 AI 권고판 (Phase 2-A, TDD 시작)**. 사용자 결정(2026-07-30): 신뢰도 산출 = 키워드 가중치(예: '정확히'/'일치'/'유사'/'could be'/'maybe' → 점수 매핑), seenCount 임계치 = **3회**(주 5일 cron 기준 3영업일 ≈ 3일). 범위: 오배치 의심 / 반복 애매 항목. 세부 결정·우선순위는 §4 하위 항목.
+- **사내 LLM 게이트웨이(작업 6)**: 사용자 명시 지시로 **폐기** — "사내 LLM은 현재 관심없어 나중에 필요하면 다시 추가할게". `scripts/utils/llm_api.js`의 공식 Anthropic SDK 경로만 유지.
 
 ---
 
@@ -146,10 +146,6 @@
 - **테스트**: `npm test` 62/62 PASS(신규 4건 + 기존 58건).
 - **변경 파일**: `tests/report/report_lib.test.js`, `scripts/report/report_lib.js`, `scripts/report_aa_daily.js`.
 
-### 작업 6 — 옵션: 사내 LLM 엔드포인트 연동
-- 사내 LLM 게이트웨이(`INTERNAL_LLM_URL` / `INTERNAL_LLM_KEY`)가 도입되면 `scripts/utils/llm_api.js`에 adapter 추가.
-- Dify 호환 모드는 불필요(정책상 Dify 미사용).
-
 ### 작업 7 — 옛 Dify KB 통합 + 경로 정리 — ✅ 2026-07-30 완료
 - 사용자 명시 지시: "1. 지워줘. 그리고, `@dify/system_prompt.md` 가 dify에서 페이지 분류했던 프롬프트인데, 잘 되어 있는지, 어떤 내용인지 확인해서 우리가 가져다 쓸수 있는 지침일지 확인해줘".
 - 완료 항목:
@@ -176,6 +172,19 @@
 - **테스트(TDD)**: 22건 신규 추가. **`npm test` 93/93 PASS**.
 - **변경 파일**: `scripts/report/report_lib.js`, `scripts/report/unmatched_state_io.js`(신규), `scripts/report_aa_daily.js`, `reference/classification_rules.md`, 4건 신규 테스트.
 - **Phase 2 잔여**: 부록 unmatched 항목의 §2 자리표시(루프 A 실데이터) 해소는 별도 작업.
+
+### 작업 9 — §4 AI 권고판 (Phase 2-A) — 진행 중 (2026-07-30, TDD RED 시작)
+- **문제**: Phase 1 리포트는 "오늘 뭐가 일어났다"만 보여준다. 운영자가 *어떤 정책 변화*가 필요한지(예: 페이지가 오배치됨, 같은 제목이 계속 애매하게 분류됨)는 매일 부록을 직접 읽어야 한다. 봇은 실행하지 않고 **사람에게 권고만** 한다.
+- **방침 결정 (사용자 2026-07-30)**:
+  - 신뢰도 산출 = **키워드 가중치**. LLM `reason` 문자열에서 `'정확히'/'일치'/'유사'/'could be'/'maybe'` 같은 어휘를 점수로 매핑. 결정적이고 테스트 가능. LLM이 일관된 어휘를 쓴다는 전제.
+  - seenCount 임계치 = **3회**. 주 5일 cron 기준 3영업일 ≈ 3일. 한 주 안에 결정 안 된 항목 = 진짜 애매 → §4에서 강하게 권고.
+- **Phase 2-A 범위 (이번 작업)**:
+  1. `scripts/report/report_lib.js`에 `computeConfidenceScore(reason)`, `selectRepeatAmbiguous(items, threshold)`, `recommendMisplacements(pages, history, opts)` 신규.
+  2. `scripts/report/render.js`에 `renderAdvisoriesSection(advisories)` (§4 렌더 — 헤드 고정 문구).
+  3. `scripts/report_aa_daily.js`에 §4 와이어업. 부록 `advisories[]`에 `kind:'misplacement-suspect'` 형식으로 머지.
+- **Phase 2-B (보류, 후속)**: §2 루프 A 실데이터 — `scripts/migrator.js`의 이관 결과를 부록에 첨부하는 어댑터 + render §2 + items 머지.
+- **테스트(TDD)**: `tests/report/recommend_misplacements.test.js`, `tests/report/render_advisories.test.js` 신규. 추정 10~14건.
+- **다음 작업(작업 10 후보, 보류)**: §2 루프 A 실데이터 활성화, 정책 승격(반복 항목 → 명시 룰 변환 워크플로우).
 
 ---
 
