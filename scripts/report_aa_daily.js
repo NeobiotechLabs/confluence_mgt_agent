@@ -14,7 +14,7 @@ const {
   generateTitle, fingerprint, policyHash, parseAppendix, detectRuleChange,
   computeDiff, diffMetrics, selectPruneCandidates, buildRunId, runMode,
   matchAgainstKnowledgeBase, findUnmatchedPages,
-  recommendMisplacements,
+  recommendMisplacements, computeRepeatedHumanDecisions,
 } = require('./report/report_lib');
 const { loadUnmatchedState, saveUnmatchedState } = require('./report/unmatched_state_io');
 
@@ -528,13 +528,34 @@ async function main() {
     v: 1, runAt, runId, mode, policyHash: hash, model, gitSha,
     metrics, items, advisories,
   };
-  const html = renderReportStorage({ appendix, deltas, failedMoves, advisories });
+
+  // Gap 2: classification_decisions.json에서 같은 폴더로 3회 이상 누적된 휴먼 결정 추출
+  let repeatedHumanDecisions = [];
+  try {
+    const decisionsPath = path.join(__dirname, '..', 'config', 'classification_decisions.json');
+    const decisionsData = JSON.parse(require('fs').readFileSync(decisionsPath, 'utf8'));
+    repeatedHumanDecisions = computeRepeatedHumanDecisions(decisionsData.decisions || [], { threshold: 3 });
+  } catch (_) {
+    // 파일 부재/파손 → 빈 배열 (알림 생략, 크래시 없음)
+  }
+
+  const html = renderReportStorage({ appendix, deltas, failedMoves, advisories, repeatedHumanDecisions });
 
   if (dryRun) {
     console.log('\n────── rendered storage format ──────\n');
     console.log(html);
     console.log('\n────── metrics ──────');
     console.log(JSON.stringify({ metrics, deltas, items: items.length, advisories, unmatchedItems: merge.items.length }, null, 2));
+
+    // dry-run 결과를 로컬 파일로 저장 (사용자가 브라우저에서 확인 가능)
+    const dryRunPath = require('path').join(__dirname, '..', 'reference', 'aa_report_dryrun.html');
+    try {
+      require('fs').writeFileSync(dryRunPath, html, 'utf8');
+      console.log(`\n📄 dry-run 리포트 저장: ${dryRunPath}`);
+    } catch (e) {
+      console.warn(`\n⚠️ dry-run 파일 저장 실패: ${e.message}`);
+    }
+
     console.log('\n[DRY] no Confluence writes performed.');
     process.exitCode = 0;
     return;

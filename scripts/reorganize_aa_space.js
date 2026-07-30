@@ -66,6 +66,8 @@ async function runReorganize({ dryRun = false, pages, aaTree, homePageId, deps }
     if (p.labels.includes('is-folder')) { skippedCount++; continue; }
     // P6 자기 배제: 봇이 생성한 리포트 페이지는 이동시키지 않는다
     if (p.labels.includes('bot-report')) { skippedCount++; continue; }
+    // Gap 3: 사람이 UI에서 직접 옮긴 페이지 — human-classified 라벨이 있으면 봇이 되돌리지 않음
+    if (p.labels.includes('human-classified')) { skippedCount++; continue; }
     // 스페이스 홈페이지는 절대 이동 대상이 아니다 (parentId=null이라 "이미 폴더 안" 휴리스틱으로 걸러지지 않음)
     if (p.id === homePageId) { skippedCount++; continue; }
     // 이미 유효한 폴더 아래 있으면 스킵 (휴리스틱: 최상위가 아님)

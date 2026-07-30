@@ -381,6 +381,40 @@ function runMode(env = process.env) {
   return env.GITHUB_ACTIONS ? 'ci' : 'local';
 }
 
+// ── Gap 2: 휴먼 결정 누적 감지 ──────────────────────────────────────────────
+// classification_decisions.json의 decisions 배열을 받아, 같은 targetFolderId로
+// threshold(기본 3)회 이상 기록된 항목을 추출. 룰 승격 권고의 근거 데이터.
+// 반환: [{targetFolderId, targetFolderTitle, count, titles[], firstDecidedAt}]
+function computeRepeatedHumanDecisions(decisions, opts) {
+  const threshold = (opts && opts.threshold) || 3;
+  if (!Array.isArray(decisions) || decisions.length === 0) return [];
+
+  const groups = {};
+  for (const d of decisions) {
+    if (!d || !d.targetFolderId) continue;
+    const key = d.targetFolderId;
+    if (!groups[key]) groups[key] = { targetFolderId: key, targetFolderTitle: d.targetFolderTitle || '', entries: [] };
+    groups[key].entries.push(d);
+  }
+
+  const result = [];
+  for (const g of Object.values(groups)) {
+    if (g.entries.length < threshold) continue;
+    const titles = g.entries
+      .map(e => (e.match && e.match.titleRegex) ? e.match.titleRegex.replace(/^\^|\$$/g, '') : '?')
+      .filter(Boolean);
+    const sorted = [...g.entries].sort((a, b) => (a.decidedAt || '').localeCompare(b.decidedAt || ''));
+    result.push({
+      targetFolderId: g.targetFolderId,
+      targetFolderTitle: g.targetFolderTitle,
+      count: g.entries.length,
+      titles,
+      firstDecidedAt: (sorted[0] && sorted[0].decidedAt) || '?',
+    });
+  }
+  return result;
+}
+
 module.exports = {
   APPENDIX_MARKER,
   kstNow, kstStamp, kstYYMMDD, kstHHMM,
@@ -391,4 +425,5 @@ module.exports = {
   matchAgainstKnowledgeBase, findUnmatchedPages,
   computeConfidenceScore, selectRepeatAmbiguous, recommendMisplacements,
   buildRunId, runMode,
+  computeRepeatedHumanDecisions,
 };

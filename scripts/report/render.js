@@ -102,14 +102,23 @@ ${rows}
   return parts.join('\n');
 }
 
-function noticeSection(appendix, failedMoves, advisories) {
+function noticeSection(appendix, failedMoves, advisories, repeatedHumanDecisions) {
   const notices = [];
   const orphans = appendix.metrics?.topLevelOrphans || 0;
   if (orphans > 0) notices.push(`최상위 고아 페이지 ${orphans}개가 홈페이지 직속에 남아 있습니다. 분류 정책을 확인하세요.`);
   if (failedMoves && failedMoves.length > 0) notices.push(`자동 이동 실패 ${failedMoves.length}건 — §3 실패 표를 확인하세요.`);
   for (const a of advisories || []) notices.push(a);
+
+  // Gap 2: 휴먼 결정 누적 — 같은 폴더로 3회 이상 휴먼 이동이 반복되면 룰 승격 권고
+  const repeated = Array.isArray(repeatedHumanDecisions) ? repeatedHumanDecisions : [];
+  for (const r of repeated) {
+    const sampleTitles = (r.titles || []).slice(0, 3).join(', ');
+    const suffix = (r.titles || []).length > 3 ? ` 외 ${(r.titles || []).length - 3}건` : '';
+    notices.push(`⚠️ 휴먼 결정 누적: "${escapeHtml(r.targetFolderTitle)}" 폴더로 ${r.count}회 휴먼 이동 (${sampleTitles}${suffix}, 최초 ${r.firstDecidedAt}). analysis_rules.json에 명시 룰 추가를 검토하세요.`);
+  }
+
   if (notices.length === 0) return '';
-  const lis = notices.map(n => `<li>${escapeHtml(n)}</li>`).join('');
+  const lis = notices.map(n => `<li>${n}</li>`).join('');
   return `<h2>§5 관리자 알림</h2>
 <ac:structured-macro ac:name="warning" ac:schema-version="1"><ac:rich-text-body>
 <ul>${lis}</ul>
@@ -147,7 +156,7 @@ ${APPENDIX_MARKER}
  * @returns {string} storage format HTML
  */
 function renderReportStorage(ctx) {
-  const { appendix, deltas = {}, failedMoves = [], advisories = [] } = ctx;
+  const { appendix, deltas = {}, failedMoves = [], advisories = [], repeatedHumanDecisions = [] } = ctx;
   const parts = [];
 
   parts.push(`<ac:structured-macro ac:name="info" ac:schema-version="1"><ac:rich-text-body>
@@ -163,7 +172,7 @@ function renderReportStorage(ctx) {
 
   parts.push(renderAdvisoriesSection(advisories));
 
-  const notice = noticeSection(appendix, failedMoves, advisories);
+  const notice = noticeSection(appendix, failedMoves, advisories, repeatedHumanDecisions);
   if (notice) parts.push(notice);
 
   parts.push(`<h2>§6 실행 메타</h2>

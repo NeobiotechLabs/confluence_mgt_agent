@@ -6,7 +6,7 @@ const path = require('path');
 const { confluenceRequest } = require('./utils/confluence_api');
 const { fetchAATree, fetchAASpaceHomepageId } = require('./utils/aa_space_tree');
 const { listAAPages } = require('./utils/aa_pages');
-const { deleteLabel } = require('./utils/migration_utils');
+const { deleteLabel, addLabels } = require('./utils/migration_utils');
 const { ruleClassifier } = require('./classifiers/rule');
 
 const DECISIONS_PATH = path.join(__dirname, '..', 'config', 'classification_decisions.json');
@@ -99,7 +99,11 @@ async function runAudit({ dryRun = false, pages, aaTree, homePageId, deps } = {}
   const topLevel = [];
   const humanMoves = [];
   const errors = [];
+  // CI에서는 체크아웃 리셋으로 파일이 휘발되므로 commitDecision은 로컬에서만 의미.
+  // dryRun은 쓰기 금지이므로 커밋 금지. stampLastParent는 양쪽 모두에서 실행(라벨 갱신은 부작용이 아니며 재보고 방지에 필요).
   const shouldCommit = !dryRun && !process.env.CI;
+  const _commitDecision = deps?.commitDecision || commitDecision;
+  const _addLabels = deps?.addLabels || addLabels;
 
   for (const p of pages) {
     // P6 자기 배제: 봇이 생성한 리포트 페이지는 감사 대상이 아니다.
@@ -111,10 +115,15 @@ async function runAudit({ dryRun = false, pages, aaTree, homePageId, deps } = {}
     try {
       const move = detectMove(p);
       if (move && await shouldCommitHumanDecision(p, move, aaTree, homePageId)) {
-        if (shouldCommit) commitDecision(p, move);
+        if (shouldCommit) {
+          _commitDecision(p, move);
+          await _addLabels(p.id, ['human-classified']);
+        }
         humanMoves.push({ page: p, move, committed: shouldCommit });
       }
-      if (p.parentId && !dryRun) {
+      // stampLastParent는 dryRun과 무관하게 항상 실행:
+      // CI에서도 라벨을 갱신해야 같은 이동이 다음 실행에서 재보고되지 않는다.
+      if (p.parentId) {
         await stampLastParent(p.id, p.parentId, p.labels, deps);
       }
     } catch (e) {

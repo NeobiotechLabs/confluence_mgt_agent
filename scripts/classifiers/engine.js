@@ -7,6 +7,7 @@
 require('dotenv').config({ path: require('path').join(__dirname, '..', '..', '.env') });
 const { classifyPage } = require('../utils/classification_provider');
 const { ruleClassifier } = require('./rule');
+const { humanClassifier } = require('./human');
 const { callLLM } = require('../utils/llm_api');
 
 async function classifyWithChain(ctx, aaTree, deps) {
@@ -23,7 +24,7 @@ async function classifyWithChain(ctx, aaTree, deps) {
         tools: deps?.tools || [{ name: 'select_folder' }],
       }),
   };
-  return classifyPage(ctx, aaTree, { ruleClassifier, llm });
+  return classifyPage(ctx, aaTree, { humanClassifier, ruleClassifier, llm });
 }
 
 module.exports = { classifyWithChain };

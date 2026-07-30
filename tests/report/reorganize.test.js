@@ -78,3 +78,28 @@ test('reorganize: 홈페이지 ID 미해결(null) → 이동 전체 스킵(degra
   assert.strictEqual(result.degraded, true);
   assert.strictEqual(result.skippedCount, 5);
 });
+
+// Gap 3: human-classified 라벨이 붙은 페이지는 재이동 금지
+test('reorganize: human-classified 라벨이 있으면 분류 체인 진입 없이 스킵', async () => {
+  const pagesWithHuman = [
+    { id: 'home', title: 'AA 홈', parentId: null, labels: [] },
+    { id: 'h1', title: '휴먼결정페이지', parentId: 'home', labels: ['human-classified'] }, // 최상위지만 human-classified
+    { id: 'o1', title: '일반고아', parentId: 'home', labels: [] },
+  ];
+  const classified = [];
+  const moves = [];
+  const result = await runReorganize({
+    dryRun: false,
+    pages: pagesWithHuman,
+    aaTree: fakeTree,
+    homePageId: 'home',
+    deps: {
+      classify: async (ctx) => { classified.push(ctx.pageId); return decision; },
+      move: async (id, to) => { moves.push([id, to]); },
+    },
+  });
+  assert.ok(!classified.includes('h1'), 'human-classified는 분류 체인 진입 금지');
+  assert.deepStrictEqual(classified, ['o1']);
+  assert.deepStrictEqual(moves, [['o1', 'dest']]);
+  assert.strictEqual(result.skippedCount, 2); // home + h1
+});

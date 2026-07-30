@@ -88,3 +88,32 @@ test('§5 appears with orphan notice / advisories / failed moves', () => {
   assert.ok(html.includes('감사 실행 실패: x'));
   assert.ok(html.includes('API Error [500]'));
 });
+
+// Gap 2: §5에 휴먼 결정 누적 알림 (3회 이상 같은 폴더로 이동된 항목)
+test('§5: repeatedHumanDecisions 3회 이상이면 알림 렌더', () => {
+  const appendix = makeAppendix({
+    metrics: { aaPageCount: 10, topLevelOrphans: 0, unclassifiedCount: 0, movesB: 0, advisories: 0, actionRequiredCount: 0 },
+  });
+  const html = renderReportStorage({
+    appendix, deltas: {},
+    repeatedHumanDecisions: [
+      { targetFolderTitle: '기술문서', count: 4, titles: ['MPS_v1', 'MPS_v2', 'MPS_v3', 'MPS_v4'], firstDecidedAt: '2026-07-15' },
+    ],
+  });
+  assert.ok(html.includes('§5'), '§5 렌더됨');
+  assert.ok(html.includes('휴먼 결정 누적'), '알림 제목 포함');
+  assert.ok(html.includes('기술문서'), '폴더명 포함');
+  assert.ok(html.includes('4회'), '횟수 포함');
+  assert.ok(html.includes('analysis_rules.json'), '룰 추가 안내 포함');
+});
+
+test('§5: repeatedHumanDecisions 빈 배열이면 §5에 해당 알림 없음', () => {
+  const appendix = makeAppendix({
+    metrics: { aaPageCount: 10, topLevelOrphans: 0, unclassifiedCount: 0, movesB: 0, advisories: 0, actionRequiredCount: 0 },
+  });
+  const html = renderReportStorage({
+    appendix, deltas: {},
+    repeatedHumanDecisions: [],
+  });
+  assert.ok(!html.includes('휴먼 결정 누적'));
+});

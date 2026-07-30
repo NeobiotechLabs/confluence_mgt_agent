@@ -200,3 +200,45 @@ test('detectRuleChange: 해시 상이 → advisory 문자열 반환', () => {
 test('detectRuleChange: curr null → null (방어 — 발생 불가 시나리오)', () => {
   assert.strictEqual(detectRuleChange('abcd1234', null, '2026-07-30'), null);
 });
+
+// ── Gap 2: computeRepeatedHumanDecisions ────────────────────────────────────
+const { computeRepeatedHumanDecisions } = require('../../scripts/report/report_lib');
+
+test('computeRepeatedHumanDecisions: 같은 폴더 3회 이상이면 추출', () => {
+  const decisions = [
+    { targetFolderId: 'f1', targetFolderTitle: '기술문서', match: { titleRegex: '^MPS_v1$' }, decidedAt: '2026-07-15' },
+    { targetFolderId: 'f1', targetFolderTitle: '기술문서', match: { titleRegex: '^MPS_v2$' }, decidedAt: '2026-07-16' },
+    { targetFolderId: 'f1', targetFolderTitle: '기술문서', match: { titleRegex: '^MPS_v3$' }, decidedAt: '2026-07-17' },
+    { targetFolderId: 'f2', targetFolderTitle: '회의록', match: { titleRegex: '^회의1$' }, decidedAt: '2026-07-18' },
+  ];
+  const result = computeRepeatedHumanDecisions(decisions, { threshold: 3 });
+  assert.strictEqual(result.length, 1);
+  assert.strictEqual(result[0].targetFolderId, 'f1');
+  assert.strictEqual(result[0].targetFolderTitle, '기술문서');
+  assert.strictEqual(result[0].count, 3);
+  assert.deepStrictEqual(result[0].titles, ['MPS_v1', 'MPS_v2', 'MPS_v3']);
+  assert.strictEqual(result[0].firstDecidedAt, '2026-07-15');
+});
+
+test('computeRepeatedHumanDecisions: threshold 미만이면 빈 배열', () => {
+  const decisions = [
+    { targetFolderId: 'f1', targetFolderTitle: '기술문서', match: { titleRegex: '^MPS_v1$' }, decidedAt: '2026-07-15' },
+    { targetFolderId: 'f1', targetFolderTitle: '기술문서', match: { titleRegex: '^MPS_v2$' }, decidedAt: '2026-07-16' },
+  ];
+  assert.deepStrictEqual(computeRepeatedHumanDecisions(decisions, { threshold: 3 }), []);
+});
+
+test('computeRepeatedHumanDecisions: 빈 decisions → 빈 배열', () => {
+  assert.deepStrictEqual(computeRepeatedHumanDecisions([], { threshold: 3 }), []);
+  assert.deepStrictEqual(computeRepeatedHumanDecisions(null, { threshold: 3 }), []);
+});
+
+test('computeRepeatedHumanDecisions: titleRegex에서 제목 추출 (^$ 제거)', () => {
+  const decisions = [
+    { targetFolderId: 'f1', targetFolderTitle: 'X', match: { titleRegex: '^hello\\sworld$' }, decidedAt: '2026-07-20' },
+    { targetFolderId: 'f1', targetFolderTitle: 'X', match: { titleRegex: '^foo$' }, decidedAt: '2026-07-21' },
+    { targetFolderId: 'f1', targetFolderTitle: 'X', match: { titleRegex: '^bar$' }, decidedAt: '2026-07-22' },
+  ];
+  const result = computeRepeatedHumanDecisions(decisions, { threshold: 3 });
+  assert.deepStrictEqual(result[0].titles, ['hello\\sworld', 'foo', 'bar']);
+});

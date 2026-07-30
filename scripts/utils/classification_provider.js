@@ -15,8 +15,19 @@ function fallback(aaTree) {
 }
 
 async function classifyPage(ctx, aaTree, deps) {
-  const { ruleClassifier, llm } = deps || {};
+  const { humanClassifier, ruleClassifier, llm } = deps || {};
   const systemHasKey = Boolean(process.env.ANTHROPIC_API_KEY);
+
+  // 0) human decision (classification_decisions.json, prior human UI moves)
+  if (humanClassifier && typeof humanClassifier.classify === 'function') {
+    let humanResult = null;
+    try {
+      humanResult = await humanClassifier.classify(ctx, aaTree);
+    } catch (_) {
+      humanResult = null;
+    }
+    if (humanResult && humanResult.ok && humanResult.folderId) return humanResult;
+  }
 
   // 1) rule
   let ruleResult = null;

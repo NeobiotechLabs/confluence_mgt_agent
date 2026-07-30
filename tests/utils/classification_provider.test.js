@@ -93,3 +93,54 @@ test('chain: llm이 folderId 없으면 fallback으로 안전하게 떨어진다'
   assert.strictEqual(out.folderId, 'u-1');
   assert.strictEqual(out.source, 'fallback');
 });
+
+// Gap 1: human-classifier 단계 재삽입 (human → rule → llm → fallback)
+test('chain: humanClassifier hit이면 rule/llm 호출 없이 즉시 반환', async () => {
+  const calls = [];
+  const humanClassifier = {
+    classify: async () => {
+      calls.push('human');
+      return { ok: true, source: 'human', folderId: 'f-human', labels: ['human-classified'], reason: 'dec-001' };
+    },
+  };
+  const ruleClassifier = {
+    classify: async () => { calls.push('rule'); return { ok: true, source: 'rule', folderId: 'f-42' }; },
+  };
+  const llm = { callLLM: async () => { calls.push('llm'); return { ok: true, folderId: 'x' }; } };
+  const out = await classifyPage(baseCtx, aaTree, { humanClassifier, ruleClassifier, llm });
+  assert.strictEqual(out.source, 'human');
+  assert.strictEqual(out.folderId, 'f-human');
+  assert.deepStrictEqual(calls, ['human']);
+});
+
+test('chain: humanClassifier miss이면 rule 단계로 진행', async () => {
+  const calls = [];
+  const humanClassifier = {
+    classify: async () => { calls.push('human'); return { ok: false, source: 'miss' }; },
+  };
+  const ruleClassifier = {
+    classify: async () => { calls.push('rule'); return { ok: true, source: 'rule', folderId: 'f-42', labels: [] }; },
+  };
+  const llm = { callLLM: async () => { calls.push('llm'); return { ok: true, folderId: 'x' }; } };
+  const out = await classifyPage(baseCtx, aaTree, { humanClassifier, ruleClassifier, llm });
+  assert.strictEqual(out.source, 'rule');
+  assert.deepStrictEqual(calls, ['human', 'rule']);
+});
+
+test('chain: humanClassifier throw 시 rule 단계로 안전하게 진행', async () => {
+  const humanClassifier = { classify: async () => { throw new Error('human-boom'); } };
+  const ruleClassifier = {
+    classify: async () => ({ ok: true, source: 'rule', folderId: 'f-42', labels: [] }),
+  };
+  const llm = { callLLM: async () => ({ ok: true, folderId: 'x' }) };
+  const out = await classifyPage(baseCtx, aaTree, { humanClassifier, ruleClassifier, llm });
+  assert.strictEqual(out.source, 'rule');
+});
+
+test('chain: humanClassifier 없으면 기존 체인(rule → llm → fallback) 유지', async () => {
+  const ruleClassifier = {
+    classify: async () => ({ ok: true, source: 'rule', folderId: 'f-42', labels: [] }),
+  };
+  const out = await classifyPage(baseCtx, aaTree, { ruleClassifier });
+  assert.strictEqual(out.source, 'rule');
+});
