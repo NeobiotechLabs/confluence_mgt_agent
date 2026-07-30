@@ -69,6 +69,19 @@ function policyHash(configDir) {
   return h.digest('hex').slice(0, 8);
 }
 
+/**
+ * 룰 해시 변동 감지. prev(직전 리포트)와 curr(오늘)가 다르면 §5 advisory 1줄.
+ * - prev가 없음(첫 리포트): 비교 대상 없음 → null (의심하지 않음).
+ * - curr가 없음(방어): null (현실적으로 발생 불가).
+ * - prev === curr: 변경 없음 → null.
+ * - 그 외: advisory 반환.
+ */
+function detectRuleChange(prevHash, currHash, todayStr) {
+  if (!prevHash || !currHash) return null;
+  if (prevHash === currHash) return null;
+  return `⚠️ 룰 변경 감지: ${prevHash} → ${currHash} (${todayStr})`;
+}
+
 // ── 부록(appendix) ──────────────────────────────────────────────────────────
 /**
  * 직전 리포트의 storage HTML에서 기계 부록 JSON을 파싱.
@@ -171,7 +184,7 @@ module.exports = {
   APPENDIX_MARKER,
   kstNow, kstStamp, kstYYMMDD, kstHHMM,
   generateTitle, parseReportTitle,
-  fingerprint, policyHash,
+  fingerprint, policyHash, detectRuleChange,
   parseAppendix, computeDiff, diffMetrics,
   selectPruneCandidates,
   buildRunId, runMode,

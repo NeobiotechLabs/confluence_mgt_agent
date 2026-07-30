@@ -11,7 +11,7 @@ const { runReorganize } = require('./reorganize_aa_space');
 const { renderReportStorage } = require('./report/render');
 const {
   kstNow, kstStamp, kstYYMMDD, kstHHMM,
-  generateTitle, fingerprint, policyHash, parseAppendix,
+  generateTitle, fingerprint, policyHash, parseAppendix, detectRuleChange,
   computeDiff, diffMetrics, selectPruneCandidates, buildRunId, runMode,
 } = require('./report/report_lib');
 
@@ -182,6 +182,11 @@ async function main() {
   // 7) 직전 리포트 → delta
   const prev = await fetchPreviousReport(advisories);
   const deltas = diffMetrics(metrics, prev ? prev.metrics : null);
+
+  // 7-1) 룰 해시 변동 감지 (작업 5): 직전 부록의 policyHash와 오늘 hash가 다르면 §5 알림 1줄.
+  // — 비교 가능: prev 있고 prev.policyHash가 8자 문자열. 변경 없음: same hash. 첫 리포트: prev null.
+  const ruleAdvisory = detectRuleChange(prev?.policyHash, hash, runAt.slice(0, 10));
+  if (ruleAdvisory) advisories.push(ruleAdvisory);
 
   // 8) items + fingerprint + diff(seenCount) → 렌더
   const rawItems = reorg.moved.map(m => ({

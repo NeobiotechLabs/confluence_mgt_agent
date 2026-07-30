@@ -8,6 +8,7 @@ const {
   fingerprint, policyHash,
   parseAppendix, computeDiff, diffMetrics,
   selectPruneCandidates, buildRunId, runMode, APPENDIX_MARKER,
+  detectRuleChange,
 } = require('../../scripts/report/report_lib');
 
 // ── KST (UTC+9) ─────────────────────────────────────────────────────────────
@@ -176,4 +177,26 @@ test('buildRunId / runMode: ci vs local', () => {
   assert.strictEqual(buildRunId({}), '0#0');
   assert.strictEqual(runMode({ GITHUB_ACTIONS: 'true' }), 'ci');
   assert.strictEqual(runMode({}), 'local');
+});
+
+// ── 룰 변경 감지 (작업 5) ───────────────────────────────────────────────────
+test('detectRuleChange: prev null → null (첫 리포트: 비교 대상 없음)', () => {
+  assert.strictEqual(detectRuleChange(null, 'abcd1234', '2026-07-30'), null);
+});
+
+test('detectRuleChange: 해시 동일 → null (룰 변경 없음)', () => {
+  assert.strictEqual(detectRuleChange('abcd1234', 'abcd1234', '2026-07-30'), null);
+});
+
+test('detectRuleChange: 해시 상이 → advisory 문자열 반환', () => {
+  const advisory = detectRuleChange('abcd1234', 'deadbee0', '2026-07-30');
+  assert.strictEqual(typeof advisory, 'string');
+  // 두 해시 + 오늘 날짜 모두 포함
+  assert.ok(advisory.includes('abcd1234'), 'prev hash 포함');
+  assert.ok(advisory.includes('deadbee0'), 'curr hash 포함');
+  assert.ok(advisory.includes('2026-07-30'), 'todayStr 포함');
+});
+
+test('detectRuleChange: curr null → null (방어 — 발생 불가 시나리오)', () => {
+  assert.strictEqual(detectRuleChange('abcd1234', null, '2026-07-30'), null);
 });

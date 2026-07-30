@@ -1,6 +1,6 @@
 # 프로젝트 할일 / 진행 상황 (ToDo)
 
-> 마지막 갱신: 2026-07-30
+> 마지막 갱신: 2026-07-30 (작업 5 완료 — 룰 해시 변경 자동 감지)
 >
 > 이 문서는 **현재 정책과 상태**를 기준으로 작성되었습니다. 옛 정책(Dify, human 큐, v1 폴더 규칙 등)은 더 이상 사실이 아니므로 이 문서에 남아 있지 않습니다.
 
@@ -10,7 +10,7 @@
 
 - **목표**: 사내 Confluence 신규 스페이스(AA)를 잘 구조화해서, MPS(Planning/Evaluation) 작성용 RAG 원천으로 유지.
 - **현재 상태**: AA 스페이스 이관 + 일일 자동 리포트 + 자가 정화(audit·reorganize) 동작 중. 분류 체인은 **rule → inline-llm(Anthropic) → fallback** 단일 흐름으로 단순화 완료.
-- **다음 큰 작업**: 분류 체인의 워크플로우 YAML 재편(작업 4) + 룰 변경 자동화(작업 5).
+- **다음 큰 작업**: 사내 LLM 엔드포인트 연동(작업 6, 옵션). 룰 변경 자동화(작업 5)는 ✅ 완료 — 직전 리포트 부록의 policyHash와 오늘 hash를 비교해 변경 시 §5 advisory 1줄을 자동으로 추가하는 형태로 이미 동작 중.
 
 ---
 
@@ -79,18 +79,32 @@
 - 문서: [`reference/classification_rules.md`](classification_rules.md).
 - 테스트: 56/56 PASS(`tests/utils/llm_api.test.js` 4건 + `tests/utils/classification_provider.test.js` 6건 + `tests/classifiers/engine.test.js` 2건 추가).
 
+### 3-4. 룰 해시 변경 자동 감지 (작업 5) — 2026-07-30
+- 일별 cron(`daily-report`)이 룰 변경을 흡수하므로 별도 batch 워크플로우 불필요.
+- `policyHash()`(`config/classification_decisions.json` + `config/analysis_rules.json` sha256 앞 8자)의 변동을 직전 리포트 부록의 `policyHash`와 비교.
+- `detectRuleChange(prev, curr, today)` → prev 없음(첫 리포트)·해시 동일 → `null`, 상이 시 `⚠️ 룰 변경 감지: … → … (YYYY-MM-DD)` advisory 1줄 → §5 자동 렌더.
+- 변경 파일: `scripts/report/report_lib.js`, `scripts/report_aa_daily.js`, `tests/report/report_lib.test.js`.
+- 테스트: 62/62 PASS(신규 4건 추가).
+
 ---
 
 ## 4. 진행 중 / 다음 작업
 
-### 작업 4 — 워크플로우 YAML 재편 (다음 우선)
-- `.github/workflows/confluence_automation.yml`을 `migrator`(수집/이관) + `daily-report`(자가 정화 + 리포트) 두 job으로 정리.
-- 각 job에 `ANTHROPIC_API_KEY` env 주입 확인.
-- `CLASSIFICATION_PROVIDER` env 분기는 불필요(체인 단일화로 단순화).
+### 작업 4 — 워크플로우 YAML 재편 — ✅ 2026-07-30 완료
+- `.github/workflows/confluence_automation.yml`은 이미 의도된 형태(`daily-report` 1 job + `migrate` 후속 + `notify-failure`(`if: failure()`))). 두 job에 `ANTHROPIC_API_KEY` Secrets 주입 확인, `permissions: contents: read` 유지. `CLASSIFICATION_PROVIDER` env 분기는 코드·YAML 어디에도 없음(체인 단일화로 단순화).
+- 정리한 코드 잔재: `scripts/migrator.js`의 `Dify LLM 분석` 로그 및 `Dify-like` 주석을 정책에 맞춰 일반화(consonID 보관), `scripts/analyze_migration_candidates.js`의 본문 링크 `dify/space_rules_knowledge.md` → `reference/classification_rules.md`로 교체.
+- 회귀 가드: `tests/migrator/no_dify_stale_log.test.js` 2건 추가(`console.log` / 주석 `Dify-like` 잔재 차단). `npm test` 58/58 PASS.
 
-### 작업 5 — 룰 업데이트 자동화
-- 일별 cron(`daily-report`)이 자동으로 룰 변경을 흡수하므로 별도 batch 워크플로우는 **선택 사항**.
-- 필요 시: 룰 해시(`config/analysis_rules.json` sha256)가 전날과 다르면 자동으로 dry-run 리포트에 §5 알림 추가.
+### 작업 5 — 룰 업데이트 자동화 — ✅ 2026-07-30 완료 (해시 diff 감지만 구현)
+- **선택 범위**: 별도 batch 워크플로우·추가 알림 채널·Git SHA 표기·PR 권고 모두 제외. 사용자 선택: *"해시 diff 감지만 구현 (Recommended)"*.
+- **구현**:
+  - `scripts/report/report_lib.js`: 순수 함수 `detectRuleChange(prevHash, currHash, todayStr)` — prev 없음(첫 리포트)·curr 없음(방어)·해시 동일 → 모두 `null`. 상이 시 `⚠️ 룰 변경 감지: {prev} → {curr} ({today})` advisory 문자열 반환. export 추가.
+  - `scripts/report_aa_daily.js`: 직전 리포트 부록 `prev?.policyHash`(L183)와 오늘 `policyHash()`(L128) 비교. `runAt.slice(0, 10)`을 todayStr로 전달. 변경 감지 시 `advisories.push(ruleAdvisory)` → 기존 §5 advisory 섹션이 그대로 렌더.
+  - `tests/report/report_lib.test.js`: 4건 추가 (prev null / 동일 / 상이 / curr null).
+- **회귀 가드**: 직전 부록 파싱 실패(사람 편집) → `prev=null` → 자동으로 첫 리포트 분기로 진입해 advisory 발생 안 함. 운영·advisory 누락 위험 0.
+- **효과**: 룰 해시(`classification_decisions.json` + `analysis_rules.json`) 변동 시 다음 리포트 §5에 1줄 알림이 자동 등장. 별도 트리거 불필요.
+- **테스트**: `npm test` 62/62 PASS(신규 4건 + 기존 58건).
+- **변경 파일**: `tests/report/report_lib.test.js`, `scripts/report/report_lib.js`, `scripts/report_aa_daily.js`.
 
 ### 작업 6 — 옵션: 사내 LLM 엔드포인트 연동
 - 사내 LLM 게이트웨이(`INTERNAL_LLM_URL` / `INTERNAL_LLM_KEY`)가 도입되면 `scripts/utils/llm_api.js`에 adapter 추가.
