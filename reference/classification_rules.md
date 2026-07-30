@@ -48,7 +48,25 @@ rule → inline-llm(Anthropic) → fallback(unsortedFolderId, needs-review)
 
 실패 시 `{ ok: false, source: 'miss', reason: '...' }` — 예외를 throw하지 않고 흡수해 per-page try/catch와 호환됩니다.
 
-## 5. 비용·안전 가드
+## 5. 매칭 실패 추적 (작업 8)
+
+일별 cron은 `unsorted` 폴더에 남아 있는 페이지가 KB(SSOT 룰)에 잡히지 않으면 **룰 추가 후보**로 표기합니다. 자동 분류는 fallback(`unsortedFolderId`로 이동)으로 끝나지만, 그 자체는 "룰이 모른다"는 신호이므로 가시화해 사람이 후속 룰을 추가할 수 있게 합니다.
+
+- **추적 단위**: `kind: 'unmatched'` 부록 item. `fingerprint = sha1('unmatched', pageId, unsortedFolderId)[:12]` — 페이지가 폴더를 떠났다가 돌아와도 동일 fingerprint.
+- **SSOT**: `reference/unmatched_pages.json` (append-only 머지). 원자적 쓰기(`.tmp` → rename).
+- **머지 의미**:
+  - 같은 fingerprint가 prev에 있으면 → `seenCount+1`, `lastSeen = today`, `firstSeen` 보존.
+  - 없으면 → `seenCount=1`, `firstSeen = lastSeen = today`.
+  - prev에만 있고 오늘은 없으면 → 부록엔 안 들어가지만 파일엔 남음(다음 비교 기준 보존). 만료/제거 정책은 Phase 2.
+- **catch_all 흡수의 의미**: `catch_all_known`(있으면 모든 페이지 흡수)은 "매칭 성공"으로 간주되지만 "명시 카테고리 매칭 실패"의 신호이므로 **unmatched로 본다**. `sourceSpace`는 catch_all의 sourceSpace(보통 `*`)로 기록.
+- **매칭 진짜 실패**: KB 자체에 catch_all도 없고 명시 룰도 매칭 안 됨 → `sourceSpace: 'unknown'`.
+- **부록 items 머지**: `move-b`류(루프 B 이동 로그)와 `unmatched`류가 같은 `items[]` 안에 공존. 렌더 측은 `kind`로 분기.
+- **dry-run**: 디스크 쓰기 없음, stdout에 `unmatchedItems` 카운트만 출력.
+- **save 실패**: throw하지 않고 advisory 1줄로 부록에 기록(리포트 POST는 계속).
+
+**누락 가시화 → 룰 추가 흐름**: 운영자가 매일 부록을 보고 `캘리브레이션 회의록` 류가 반복되면 → `config/analysis_rules.json`에 명시 룰 추가 → 다음 cron부터 자동 흡수 → `unmatched` 카운트 감소.
+
+## 6. 비용·안전 가드
 
 - **키 부재 시**: LLM 단계 skip → fallback. 의도된 동작입니다(테스트로 보호).
 - **API 에러**: `callLLM` 내부에서 throw를 catch하여 `{ok:false, source:'miss'}` 반환. 호출자(분류 체인)는 fallback으로 이어짐.
@@ -65,6 +83,7 @@ rule → inline-llm(Anthropic) → fallback(unsortedFolderId, needs-review)
 | 모델 변경 | `ANTHROPIC_MODEL` env 주입(워크플로우) — 코드 변경 불필요 |
 | 키 회전 | GitHub Secrets 갱신 — 코드 변경 불필요 |
 | 룰 자동 재감사 | 일별 cron(`daily-report`)이 자동 수행. dry-run은 `npm run report:aa:dryrun` |
+| 미매칭 룰 추가 | §5 흐름: 부록 `unmatched` 항목 → `config/analysis_rules.json`에 명시 룰 추가 → 다음 cron부터 자동 흡수 |
 
 ## 7. 향후 작업 (Phase 2 자리표시)
 

@@ -101,4 +101,4 @@
 | 분류 불가 (기타) | 0개 |
 
 *문서 위치: `reference/migration_candidates.md`*
-*관련 정책: [dify/space_rules_knowledge.md](../dify/space_rules_knowledge.md) | 룰 파일: [config/analysis_rules.json](../config/analysis_rules.json)*
+*관련 정책: [reference/classification_rules.md](classification_rules.md) · [reference/space_rules_knowledge.md](space_rules_knowledge.md) | 룰 파일: [config/analysis_rules.json](../config/analysis_rules.json)*

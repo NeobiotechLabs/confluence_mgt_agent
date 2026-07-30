@@ -172,6 +172,99 @@ function selectPruneCandidates(reports, now, { maxAgeDays = 31, keepMin = 7 } = 
   return { prune, keep };
 }
 
+// ── 룰 베이스(KB) 매칭 ──────────────────────────────────────────────────────
+/**
+ * KB(SSOT 카테고리 매칭) + 공통 룰을 페이지에 적용한다.
+ *   - 명시적 카테고리가 매칭되면 is_catch_all은 무시된다.
+ *   - exclude(title_patterns)에 걸리면 그 카테고리는 매칭 실패로 처리.
+ *   - 모든 명시 카테고리 실패 + catch_all 존재 → catch_all로 흡수.
+ *   - 그 외(둘 다 없음) → null.
+ * @param {{title:string, ancestors:string[]}|null} page
+ * @param {{rules: Array<{id:string, is_catch_all?:boolean, sourceSpace?:string, match?:{title_patterns?:string[], any?:Array<{title_patterns?:string[], ancestor_contains?:string}>}, exclude?:{title_patterns?:string[]}}>}} kb
+ * @returns {{categoryId:string, sourceSpace?:string}|null}
+ */
+function matchAgainstKnowledgeBase(page, kb) {
+  if (!page || !kb || !Array.isArray(kb.rules) || kb.rules.length === 0) return null;
+  const title = page.title || '';
+  const ancestors = Array.isArray(page.ancestors) ? page.ancestors : [];
+  const explicit = kb.rules.filter(r => !r.is_catch_all);
+  const catchAll = kb.rules.find(r => r.is_catch_all) || null;
+
+  for (const rule of explicit) {
+    if (matchesRule(rule, title, ancestors)) {
+      return { categoryId: rule.id, sourceSpace: rule.sourceSpace };
+    }
+  }
+  if (catchAll) return { categoryId: catchAll.id, sourceSpace: catchAll.sourceSpace };
+  return null;
+}
+
+function matchesRule(rule, title, ancestors) {
+  if (isExcluded(rule, title)) return false;
+  return matchesAny(rule.match, title, ancestors);
+}
+
+function isExcluded(rule, title) {
+  const excludes = rule.exclude && Array.isArray(rule.exclude.title_patterns)
+    ? rule.exclude.title_patterns : null;
+  if (!excludes) return false;
+  return excludes.some(pat => new RegExp(pat).test(title));
+}
+
+function matchesAny(match, title, ancestors) {
+  if (!match) return false;
+  // any[...]가 있으면 그 중 하나라도 매칭되면 매칭.
+  if (Array.isArray(match.any) && match.any.length > 0) {
+    return match.any.some(branch => matchesBranch(branch, title, ancestors));
+  }
+  // 없으면 title_patterns만 검사.
+  if (Array.isArray(match.title_patterns) && match.title_patterns.length > 0) {
+    return match.title_patterns.some(pat => new RegExp(pat).test(title));
+  }
+  return false;
+}
+
+function matchesBranch(branch, title, ancestors) {
+  if (Array.isArray(branch.title_patterns) && branch.title_patterns.length > 0) {
+    if (branch.title_patterns.some(pat => new RegExp(pat).test(title))) return true;
+  }
+  if (typeof branch.ancestor_contains === 'string' && branch.ancestor_contains) {
+    if (ancestors.some(a => (a || '').includes(branch.ancestor_contains))) return true;
+  }
+  return false;
+}
+
+// ── 미매칭(누락) 추적 머지 ──────────────────────────────────────────────────
+/**
+ * 오늘의 미매칭(unmatched) 항목 리스트를 직전 머지 산출물에 append-only로 머지.
+ * - fingerprint 매칭: seenCount+1, lastSeen=todayStr, firstSeen 보존.
+ * - fingerprint 신규: seenCount=1, firstSeen=lastSeen=todayStr.
+ * - prev에만 있는 fingerprint: out에서 빠짐(오늘 누락이 아니므로).
+ * - 입력은 변형하지 않는다.
+ * @param {Array<{fingerprint:string}>} curItems
+ * @param {Array<{fingerprint:string, seenCount?:number, firstSeen?:string}>|null} prevItems
+ * @param {string} todayStr "YYYY-MM-DD"
+ */
+function findUnmatchedPages(curItems, prevItems, todayStr) {
+  const prevByFp = new Map((prevItems || [])
+    .filter(it => it && it.fingerprint)
+    .map(it => [it.fingerprint, it]));
+  return (curItems || [])
+    .filter(it => it && it.fingerprint)
+    .map(it => {
+      const prev = prevByFp.get(it.fingerprint);
+      if (!prev) {
+        return { ...it, seenCount: 1, firstSeen: todayStr, lastSeen: todayStr };
+      }
+      return {
+        ...it,
+        seenCount: (typeof prev.seenCount === 'number' ? prev.seenCount : 1) + 1,
+        firstSeen: prev.firstSeen || todayStr,
+        lastSeen: todayStr,
+      };
+    });
+}
+
 // ── 실행 메타 ───────────────────────────────────────────────────────────────
 function buildRunId(env = process.env) {
   return env.GITHUB_RUN_ID ? `${env.GITHUB_RUN_ID}#${env.GITHUB_RUN_ATTEMPT || '1'}` : '0#0';
@@ -187,5 +280,6 @@ module.exports = {
   fingerprint, policyHash, detectRuleChange,
   parseAppendix, computeDiff, diffMetrics,
   selectPruneCandidates,
+  matchAgainstKnowledgeBase, findUnmatchedPages,
   buildRunId, runMode,
 };

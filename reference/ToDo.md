@@ -1,6 +1,6 @@
 # 프로젝트 할일 / 진행 상황 (ToDo)
 
-> 마지막 갱신: 2026-07-30 (작업 5 완료 — 룰 해시 변경 자동 감지)
+> 마지막 갱신: 2026-07-30 (작업 8 완료 — 룰 매칭 추적/누락 가시화)
 >
 > 이 문서는 **현재 정책과 상태**를 기준으로 작성되었습니다. 옛 정책(Dify, human 큐, v1 폴더 규칙 등)은 더 이상 사실이 아니므로 이 문서에 남아 있지 않습니다.
 
@@ -9,8 +9,9 @@
 ## 0. 한 줄 요약
 
 - **목표**: 사내 Confluence 신규 스페이스(AA)를 잘 구조화해서, MPS(Planning/Evaluation) 작성용 RAG 원천으로 유지.
-- **현재 상태**: AA 스페이스 이관 + 일일 자동 리포트 + 자가 정화(audit·reorganize) 동작 중. 분류 체인은 **rule → inline-llm(Anthropic) → fallback** 단일 흐름으로 단순화 완료.
+- **현재 상태**: AA 스페이스 이관 + 일일 자동 리포트 + 자가 정화(audit·reorganize) 동작 중. 분류 체인은 **rule → inline-llm(Anthropic) → fallback** 단일 흐름으로 단순화 완료. 룰 매칭 추적(작업 8) — `reference/unmatched_pages.json` SSOT에 `kind:'unmatched'` append-only 머지로 매일 누락 가시화.
 - **다음 큰 작업**: 사내 LLM 엔드포인트 연동(작업 6, 옵션). 룰 변경 자동화(작업 5)는 ✅ 완료 — 직전 리포트 부록의 policyHash와 오늘 hash를 비교해 변경 시 §5 advisory 1줄을 자동으로 추가하는 형태로 이미 동작 중.
+- **다음 큰 작업(후속)**: 작업 9(미정). 후보: Phase 2 §2/§4 활성화 — §2 루프 A 실데이터, §4 AI 권고판.
 
 ---
 
@@ -86,6 +87,45 @@
 - 변경 파일: `scripts/report/report_lib.js`, `scripts/report_aa_daily.js`, `tests/report/report_lib.test.js`.
 - 테스트: 62/62 PASS(신규 4건 추가).
 
+### 3-5. 옛 Dify KB 통합 + 경로 정리 (작업 7) — 2026-07-30
+- 사용자 의도: "옛 Dify 자산을 정리하고, 분류 프롬프트가 재사용 가능한지 확인".
+- 결정:
+  - `reference/aa_space_dify_knowledge.md` **삭제**(AA 전용 옛 KB, 사용자 명시 지시).
+  - `dify/space_rules_knowledge.md` → `reference/space_rules_knowledge.md`로 **승격 + 재작성**. `§0 [전역(Global) Common Rule]` + `§1~4 [SD/WND/Device/SmileArch] 섹션 룰` 구조로 통일. status 헤더에 `reference-only` 명시(SSOT는 `config/analysis_rules.json`).
+  - `dify/system_prompt.md`는 **보존**(사용자 선택) + status 헤더 주석 추가(`status: deprecated-for-dify`, 옛 KB 위치 표기). 본 파일은 Dify 컨테이너 의존이라 코드 자동화에 그대로 이식하지는 않음.
+- 코드/문서 갱신:
+  - `config/analysis_rules.json` `$description`: 정책 출처 표기를 옛 `dify/` → 새 `reference/space_rules_knowledge.md`로.
+  - `reference/migration_candidates.md` L104: 관련 정책 링크를 `reference/classification_rules.md · reference/space_rules_knowledge.md`로.
+  - `scripts/`: 옛 `dify/` 경로 참조 0건(작업 4에서 이미 모두 갱신 완료).
+- 의도적 보존 4건: `reference/ToDo.md`(작업 4 이력), `reference/PROJECT_STATUS.md`(옛 핸드오프), `docs/spec_auto_report.md`(옛 시점 디자인 스펙), `reference/space_rules_knowledge.md` 헤더(옛 위치 표기), `dify/system_prompt.md`(옛 KB 위치 표기).
+- 테스트: 변경 없음(문서·정책 표기 작업이라 회귀 위험 0). `npm test` 62/62 PASS 유지.
+
+### 3-6. 룰 매칭 추적/누락 가시화 (작업 8) — 2026-07-30
+- **문제**: 오늘 룰로 매칭되지 않아 `catch_all_known`(`needs-review`)으로 흡수된 페이지가 *왜* 누락됐는지 추적하기 어렵다. 새 룰을 추가할 때 데이터 기반 결정이 어려움.
+- **방침**: 일별 cron이 흡수만 하고 끝나면 "룰이 모른다"는 신호가 묻힌다. 부록에 `kind:'unmatched'`로 노출해 사람이 후속 룰을 추가할 수 있게 한다.
+- **구현**:
+  - `scripts/report/report_lib.js`:
+    - `matchAgainstKnowledgeBase({title, ancestors}, kb)` — rules를 순회하며 `match.title_patterns`(정규식)와 `match.ancestor_contains` 평가. `is_catch_all` 룰은 매칭 성공으로 보고하되 `categoryId='catch_all_known'`으로 표기. 명시 매칭 실패 → `null`.
+    - `findUnmatchedPages(cur, prev, todayStr)` — `fingerprint = sha1('unmatched', pageId, unsortedFolderId)[:12]` 단위로 seenCount/첫관측일자 보존. prev에 같은 fingerprint 있으면 seenCount+1·firstSeen 보존·lastSeen 갱신, 없으면 seenCount=1·firstSeen=lastSeen=today. prev에만 있고 오늘 없으면 부록엔 안 들어가지만 SSOT엔 남음.
+  - `scripts/report/unmatched_state_io.js`:
+    - `loadUnmatchedState(file)` — `reference/unmatched_pages.json` 로더. 파일 부재/깨짐/스키마 위반 모두 `[]`로 graceful 퇴화(절대 throw 안 함).
+    - `saveUnmatchedState(file, items)` — 원자적 쓰기(`.tmp` → `rename`). 부모 디렉터리 자동 생성.
+  - `scripts/report_aa_daily.js`:
+    - `computeUnmatchedItems(pages, kb, todayStr, {unsortedFolderId, prevState})` — `pages.filter(parentId===unsortedFolderId)` → KB 매칭 시도 → `null`(진짜 미매칭) 또는 `catch_all_known`(명시 매칭 실패 + 흡수) 모두 `kind:'unmatched'`로 부록 진입. 명시 카테고리 매칭은 정상이라 건너뜀.
+    - `runUnmatchedMerge({kbPath, statePath, pages, todayStr, unsortedFolderId, dryRun})` — 통합 헬퍼. KB 로드(부재·깨짐 모두 graceful, kbError=null) → prev 로드 → compute → 실실행이면 save. **save 실패는 throw하지 않고 `saveError` 문자열로 호출자에 전달** → 부록 advisories에 머지 → 리포트 POST는 계속(심박 P1).
+    - main() §8-1 와이어업: `KB_PATH = config/analysis_rules.json`, `UNMATCHED_STATE_PATH = reference/unmatched_pages.json`. 부록 `items[]`에 `movedItems.concat(merge.items)` — `move-b`와 `unmatched` 공존, 렌더 측은 `kind`로 분기.
+    - dry-run stdout에 `unmatchedItems` 카운트 추가.
+  - `reference/classification_rules.md`: §5 "매칭 실패 추적 (작업 8)" 신설, §6 변경 절차 표에 "미매칭 룰 추가" 행 추가.
+- **누락 가시화 → 룰 추가 흐름**: 운영자가 매일 부록을 보고 `캘리브레이션 회의록` 류가 반복되면 → `config/analysis_rules.json`에 명시 룰 추가 → 다음 cron부터 자동 흡수 → `unmatched` 카운트 감소.
+- **테스트(TDD)**: 22건 신규 추가.
+  - `tests/report/match_kb.test.js` 4건 — 빈 KB / 전부 매칭 / 일부 누락 / catch_all 단독.
+  - `tests/report/unmatched_wireup.test.js` 8건 — `computeUnmatchedItems` 시그니처·catch_all 흡수·unknown·prevState 머지·prevState mutate 금지.
+  - `tests/report/unmatched_state_io.test.js` 8건 — `loadUnmatchedState`/`saveUnmatchedState` graceful + 원자성 + 스키마 필터.
+  - `tests/report/orchestrator_unmatched.test.js` 6건 — `runUnmatchedMerge` 통합(KB 정상/부재/깨짐/dryRun/prev 머지/unsortedFolderId 불일치).
+  - **`npm test` 93/93 PASS**.
+- **변경 파일**: `scripts/report/report_lib.js`, `scripts/report/unmatched_state_io.js`(신규), `scripts/report_aa_daily.js`, `reference/classification_rules.md`, 4건 신규 테스트.
+- **SSOT 신규**: `reference/unmatched_pages.json`(append-only, 원자적 쓰기).
+
 ---
 
 ## 4. 진행 중 / 다음 작업
@@ -110,6 +150,33 @@
 - 사내 LLM 게이트웨이(`INTERNAL_LLM_URL` / `INTERNAL_LLM_KEY`)가 도입되면 `scripts/utils/llm_api.js`에 adapter 추가.
 - Dify 호환 모드는 불필요(정책상 Dify 미사용).
 
+### 작업 7 — 옛 Dify KB 통합 + 경로 정리 — ✅ 2026-07-30 완료
+- 사용자 명시 지시: "1. 지워줘. 그리고, `@dify/system_prompt.md` 가 dify에서 페이지 분류했던 프롬프트인데, 잘 되어 있는지, 어떤 내용인지 확인해서 우리가 가져다 쓸수 있는 지침일지 확인해줘".
+- 완료 항목:
+  1. `reference/aa_space_dify_knowledge.md` 삭제(AA 전용 옛 KB).
+  2. `dify/space_rules_knowledge.md` → `reference/space_rules_knowledge.md` 승격 + 재작성(common.rule + 4섹션 구조).
+  3. `dify/system_prompt.md`에 status: deprecated-for-dify 헤더 주석 추가, 본문은 보존.
+  4. `config/analysis_rules.json` $description 갱신, `reference/migration_candidates.md` L104 링크 갱신.
+  5. ToDo.md 갱신(본 작업).
+- 분석 결과(`dify/system_prompt.md` 45 lines 검토):
+  - **재사용 가능 부분**: Validation·Labeling·Output Format 스키마(`is_valid`·`target_folder_id`·`labels`·`needs_new_category`)의 *의도*는 `config/analysis_rules.json` SSOT에 이미 반영됨. 프롬프트 구조(Validation→Labeling→Exception→Output 4섹션)는 향후 §0.3 매칭 워크플로우와 정렬 가능.
+  - **이식 불필요**: 프롬프트 본문은 Dify 컨테이너 변수(`{{page_title}}`, `{{#context#}}`, `<context_tree>` 등)에 강하게 결합되어 있어, 공식 Anthropic SDK(`scripts/utils/llm_api.js`)로 직결 시 컨테이너 의존이 늘어남. 자동화는 도구 호출(`tool_use(select_folder)`)이 이미 동일한 정규화(`{ok, folderId, labels, reason}`)를 제공.
+- 의도적 보존 4건은 §3-5 본문 참조.
+
+### 작업 8 — 룰 매칭 추적(누락 가시화) — ✅ 2026-07-30 완료
+- **문제**: 오늘 룰로 매칭되지 않아 `catch_all_known`(`needs-review`)으로 흡수된 페이지가 *왜* 누락됐는지 추적하기 어렵다. 새 룰을 추가할 때 데이터 기반 결정이 어려움.
+- **방침**: 일별 cron이 흡수만 하고 끝나면 "룰이 모른다"는 신호가 묻힌다. 부록에 `kind:'unmatched'`로 노출해 사람이 후속 룰을 추가할 수 있게 한다.
+- **구현**:
+  - `scripts/report/report_lib.js`: `matchAgainstKnowledgeBase({title, ancestors}, kb)` + `findUnmatchedPages(cur, prev, todayStr)` — fingerprint 단위 seenCount/첫관측일자 보존(append-only 머지).
+  - `scripts/report/unmatched_state_io.js`(신규): `loadUnmatchedState`/`saveUnmatchedState` — graceful 로드 + 원자적 쓰기(`.tmp` → `rename`).
+  - `scripts/report_aa_daily.js`: `computeUnmatchedItems` + `runUnmatchedMerge` 통합 헬퍼. KB 부재/깨짐 모두 empty fallback, save 실패는 throw 대신 `saveError` 문자열로 advisories에 머지 → 리포트 POST는 계속(심박 P1).
+  - main() §8-1 와이어업: `KB_PATH = config/analysis_rules.json`, `UNMATCHED_STATE_PATH = reference/unmatched_pages.json`. 부록 items[]에 `movedItems.concat(merge.items)` — `move-b`와 `unmatched` 공존.
+- **SSOT 신규**: `reference/unmatched_pages.json` (append-only 머지, 원자적 쓰기).
+- **누락 가시화 → 룰 추가 흐름**: 운영자가 매일 부록을 보고 `캘리브레이션 회의록` 류가 반복되면 → `config/analysis_rules.json`에 명시 룰 추가 → 다음 cron부터 자동 흡수 → `unmatched` 카운트 감소.
+- **테스트(TDD)**: 22건 신규 추가. **`npm test` 93/93 PASS**.
+- **변경 파일**: `scripts/report/report_lib.js`, `scripts/report/unmatched_state_io.js`(신규), `scripts/report_aa_daily.js`, `reference/classification_rules.md`, 4건 신규 테스트.
+- **Phase 2 잔여**: 부록 unmatched 항목의 §2 자리표시(루프 A 실데이터) 해소는 별도 작업.
+
 ---
 
 ## 5. 협업 필요 (사용자 액션)
@@ -128,6 +195,7 @@
 | [`reference/SD_space_analysis.md`](SD_space_analysis.md) | 기존 SD 스페이스 분석(1회성 참고) |
 | [`reference/AA_space_design_plan.md`](AA_space_design_plan.md) | AA 스페이스 설계 의도 |
 | [`reference/classification_rules.md`](classification_rules.md) | 분류 체인 의도·SSOT 경계·변경 절차 |
+| [`reference/space_rules_knowledge.md`](space_rules_knowledge.md) | 스페이스별 문서 이관 및 판별 정책(reference-only, 옛 Dify KB 통합본) |
 | [`docs/spec_auto_report.md`](../docs/spec_auto_report.md) | 일일 리포트 스펙 (DRAFT v0.2) |
 | [`docs/AUTOMATION_GUIDE.md`](../docs/AUTOMATION_GUIDE.md) | 운영 가이드 |
 | [`docs/STATUS.md`](../docs/STATUS.md) | 상태 요약(있으면) |

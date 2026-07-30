@@ -1,6 +1,6 @@
 {
   "$schema_version": "2.0",
-  "$description": "AA 스페이스 이관 후보 분류 룰 v2 — 과제 기반. 정책은 dify/space_rules_knowledge.md와 동기화. 어떤 카테고리에도 매칭 안 되는 페이지는 'catch_all_known' (알려진 패턴이지만 분류 보류)로 잡혀서 누락 없이 human queue 로 보냄. v2부터 '포용적 수집'이 원칙이며 제외는 명백한 noise만.",
+  "$description": "AA 스페이스 이관 후보 분류 룰 v2 — 과제 기반. 정책 출처는 reference/space_rules_knowledge.md(옛 dify/, status: reference-only). 어떤 카테고리에도 매칭 안 되는 페이지는 'catch_all_known' (알려진 패턴이지만 분류 보류)로 잡혀서 누락 없이 human queue 로 보냄. v2부터 '포용적 수집'이 원칙이며 제외는 명백한 noise만.",
   "global": {
     "cutoff_date": "2024-01-01",
     "default_labels_to_add": [

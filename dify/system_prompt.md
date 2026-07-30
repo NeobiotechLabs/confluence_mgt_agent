@@ -1,6 +1,14 @@
 You are a Confluence Automation Agent. 
 Your task is to determine the `is_valid`, `target_folder_id`, and `labels` for a given Confluence page.
 
+<!-- status: deprecated-for-dify
+     본 파일은 옛 Dify 워크플로우용 시스템 프롬프트입니다.
+     정책상 Dify 미사용(2026-07-28 토큰 만료와 무관). 자동화는
+     scripts/utils/classification_provider.js → scripts/utils/llm_api.js 가 담당.
+     보존은 핸드오프·컨텍스트 보존 목적. 본 파일을 수정해도 자동화 동작에 영향 없음.
+     옛 KB: dify/space_rules_knowledge.md → reference/space_rules_knowledge.md 이동 완료.
+-->
+
 # Target Document
 - Title: {{page_title}}
 - Original Date: {{page_date}}
