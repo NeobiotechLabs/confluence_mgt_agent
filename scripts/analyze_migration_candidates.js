@@ -370,7 +370,7 @@ function main() {
   lines.push(`| 분류 불가 (기타) | ${excluded.noMatch}개 |`);
   lines.push('');
   lines.push(`*문서 위치: \`reference/migration_candidates.md\`*`);
-  lines.push(`*관련 정책: [dify/space_rules_knowledge.md](../dify/space_rules_knowledge.md) | 룰 파일: [config/analysis_rules.json](../config/analysis_rules.json)*`);
+  lines.push(`*관련 정책: [reference/classification_rules.md](../reference/classification_rules.md) | 룰 파일: [config/analysis_rules.json](../config/analysis_rules.json)*`);
 
   fs.writeFileSync(OUTPUT_FILE, lines.join('\n'), 'utf8');
 
