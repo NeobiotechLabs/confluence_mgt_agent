@@ -59,6 +59,49 @@ ${rows.join('\n')}
   return parts.join('\n');
 }
 
+/**
+ * §4 AI 권고판 섹션 본문 렌더 (작업 9, Phase 2-A).
+ * 정책: reference/classification_rules.md §8 (사용자 결정 2026-07-30).
+ * - 문자열 권고 → <ul><li> escapeHtml
+ * - kind:'misplacement-suspect' 객체 권고 → 표(table) 행
+ * - 혼합 시 둘 다 렌더 (문자열 먼저, 그 뒤 표)
+ * - 빈 데이터 / 자리표시 → "미실행 (Phase 2 예정)"
+ * - 봇 자동 이동 없음 — 사람이 결정 (정책 합의 §8-4)
+ */
+function renderAdvisoriesSection(advisories) {
+  const parts = ['<h2>§4 AI 권고판</h2>'];
+  const items = Array.isArray(advisories) ? advisories : [];
+  if (items.length === 0) {
+    parts.push('<p><em>미실행 (Phase 2 예정)</em></p>');
+    return parts.join('\n');
+  }
+  const strings = items.filter(a => typeof a === 'string');
+  const structured = items.filter(a => a && typeof a === 'object' && a.kind === 'misplacement-suspect');
+  if (strings.length > 0) {
+    const lis = strings.map(s => `<li>${escapeHtml(s)}</li>`).join('');
+    parts.push(`<ul>${lis}</ul>`);
+  }
+  if (structured.length > 0) {
+    const rows = structured.map(a => `<tr>
+<td>${cell(a.title)}</td>
+<td>${cell(a.currentFolderId)}</td>
+<td>${cell(a.suggestedFolderId)}</td>
+<td>${cell(a.confidence)}</td>
+<td>${cell(a.confidenceReason)}</td>
+<td>${cell(a.seenCount)}</td>
+<td>${cell(a.firstSeen)} → ${cell(a.lastSeen)}</td>
+</tr>`).join('\n');
+    parts.push(`<table><tbody>
+<tr><th>페이지</th><th>현재 폴더</th><th>추천 폴더</th><th>신뢰도</th><th>근거</th><th>seen</th><th>기간</th></tr>
+${rows}
+</tbody></table>`);
+  }
+  if (strings.length === 0 && structured.length === 0) {
+    parts.push('<p><em>미실행 (Phase 2 예정)</em></p>');
+  }
+  return parts.join('\n');
+}
+
 function noticeSection(appendix, failedMoves, advisories) {
   const notices = [];
   const orphans = appendix.metrics?.topLevelOrphans || 0;
@@ -118,8 +161,7 @@ function renderReportStorage(ctx) {
 
   parts.push(movesSection(appendix.items || [], failedMoves));
 
-  parts.push(`<h2>§4 AI 권고판</h2>
-<p><em>미실행 (Phase 2 예정)</em></p>`);
+  parts.push(renderAdvisoriesSection(advisories));
 
   const notice = noticeSection(appendix, failedMoves, advisories);
   if (notice) parts.push(notice);
@@ -132,4 +174,4 @@ ${metaTable(appendix)}`);
   return parts.join('\n');
 }
 
-module.exports = { renderReportStorage, formatDelta, METRIC_LABELS };
+module.exports = { renderReportStorage, renderAdvisoriesSection, formatDelta, METRIC_LABELS };

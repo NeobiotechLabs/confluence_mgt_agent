@@ -131,7 +131,7 @@ async function runMigrator() {
 
       if (candidates.length === 0) continue;
 
-      console.log(`📡 [3/3] Dify LLM 분석 및 이관을 시작합니다...`);
+      console.log(`📡 [3/3] 분류 체인 분석 및 이관을 시작합니다...`);
       for (const page of candidates) {
         console.log(`\n--------------------------------------------------`);
         console.log(`📄 분석 중: [${page.title}] (ID: ${page.id})`);
@@ -145,7 +145,7 @@ async function runMigrator() {
           const pageDate = srcMeta.createdAt ? srcMeta.createdAt.substring(0, 10) : ''; 
 
           // ClassifierChain 결과는 { ok, source, folderId, folderTitle, labels, reason } 모양.
-          // 하위 호환을 위해 Dify-like 모양으로 브릿지 (lines 108-120 그대로 동작).
+          // 하위 호환을 위해 기존 호출자 모양으로 정규화 (lines 108-120 그대로 동작).
           const existingLabels = await fetchPageLabels(page.id);
           const chainResult = await classifyWithChain({
             pageId: page.id,
