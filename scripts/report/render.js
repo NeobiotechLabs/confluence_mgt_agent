@@ -1,0 +1,135 @@
+// scripts/report/render.js
+'use strict';
+const { escapeHtml } = require('../utils/migration_utils');
+const { APPENDIX_MARKER } = require('./report_lib');
+
+const METRIC_LABELS = {
+  aaPageCount: 'AA 총 페이지',
+  topLevelOrphans: '최상위 고아 페이지',
+  unclassifiedCount: '미분류(미분류 폴더)',
+  movesB: '자동 이동(루프 B)',
+  advisories: '실행 경고',
+  actionRequiredCount: '관리자 조치 필요',
+};
+
+/** delta 표시: null → "—"(직전 리포트 없음), 양수 → "+n", 그 외 그대로 */
+function formatDelta(v) {
+  if (v === null || v === undefined) return '—';
+  return v > 0 ? `+${v}` : String(v);
+}
+
+function cell(v) {
+  return escapeHtml(String(v ?? '—'));
+}
+
+function metricsSection(metrics, deltas) {
+  const rows = Object.keys(METRIC_LABELS).map(k => {
+    const label = METRIC_LABELS[k];
+    const val = metrics[k];
+    const d = deltas ? deltas[k] : null;
+    return `<tr><td>${escapeHtml(label)}</td><td>${cell(val)}</td><td>${escapeHtml(formatDelta(d))}</td></tr>`;
+  });
+  return `<h2>§1 요약</h2>
+<table><tbody>
+<tr><th>지표</th><th>오늘</th><th>전일 대비</th></tr>
+${rows.join('\n')}
+</tbody></table>`;
+}
+
+function movesSection(items, failedMoves) {
+  const parts = ['<h2>§3 루프 B — 자동 이동 로그</h2>'];
+  const moves = (items || []).filter(it => it.kind === 'move-b');
+  if (moves.length === 0) {
+    parts.push('<p><em>오늘 자동 이동 없음.</em></p>');
+  } else {
+    const rows = moves.map(it => `<tr><td>${cell(it.title)}</td><td>${cell(it.fromFolderId)} → ${cell(it.toFolderId)}</td><td>${cell(it.source)}</td><td>${cell(it.reason)}</td><td>${cell(it.seenCount)}</td></tr>`);
+    parts.push(`<table><tbody>
+<tr><th>페이지</th><th>이동(from → to)</th><th>판정 소스</th><th>사유</th><th>seen</th></tr>
+${rows.join('\n')}
+</tbody></table>`);
+  }
+  if (failedMoves && failedMoves.length > 0) {
+    const rows = failedMoves.map(f => `<tr><td>${cell(f.title)}</td><td>${cell(f.error)}</td></tr>`);
+    parts.push(`<p><strong>이동 실패 (${failedMoves.length}건)</strong></p>
+<table><tbody>
+<tr><th>페이지</th><th>오류</th></tr>
+${rows.join('\n')}
+</tbody></table>`);
+  }
+  return parts.join('\n');
+}
+
+function noticeSection(appendix, failedMoves, advisories) {
+  const notices = [];
+  const orphans = appendix.metrics?.topLevelOrphans || 0;
+  if (orphans > 0) notices.push(`최상위 고아 페이지 ${orphans}개가 홈페이지 직속에 남아 있습니다. 분류 정책을 확인하세요.`);
+  if (failedMoves && failedMoves.length > 0) notices.push(`자동 이동 실패 ${failedMoves.length}건 — §3 실패 표를 확인하세요.`);
+  for (const a of advisories || []) notices.push(a);
+  if (notices.length === 0) return '';
+  const lis = notices.map(n => `<li>${escapeHtml(n)}</li>`).join('');
+  return `<h2>§5 관리자 알림</h2>
+<ac:structured-macro ac:name="warning" ac:schema-version="1"><ac:rich-text-body>
+<ul>${lis}</ul>
+</ac:rich-text-body></ac:structured-macro>`;
+}
+
+function metaTable(appendix) {
+  const rows = [
+    ['runId', appendix.runId],
+    ['mode', appendix.mode],
+    ['정책 해시', appendix.policyHash],
+    ['코드 SHA', appendix.gitSha],
+    ['분류 모델', appendix.model],
+  ].map(([k, v]) => `<tr><td>${escapeHtml(k)}</td><td><code>${cell(v)}</code></td></tr>`);
+  return `<table><tbody>${rows.join('')}</tbody></table>`;
+}
+
+function appendixSection(appendix) {
+  // CDATA 종료 시퀀스가 본문에 섞여도 안전하도록 표준 분할 기법 적용
+  const json = JSON.stringify(appendix, null, 2).replace(/\]\]>/g, ']]]]><![CDATA[>');
+  return `<h2>§7 기계 부록</h2>
+${APPENDIX_MARKER}
+<ac:structured-macro ac:name="code" ac:schema-version="1"><ac:parameter ac:name="language">json</ac:parameter><ac:plain-text-body><![CDATA[${json}]]></ac:plain-text-body></ac:structured-macro>`;
+}
+
+/**
+ * 일일 리포트의 Confluence storage format 본문을 렌더.
+ * 모든 동적 값은 escapeHtml 처리. 부록 JSON은 코드 매크로 CDATA로 임베드.
+ *
+ * @param {Object} ctx
+ * @param {Object} ctx.appendix - 부록 스키마 v1 객체 (runAt/runId/mode/policyHash/model/gitSha/metrics/items/advisories)
+ * @param {Object} [ctx.deltas] - diffMetrics 결과 (null → "—")
+ * @param {Array}  [ctx.failedMoves] - [{title, error}]
+ * @param {Array}  [ctx.advisories] - 문자열 배열 (appendix.advisories와 동일해도 됨)
+ * @returns {string} storage format HTML
+ */
+function renderReportStorage(ctx) {
+  const { appendix, deltas = {}, failedMoves = [], advisories = [] } = ctx;
+  const parts = [];
+
+  parts.push(`<ac:structured-macro ac:name="info" ac:schema-version="1"><ac:rich-text-body>
+<p><strong>🤖 AA 스페이스 자동화 일일 리포트</strong> — 생성 시각(KST): ${cell(appendix.runAt)}</p>
+</ac:rich-text-body></ac:structured-macro>`);
+
+  parts.push(metricsSection(appendix.metrics || {}, deltas));
+
+  parts.push(`<h2>§2 루프 A — 휴먼 결정 학습</h2>
+<p><em>미실행 (Phase 2 예정)</em></p>`);
+
+  parts.push(movesSection(appendix.items || [], failedMoves));
+
+  parts.push(`<h2>§4 AI 권고판</h2>
+<p><em>미실행 (Phase 2 예정)</em></p>`);
+
+  const notice = noticeSection(appendix, failedMoves, advisories);
+  if (notice) parts.push(notice);
+
+  parts.push(`<h2>§6 실행 메타</h2>
+${metaTable(appendix)}`);
+
+  parts.push(appendixSection(appendix));
+
+  return parts.join('\n');
+}
+
+module.exports = { renderReportStorage, formatDelta, METRIC_LABELS };

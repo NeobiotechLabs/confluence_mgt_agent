@@ -1,53 +1,35 @@
 name: Confluence AA Space Automation
 
+# Auto-PR 제거(2026-07): 출력 채널이 GitHub 파일 커밋+PR에서 Confluence 일일 리포트로 전환됨.
+# 저장소 쓰기 권한 불필요 → read 전용으로 축소.
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
 
 on:
   schedule:
-    - cron: '0 0 * * *'
+    - cron: '0 0 * * *' # UTC 00:00 = KST 09:00 — 매일 리포트 1장 생성이 정상(심박 신호)
   workflow_dispatch:
 
 jobs:
-  audit-aa:
+  # audit + reorganize + Confluence 일일 리포트 POST를 한 프로세스에서 실행.
+  # audit/reorganize가 실패해도 리포트 POST는 반드시 시도된다(심박 보장).
+  # exit code는 리포트 POST 성패로만 결정된다(부분 실패는 리포트 내 경고로 기록).
+  daily-report:
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with: { node-version: '18', cache: 'npm' }
       - run: npm install
-      - name: Audit AA Space
-        env:
-          CONFLUENCE_EMAIL: ${{ secrets.CONFLUENCE_EMAIL }}
-          CONFLUENCE_TOKEN: ${{ secrets.CONFLUENCE_TOKEN }}
-        run: node scripts/audit_aa_space.js
-      - name: Auto-PR if decisions.json changed
-        uses: peter-evans/create-pull-request@v5
-        with:
-          commit-message: "chore(audit): auto-commit human decisions"
-          title: "[bot] Audit human moves"
-          branch: bot/audit-decisions
-          branch-suffix: timestamp
-          add-paths: config/classification_decisions.json
-
-  reorganize-aa:
-    needs: audit-aa
-    runs-on: self-hosted
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with: { node-version: '18', cache: 'npm' }
-      - run: npm install
-      - name: Reorganize AA Space
+      - name: Run daily report (audit + reorganize + report)
         env:
           CONFLUENCE_EMAIL: ${{ secrets.CONFLUENCE_EMAIL }}
           CONFLUENCE_TOKEN: ${{ secrets.CONFLUENCE_TOKEN }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-        run: node scripts/reorganize_aa_space.js
+        run: node scripts/report_aa_daily.js
 
   migrate:
-    needs: reorganize-aa
+    needs: daily-report
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v3
@@ -62,7 +44,7 @@ jobs:
         run: node scripts/migrator.js
 
   notify-failure:
-    needs: [audit-aa, reorganize-aa, migrate]
+    needs: [daily-report, migrate]
     if: failure()
     runs-on: self-hosted
     steps:
@@ -84,4 +66,4 @@ jobs:
           subject: 🚨 [Confluence 봇] 자동화 작업 실패 알림
           to: ${{ secrets.NOTIFY_EMAIL_TO }}
           from: Confluence Automation Bot
-          body: audit / reorganize / migrate 단계 중 하나에서 오류가 발생했습니다. GitHub Actions 로그를 확인해 주세요.
+          body: daily-report(리포트 POST) / migrate 단계 중 하나에서 오류가 발생했습니다. "오늘 리포트가 없다"면 심박 정지입니다. GitHub Actions 로그를 확인해 주세요.

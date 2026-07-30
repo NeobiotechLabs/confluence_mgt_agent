@@ -1,115 +1,121 @@
-# 이 레포지토리에서 할일
+# 프로젝트 할일 / 진행 상황 (ToDo)
 
-## 목적
-
-- 사내 Confluence 시스템의 재정비
-
-## 배경
-
-- 우리 회사에는 MPS라는 시스템이 있음. Mission/Performance objectives/ Strategy
-- 기간의 초에 각 구성원은 그 기간에 해야 할 일들을 Planning 하고, 기간의 말경 Evaluation 해야 함.
-- 사내의 대부분의 문서는 당사 confluence 페이지에 저장되고, 관리 됨
-- 이 페이지들을 데이터의 원천으로 삼아 신규 MPS를 계획하고, Evaluation 하기를 원함.
-- MPS의 계획은 연간 MPS와 지난 월간 MPS를 기준으로 계획 되어야 함.
-- 사내 Dify 시스템을 통해 MPS를 생성하고 평가하는 LLM 기반의 Workflow를 구축하고 있음
-- 사내 Dify의 MPS agent(workflow), 사내 confluence의 MPS 이력과 MPS 서버로 부터 이전 MPS들을 참고해서 작성하고,
-- 필요한 원천데이터는 confluence에서 가져와야 함.
-- 이게 잘 동작하도록 
-
-## 문제점
-
-- 하지만, 현재 우리 회사 confluence의 스페이스의 페이지는 잘 구조화 되어 있지 않아.
-- RAG 기반으로 참고하기에는 계층화가 잘 되어 있지 않고, 어떤걸 LLM이 참조해야 할 지 알기 어려워
-- 올드 페이지가 섞여 있어서, 나쁜 결과가 나와
-- 한번 정리한다 해도 계속 좋은 상태를 유지하기 어려워.
-
-## 해야 할 일
-
-1. 그렇지만, 일단은 어쩔 수 없이 한번 정리해야 함.
-    - 기존 스페이스의 문제점을 잘 검토해서, 신규 스페이스에 잘 계층화 된 구조를 만들고 싶어
-        . 기존 스페이스 : https://neobiotech.atlassian.net/wiki/spaces/SD/overview?homepageId=98524
-        . 신규 스페이스 : https://neobiotech.atlassian.net/wiki/spaces/AA/overview
-    - 그리고, LLM에서 contex 참조가 용이할 수 있도록 레이블 혹은 태그 지정을 하도록 하고 싶어.
-    - 정책을 정리해서 지속적인 유지가 될 수 있도록 해야 해.
-    - 기존 스페이스의 페이지는 유지 하고, 위의 정책에 맞는 페이지만 신규 스페이스에 복사해야 해.
-    - 신규 스페이스는 MPS 작성에 (planning / evaluation) 필요한 정보만 남기고, 완료 되지 않았거나, 단순 기록성이거나 한 정보는 기존 스페이스 혹은 별도 프로젝트 스페이스에 기록을 남기도록 해야 해.
-2. 정리 이후, 지속 가능해야 해. 물론 기본적으로 사용자가 1번에서 만든 정책을 잘 따라야 하겠지만, 스페이스 관리지가 필요해
-    - 하지만, 여기에 휴먼 리소스를 사용할 수는 없고, AI Agent 혹은 workflow 구축해서 자동화 하는게 목표야.
-    - 사내 Dify 시스템이 있기 때문에 그걸 활용해서 confluence를 유지 보수 하는 자동화를 만들거야. 기능은 (러프하게)
-        . 새로 생성된 페이지의 위치가 정책에 위배 되면, slack 혹은 email 로 이동 요청 시킬 수 있어야 함
-        . 정책에 따라 레이블 혹은 태그가 없을 시, 페이지 내용 파악해서 자동 tagging 하고 글 작성자에게 알림
-        . 일정 기간 (6개월) 지난 페이지는 신규 스페이스에서 이동필요한 지, 파악할 수 있도록 작성자에게 알림.
-            * 내용의 성격에 따라 계속 참고해야 할 수 도 있어. 이런건 특정 레이블이 필요할거 같아.
-
-## 현재 마이그레이션 이후 문제 및 해결 상태
-
-- 이전 스크립트 기반으로 마이그레이션이 되었고, 이후 신규 계층구조로 업데이트 해서, update 옵션으로 정리 했으나 아래 문제들이 발견되어 **초기화 후 재마이그레이션**을 결정했습니다. (`npm run clean:aa` 후 `npm run migrate:all` 진행)
-
-1. **[해결됨]** SD 에서 처음 마이그레이션 될 때는, 계층 구조를 알고 있었는데 (원래 설계가 flat 했음). 이후 업데이트 할때는 이미 flat 해져서 인지, 신규 계층 구조에 페이지 들이 이동하길 기대 했으나, 이동안됨.
-    - **원인/해결**: Confluence Cloud의 '스페이스 내 동일 제목 불가' 제약으로 인해 2026년 하위 폴더 생성이 누락되었음. 폴더명에 연도를 포함(`25 연구소`, `26 연구소` 등)하여 고유 제목을 보장함으로써 `setup_aa_space.js`가 정상적으로 구조를 생성하도록 수정.
-2. **[해결됨]** LABEL을 group-center / group-ai 등으로 바꿨으나, 여전희 team-center로 되어 있음
-    - **원인/해결**: Confluence V2 API 및 레이블 정책 이슈. 마이그레이션 스크립트에서 레이블 텍스트 정규화(콜론 제외, 하이픈 사용) 로직을 개선하여 올바른 레이블을 부착하도록 수정.
-3. **[해결됨]** 이동한 페이지는 원본 페이지에 붙어 있던 영상 정보나 이미지 정보가 미리보기 안됨. 참조 경로 문제 아닐까 함.
-    - **원인/해결**: 첨부파일 복사 로직의 부재 및 다운로드 권한 문제(AWS S3 리다이렉트 400 오류, 구버전 링크 401 오류). 
-    - **조치**: 최신 REST API 엔드포인트를 사용하여 이미지만 다운로드 및 새 페이지에 업로드하도록 구현. 영상은 다운로드하지 않고 페이지 상단에 원본 페이지 참조 배너를 추가하여 해결.
-
-- **현재 상태**: 모든 문제를 해결한 `migrate_to_aa_space.js` (v2) 스크립트로 이관 작업을 재진행 중입니다.
+> 마지막 갱신: 2026-07-30
+>
+> 이 문서는 **현재 정책과 상태**를 기준으로 작성되었습니다. 옛 정책(Dify, human 큐, v1 폴더 규칙 등)은 더 이상 사실이 아니므로 이 문서에 남아 있지 않습니다.
 
 ---
 
-## Dify 토큰 만료로 인한 작업 중단 및 복구 계획
+## 0. 한 줄 요약
 
-### 현황 (2026-07-28)
+- **목표**: 사내 Confluence 신규 스페이스(AA)를 잘 구조화해서, MPS(Planning/Evaluation) 작성용 RAG 원천으로 유지.
+- **현재 상태**: AA 스페이스 이관 + 일일 자동 리포트 + 자가 정화(audit·reorganize) 동작 중. 분류 체인은 **rule → inline-llm(Anthropic) → fallback** 단일 흐름으로 단순화 완료.
+- **다음 큰 작업**: 분류 체인의 워크플로우 YAML 재편(작업 4) + 룰 변경 자동화(작업 5).
 
-- 사내 Dify의 MPS 분류 워크플로우 API 토큰이 만료되어, GitHub Actions 기반 자동 분류/감사 (`scripts/migrator.js`, `scripts/auditor.js`)가 장기간 동작 중지 상태.
-- 그나마 마이그레이션 본체(`scripts/migrate_to_aa_space.js`)는 Dify 호출이 없으므로 영향이 없음 → 로컬에서 직접 `npm run migrate:all` 등으로 밀린 건을 처리 가능 (자세한 절차는 위 "현재 마이그레이션 이후 문제 및 해결 상태" 섹션의 v2 절차 참고).
+---
 
-### 즉시(Now): 로컬에서 밀린 마이그레이션 처리
+## 1. 아키텍처 — 현재 사실
 
-1. `.env`에 `CONFLUENCE_EMAIL`, `CONFLUENCE_TOKEN`만 설정 (DIFY_* 키는 없어도 무관).
-2. `npm install` 후 `npm run setup:aa` → `npm run migrate:all` 또는 카테고리별 명령(`migrate:mps`, `migrate:project`, `migrate:tech`, `migrate:guide`, `migrate:report`) 실행.
-3. `utils/dify_api.js`의 mock 폴백은 분류 정확도가 없어서 마이그레이션 본체에는 사용하지 않음. mock은 워크플로우 재개 후 health-check 용도로만 사용.
+| 영역 | 현재 |
+|---|---|
+| 분류 체인 | `rule → inline-llm(Anthropic SDK) → fallback(unsortedFolderId, needs-review)` |
+| LLM 모델 | `claude-haiku-4-5-20251001` (env `ANTHROPIC_MODEL`로 override 가능) |
+| LLM 키 | GitHub Actions Secrets `ANTHROPIC_API_KEY`. `.env`에는 넣지 않음(워크플로우 env 주입) |
+| 출력 채널 | Confluence 일일 리포트 페이지(AA 스페이스 "자동화 리포트" 폴더) |
+| Cron | 매일 KST 09:00 — `scripts/report_aa_daily.js` 단일 job |
+| 마이그레이션 | `scripts/migrator.js`(멱등 — `findPageByTitleInAA`로 동명 페이지 제자리 동기화) |
+| 자가 정화 | `scripts/audit_aa_space.js` + `scripts/reorganize_aa_space.js` |
+| 더 이상 사용 안 함 | Dify 워크플로우, human queue, `scripts/classifiers/claude.js`, `scripts/classifiers/human.js` (engine이 위임만 하고 호출 경로 없음) |
 
-### 다음 단계(Not Now): Dify에서 하던 분류/감사를 GitHub Actions로 이관
+상세 의도/배경/변경 절차: [`reference/classification_rules.md`](classification_rules.md).
 
-**목표**: 사내 Dify 토큰 의존을 끊고, GitHub Actions(self-hosted runner) + 자체 스크립트로 분류/감사를 수행. 결과적으로 외부 토큰 만료에 영향받지 않는 자급자족형 자동화.
+---
 
-**작업 항목**
+## 2. 주요 npm 명령어
 
-1. **분류 룰 추출 및 버전화**
-   - 현재 Dify 워크플로우의 system prompt / 룰 텍스트를 `reference/classification_rules.md`(가칭)로 추출하여 코드와 함께 버전 관리.
-   - 룰 변경 시 PR 리뷰로 승인하는 흐름 수립.
+| 목적 | 명령어 |
+|---|---|
+| 스페이스 분석(SD 일회성) | `node scripts/analyze_sd.js` |
+| 마이그레이션 | `npm run migrate:all` (또는 `migrate:mps` / `migrate:project` / `migrate:tech` / `migrate:guide` / `migrate:report`) |
+| 자가 정화(dry-run) | `npm run reorganize:aa:dryrun` |
+| 자가 정화(실실행) | `npm run reorganize:aa` |
+| 감사 | `npm run audit:aa` |
+| **일일 리포트(dry-run)** | `npm run report:aa:dryrun` |
+| **일일 리포트(실실행)** | `npm run report:aa` |
+| 로컬 CI 시뮬레이션 | `npm run ci:local:dryrun` |
+| LLM 환경 점검 | `npm run check:llm` |
+| 테스트 | `npm test` |
 
-2. **`utils/dify_api.js` 추상화 (`classification_provider.js`)**
-   - `getPageClassificationFromDify`를 `classifyPage(provider, ...)` 형태로 리팩터.
-   - 지원 provider: `dify` (기존), `mock` (개발/폴백), `inline-llm` (신규; OpenAI/Anthropic 직접 호출).
-   - provider 선택은 `.env`의 `CLASSIFICATION_PROVIDER`로 분기.
+---
 
-3. **자체 LLM 호출 모듈 (`utils/llm_api.js`)**
-   - 입력: 페이지 제목/본문/AA context tree/원본 스페이스/작성일.
-   - 출력 스키마는 Dify와 동일한 JSON (`is_valid`, `target_folder_id`, `labels`, `needs_new_category`, `suggested_new_folder`, `reason`).
-   - 모델은 GitHub Actions Secrets에 등록된 키 사용 (예: `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`).
+## 3. 완료된 작업 (체크리스트)
 
-4. **워크플로우 재구성**
-   - `.github/workflows/confluence_automation.yml`을 `migrator`(수집/이관)와 `auditor`(자가 정화) 두 job으로 분리하고 각각 `CLASSIFICATION_PROVIDER` env를 주입.
-   - Dify 토큰 만료 시 자동으로 `inline-llm` provider로 fallback하도록 step 추가.
-   - 실패 시 Slack/Email 알림은 기존 step 유지.
+### 3-1. 일일 자동 리포트 (Phase 1) — 2026-07-29
+- 스펙: [`docs/spec_auto_report.md`](../docs/spec_auto_report.md) (DRAFT v0.2), 운영: [`docs/AUTOMATION_GUIDE.md`](../docs/AUTOMATION_GUIDE.md)
+- 심박 신호: 매일 KST 09:00 cron이 AA 스페이스 "자동화 리포트" 폴더에 리포트 1장을 **반드시** 생성. audit/reorganize 실패해도 POST는 실행. "오늘 리포트 없음 = 장애".
+- Auto-PR 제거: `peter-evans/create-pull-request` 삭제, 워크플로우 `permissions: contents: read`로 축소. `audit-aa`+`reorganize-aa` 2 job → `daily-report` 1 job 통합.
+- 리포트 구성: 헤더 / §1 요약 계수(전일 delta) / §3 루프 B 이동 로그 / §5 조건부 관리자 알림 / §6 실행 메타 / §7 기계 부록(JSON).
+- 보관: 31일 초과분 매일 자동 삭제(최근 7개 무조건 보존).
+- 버그 수정:
+  - `stampLastParent`의 stale `last-parent-*` 라벨 누적 제거
+  - reorganize dry-run 카운트 오표시 해소
+  - audit 최상위 고아 계수에서 `is-folder` 제외
+  - **스페이스 홈페이지**(parentId=null) 자동 이동 대상 오분류 수정 — 회귀 테스트 3건 추가
+- 테스트: `tests/report/` 4종 추가, `npm test` 56/56 PASS(현재).
 
-5. **룰 업데이트 자동화**
-   - 룰 버전(`GLOBAL_RULE_VERSION`)이 올라가면 자동으로 모든 페이지를 재감사하는 batch 워크플로우 추가 (`.github/workflows/confluence_reclassify.yml`).
-   - dry-run 모드 + 관리자 승인 후 실제 적용 2단계 구조.
+### 3-2. 마이그레이션 v2 + 멱등성 — 2026-07-29
+- `migrate_to_aa_space.js` v2 스크립트로 재이관 진행 중.
+- 해결된 문제:
+  1. SD→AA 계층 구조 미이동 → 폴더명에 연도 포함(`25 연구소`, `26 연구소` 등)하여 제목 유일성 확보.
+  2. 라벨 정규화(`group-center` ↔ `team-center`) → 콜론 제외·하이픈 사용.
+  3. 첨부(이미지/영상) 미리보기 누락 → 최신 REST API로 이미지만 다운로드·업로드, 영상은 원본 페이지 참조 배너.
+- 멱등성: `migrator.js`에 `findPageByTitleInAA` 추가 → AA에 이미 존재하는 페이지는 **제자리 덮어쓰기 동기화**(본문·배너·첨부·라벨 갱신). 폴더 이동은 audit/reorganize 담당.
 
-6. **옵션: 사내 LLM 엔드포인트 연동**
-   - Dify 복구가 늦어질 경우 사내 LLM 게이트웨이 URL을 `INTERNAL_LLM_URL`/`INTERNAL_LLM_KEY`로 받아 직접 호출하는 adapter 추가 (Dify 호환 모드).
+### 3-3. 분류 체인 단일화 — 2026-07-30
+- `scripts/utils/llm_api.js`: 공식 Anthropic SDK wrapper. `tool_use(select_folder)` 결과를 `{ok, folderId, labels, reason}`으로 정규화. 실패는 throw하지 않고 `{ok:false, source:'miss'}`로 흡수.
+- `scripts/utils/classification_provider.js`: **rule → inline-llm → fallback** 체인. `ANTHROPIC_API_KEY` 부재 시 LLM 단계 skip.
+- `scripts/classifiers/engine.js`: 신규 provider에 위임. 기존 `classifyWithChain(ctx, aaTree)` 시그니처 유지 → migrator.js·audit_aa_space.js 호환성 보존.
+- human/claude/dify 단계는 정책상 제거.
+- 문서: [`reference/classification_rules.md`](classification_rules.md).
+- 테스트: 56/56 PASS(`tests/utils/llm_api.test.js` 4건 + `tests/utils/classification_provider.test.js` 6건 + `tests/classifiers/engine.test.js` 2건 추가).
 
-**검토할 트레이드오프**
+---
 
-- LLM API 비용: 매 페이지 호출하므로 rate limit/비용 모니터링 필요. 룰 기반 휴리스틱을 우선 적용하고 모호한 페이지만 LLM에 보내는 2-tier 구조 검토.
-- 토큰/키 회전: GitHub Secrets에 키를 두므로 사내 정책상 외부 LLM 사용이 허용되는지 사전 확인 필요.
-- 결과 일관성: Dify 모델과 다른 모델로 옮길 경우 분류 결과가 달라질 수 있음 → 샘셋 비교 검증 절차 마련.
+## 4. 진행 중 / 다음 작업
 
-### 성공 기준
+### 작업 4 — 워크플로우 YAML 재편 (다음 우선)
+- `.github/workflows/confluence_automation.yml`을 `migrator`(수집/이관) + `daily-report`(자가 정화 + 리포트) 두 job으로 정리.
+- 각 job에 `ANTHROPIC_API_KEY` env 주입 확인.
+- `CLASSIFICATION_PROVIDER` env 분기는 불필요(체인 단일화로 단순화).
 
-- Dify 토큰이 없어도 `npm run migrate:all`로 마이그레이션 가능.
-- GitHub Actions에서 `migrator`/`auditor` job이 외부 토큰 없이도 동작.
-- 룰 변경 → 버전 bump → 자동 재감사 → 0원 필터링(룰/페이지 버전 동일 시 skip)으로 비용 최적화. 
+### 작업 5 — 룰 업데이트 자동화
+- 일별 cron(`daily-report`)이 자동으로 룰 변경을 흡수하므로 별도 batch 워크플로우는 **선택 사항**.
+- 필요 시: 룰 해시(`config/analysis_rules.json` sha256)가 전날과 다르면 자동으로 dry-run 리포트에 §5 알림 추가.
+
+### 작업 6 — 옵션: 사내 LLM 엔드포인트 연동
+- 사내 LLM 게이트웨이(`INTERNAL_LLM_URL` / `INTERNAL_LLM_KEY`)가 도입되면 `scripts/utils/llm_api.js`에 adapter 추가.
+- Dify 호환 모드는 불필요(정책상 Dify 미사용).
+
+---
+
+## 5. 협업 필요 (사용자 액션)
+
+- [ ] `npm run report:aa` 로컬 실실행 → Confluence에 폴더·페이지·라벨·마커 생성 확인
+- [ ] 즉시 재실행 → `_2` 접미 제목 + delta/seenCount diff 확인
+- [ ] 하위호환: `npm run audit:aa`, `npm run reorganize:aa:dryrun` 정상 동작 확인
+- [ ] PR 머지(main 보호) → Actions `workflow_dispatch` 수동 트리거 → 다음 날 cron 리포트로 최종 확인
+
+---
+
+## 6. 참고 문서
+
+| 문서 | 용도 |
+|---|---|
+| [`reference/SD_space_analysis.md`](SD_space_analysis.md) | 기존 SD 스페이스 분석(1회성 참고) |
+| [`reference/AA_space_design_plan.md`](AA_space_design_plan.md) | AA 스페이스 설계 의도 |
+| [`reference/classification_rules.md`](classification_rules.md) | 분류 체인 의도·SSOT 경계·변경 절차 |
+| [`docs/spec_auto_report.md`](../docs/spec_auto_report.md) | 일일 리포트 스펙 (DRAFT v0.2) |
+| [`docs/AUTOMATION_GUIDE.md`](../docs/AUTOMATION_GUIDE.md) | 운영 가이드 |
+| [`docs/STATUS.md`](../docs/STATUS.md) | 상태 요약(있으면) |
+| [`docs/HANDOFF.md`](../docs/HANDOFF.md) | 핸드오프(있으면) |
+| [`reference/PROJECT_STATUS.md`](PROJECT_STATUS.md) | 옛 핸드오프(Dify 기반, 2026-06-22) — **참고용, 더 이상 사실 아님** |
