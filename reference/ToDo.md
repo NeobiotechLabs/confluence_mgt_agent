@@ -1,6 +1,6 @@
 # 프로젝트 할일 / 진행 상황 (ToDo)
 
-> 마지막 갱신: 2026-07-31 (작업 10 — 유틸 스크립트 5종 완료, 작업 11 — LLM 본문 기반 분류 재설계 합의)
+> 마지막 갱신: 2026-07-31 (작업 11 — LLM 본문 기반 분류 재설계 Tasks 1-7 구현 완료, 문서 동기화)
 >
 > 이 문서는 **현재 정책과 상태**를 기준으로 작성되었습니다. 옛 정책(Dify, human 큐, v1 폴더 규칙 등)은 더 이상 사실이 아니므로 이 문서에 남아 있지 않습니다.
 
@@ -9,8 +9,8 @@
 ## 0. 한 줄 요약
 
 - **목표**: 사내 Confluence 신규 스페이스(AA)를 잘 구조화해서, MPS(Planning/Evaluation) 작성용 RAG 원천으로 유지.
-- **현재 상태**: AA 스페이스 이관 + 일일 자동 리포트 + 자가 정화(audit·reorganize) 동작 중. 분류 체인은 **rule → inline-llm(Anthropic) → fallback** 단일 흐름으로 단순화 완료. 유틸 스크립트 5종 추가(작업 10). 테스트 185/185 PASS.
-- **다음 큰 작업**: **작업 11 — LLM 본문 기반 분류 재설계**. 사용자 합의(2026-07-31): 제목 regex 분류를 폐기하고 **페이지 본문 기반 LLM 분류**로 전환. 새 체인: `human → structural check → LLM(본문) → fallback(미분류 + LLM 의견)`. 자연어 지침 파일이 `analysis_rules.json` regex를 대체. 미분류 페이지에 LLM 의견 첨부 → 사람 검토 → 지침 업데이트 학습 루프. 상세 설계: [`docs/HANDOFF.md`](../docs/HANDOFF.md) §3.
+- **현재 상태**: AA 스페이스 이관 + 일일 자동 리포트 + 자가 정화(audit·reorganize) 동작 중. 분류 체인은 **human → structural → inline-llm(본문) → fallback(미분류 + LLM 의견)** 4단계로 재설계 완료(2026-07-31, 작업 11 Tasks 1-7). 제목 regex(rule) 단계는 폐기, 판단 기준 SSOT는 `reference/classification_guidelines.md`. 유틸 스크립트 5종 추가(작업 10). 테스트 ~223 PASS 예상.
+- **다음 작업**: (1) §4 advisory 키워드-가중치 → LLM 분석 대체, (2) 사람 검토 이동 → 지침 업데이트 학습 루프, (3) 워크플로우 순서 변경(`migrate → daily-report`).
 - **사내 LLM 게이트웨이(작업 6)**: 사용자 명시 지시로 **폐기** — "사내 LLM은 현재 관심없어 나중에 필요하면 다시 추가할게". `scripts/utils/llm_api.js`의 공식 Anthropic SDK 경로만 유지.
 
 ---
@@ -19,14 +19,14 @@
 
 | 영역 | 현재 |
 |---|---|
-| 분류 체인 | `rule → inline-llm(Anthropic SDK) → fallback(unsortedFolderId, needs-review)` |
+| 분류 체인 | `human → structural → inline-llm(본문, Anthropic SDK) → fallback(미분류 + LLM 의견 코멘트)` (2026-07-31 재설계) |
 | LLM 모델 | `claude-haiku-4-5-20251001` (env `ANTHROPIC_MODEL`로 override 가능) |
 | LLM 키 | GitHub Actions Secrets `ANTHROPIC_API_KEY`. `.env`에는 넣지 않음(워크플로우 env 주입) |
 | 출력 채널 | Confluence 일일 리포트 페이지(AA 스페이스 "자동화 리포트" 폴더) |
 | Cron | 매일 KST 09:00 — `scripts/report_aa_daily.js` 단일 job |
 | 마이그레이션 | `scripts/migrator.js`(멱등 — `findPageByTitleInAA`로 동명 페이지 제자리 동기화) |
 | 자가 정화 | `scripts/audit_aa_space.js` + `scripts/reorganize_aa_space.js` |
-| 더 이상 사용 안 함 | Dify 워크플로우, human queue, `scripts/classifiers/claude.js`, `scripts/classifiers/human.js` (engine이 위임만 하고 호출 경로 없음) |
+| 더 이상 사용 안 함 | Dify 워크플로우, human queue, `scripts/classifiers/claude.js` (호환 시그니처만 잔존, 호출 경로 없음). `human.js`는 체인 0단계(human)에서 호출 중 |
 
 상세 의도/배경/변경 절차: [`reference/classification_rules.md`](classification_rules.md).
 
@@ -144,6 +144,23 @@
 - **테스트**: `tests/utils/` 4종 (tree_aa 8건, snapshot_aa_tree 7건, delete_aa_before 11건, find_unmigrated 7건). **`npm test` 185/185 PASS**.
 - **미커밋**: 5개 파일 변경 + 1개 신규(aa_report_dryrun.html, 산출물).
 
+### 3-8. LLM 본문 기반 분류 재설계 (작업 11, Tasks 1-7) — 2026-07-31 완료
+- **문제**: 제목 regex 분류(`rule` 단계)는 작성자가 제목을 어떻게 달지 예측 불가 → 룰 무한 추가 유지보수.
+- **사용자 합의(2026-07-31)**: 제목 regex 폐기, **페이지 본문 기반 LLM 분류**로 전환.
+- **새 체인**: `human → structural → inline-llm(본문 기반) → fallback(미분류 + LLM 의견)`.
+- **Tasks**:
+  1. `content_extractor.js` — 본문 추출 유틸 (HTML strip + ~2000자 truncation).
+  2. `reference/classification_guidelines.md` — 판단 기준 SSOT 자연어 지침 파일 신설. `classification_prompt.js` — system prompt 빌더.
+  3. `llm_api.js` `callLLMForClassification` — 본문 입력 + `confidence` 파싱 + `llmOpinion`/`suggestedFolderId` 정규화.
+  4. `classification_provider.js` — 체인 재편 (`human → structural → inline-llm → fallback`).
+  5. `engine.js` — 와이어링 (실 client + body 전달).
+  6. `reorganize_aa_space.js` — 본문 fetch + 미분류 시 LLM 의견 코멘트 첨부.
+  7. 문서 동기화 (분류 규칙서, USER_GUIDE, CLAUDE.md, ToDo).
+- **폐기된 단계**: `rule` 단계는 분류 체인에서 제거. `scripts/classifiers/rule.js` 모듈은 보존하되 `audit_aa_space.js`의 휴먼 결정 휴리스틱과 리포트 unmatched 추적에만 사용.
+- **신규 필드**: `confidence?: 'high'`, `llmOpinion?: string|null`, `suggestedFolderId?: string|null`.
+- **SSOT 변경**: 분류 판단 기준은 `config/analysis_rules.json` → `reference/classification_guidelines.md`.
+- **잔여 작업**: (1) §4 advisory 키워드-가중치 → LLM 분석 대체, (2) 사람 검토 이동 → 지침 업데이트 학습 루프, (3) 워크플로우 순서 변경(`migrate → daily-report`).
+
 ---
 
 ## 4. 진행 중 / 다음 작업
@@ -204,20 +221,19 @@
 - **테스트(TDD)**: `tests/report/recommend_misplacements.test.js`, `tests/report/render_advisories.test.js` 신규. 추정 10~14건.
 - **다음 작업(작업 10 후보, 보류)**: §2 루프 A 실데이터 활성화, 정책 승격(반복 항목 → 명시 룰 변환 워크플로우).
 
-### 작업 11 — LLM 본문 기반 분류 재설계 — 합의 완료, 구현 미착수 (2026-07-31)
+### 작업 11 — LLM 본문 기반 분류 재설계 — ✅ 2026-07-31 완료 (Tasks 1-7)
 - **문제**: 제목 regex 분류는 작성자가 제목을 어떻게 달지 예측 불가 → 룰 무한 추가 유지보수.
-- **사용자 합의**: "아예 내용을 기반으로 LLM이 판단" → 완전 재설계.
+- **사용자 합의(2026-07-31)**: "아예 내용을 기반으로 LLM이 판단" → 완전 재설계.
 - **새 체인**: `human(과거 결정) → structural check → LLM(본문 기반) → fallback(미분류 + LLM 의견)`
 - **핵심 변경**:
-  - rule 단계 제거 → 자연어 지침 파일(`reference/classification_guidelines.md` 예정)로 대체
+  - rule 단계 제거 → 자연어 지침 파일(`reference/classification_guidelines.md`)로 대체 (SSOT)
   - LLM 입력: `ctx.title`만 → **페이지 본문** (HTML strip + ~2000자 truncation)
   - fallback: `needs-review` → **미분류 폴더 + LLM 의견 첨부**
-  - advisory: 키워드 가중치 → **LLM 생성 의미 있는 분석**
-  - 학습 루프: 미분류 → 사람 검토 → 이동 → 지침 업데이트 → LLM 개선
-- **탐색 완료**: 코드베이스 3개 영역 (분류 체인, 감사·재조직, 리포트·advisory) 에이전트 탐색 완료.
-- **구현 계획(TDD)**: [`docs/HANDOFF.md`](../docs/HANDOFF.md) §3-5에 7단계 상세.
+  - advisory: 키워드 가중치 → **LLM 생성 의미 있는 분석** (잔여 작업)
+  - 학습 루프: 미분류 → 사람 검토 → 이동 → 지침 업데이트 → LLM 개선 (잔여 작업)
+- **Tasks 1-7 구현 완료**: 본문 추출 → 지침 파일 → LLM 호출 → 체인 재편 → 엔진 와이어링 → reorganize 통합 → 문서 동기화.
 - **호환성**: `classifyWithChain(ctx, aaTree)` 시그니처 유지.
-- **기타 보류**: 워크플로우 순서 `migrate → daily-report → notify-failure` (합의, 미구현).
+- **잔여 후속 작업**: (1) §4 advisory LLM화, (2) 지침 학습 루프, (3) 워크플로우 순서 변경(`migrate → daily-report`).
 
 ---
 

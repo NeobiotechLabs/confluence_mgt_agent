@@ -6,7 +6,7 @@
 
 | 기준 시점 | 2026-07-30 |
 |---|---|
-| 분류 체인 | `human → rule → inline-llm → fallback` (4단계, 휴먼 결정 재삽입) |
+| 분류 체인 | `human → structural → inline-llm(본문) → fallback` (4단계, 2026-07-31 재설계 — rule 단계 폐기, 판단 기준: `reference/classification_guidelines.md`) |
 | 테스트 | `npm test` — node:test 184 PASS / fail 0 |
 | 일일 리포트 | Phase 1 + 작업 5·8·9 반영 (심박 + 자동 이동 + AI 권고판 + 미매칭 추적) |
 | LLM | 공식 Anthropic SDK, 모델 `claude-haiku-4-5-20251001` (env `ANTHROPIC_MODEL`로 override) |
@@ -99,7 +99,7 @@ Confluence **AA 스페이스 → "자동화 리포트" 폴더** (왼쪽 트리).
 
 ### 1.6 분류가 어려우면 어떻게 되나 — 핵심 흐름
 
-페이지 하나를 분류할 때 체인은 **`human → rule → inline-llm → fallback`** 순서로 시도한다 (`scripts/utils/classification_provider.js`).
+페이지 하나를 분류할 때 체인은 **`human → structural → inline-llm → fallback`** 순서로 시도한다 (`scripts/utils/classification_provider.js`).
 
 ```
 페이지
@@ -108,16 +108,21 @@ Confluence **AA 스페이스 → "자동화 리포트" 폴더** (왼쪽 트리).
   │    ├─ 매칭 → 즉시 확정 (titleRegex로 매칭, targetFolderId로 이동)
   │    └─ 매칭 실패 → 다음 단계
   │    ↓
-  ├─② rule: config/analysis_rules.json 정규칙/조상 매칭 → 확정 (빠름·무료)
+  ├─② structural: 이미 유효 폴더 안에 있으면 현 위치 유지 (LLM 호출 생략)
   │    ↓ 실패
-  ├─③ inline-llm: Anthropic SDK, tool_use(select_folder)로 폴더 선택
-  │    ├─ 성공 → {ok, folderId, labels, reason}
-  │    └─ 실패/예외 → 흡수 후 {ok:false, source:'miss'}  (크래시 전파 안 함)
+  ├─③ inline-llm: Anthropic SDK, 페이지 본문 앞 2000자 + 분류 지침을 읽어
+  │    tool_use(select_folder) + confidence(high/low) 판정으로 폴더 선택
+  │    ├─ confidence: high → 확정 {ok, folderId, labels, reason, confidence}
+  │    └─ confidence: low / 미응답 → miss (크래시 전파 안 함)
   │    (ANTHROPIC_API_KEY 없으면 이 단계 자체를 skip)
   │    ↓ 실패
-  └─④ fallback: "미분류" 폴더로 이동 + `needs-review` 라벨 부착
+  └─④ fallback: "미분류" 폴더로 이동 + `needs-review` 라벨 + LLM 의견 코멘트 첨부
        (미분류 폴더 = 제목이 '미분류'·'분류 보류'·'Unsorted' 중 하나인 is-folder)
 ```
+
+- LLM 판단 기준 SSOT: `reference/classification_guidelines.md` (system prompt에 주입).
+- `confidence: low` 또는 LLM 미응답 → 미분류로 이동하고 판단 근거를 페이지 코멘트로 남깁니다. 검토 후 옮기면 그 결정이 지침 개선의 근거가 됩니다.
+- `ANTHROPIC_API_KEY` 미설정 환경에서는 LLM 단계가 생략되고 human + structural + fallback만 동작합니다.
 
 **여기서 끝나지 않는다.** fallback된 페이지와 매칭 실패 항목은 두 줄의 추적망에 걸린다:
 

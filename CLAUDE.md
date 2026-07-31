@@ -22,19 +22,19 @@ Claude Code(`claude.ai/code`)가 이 저장소에서 작업할 때 읽는 안내
 ## 2. 현재 아키텍처 (단일화 완료)
 
 ```
-(Pages) → rule → inline-llm(Anthropic SDK) → fallback(unsortedFolderId, needs-review)
+(Pages) → human → structural → inline-llm(본문, Anthropic SDK) → fallback(미분류 + LLM 의견 코멘트)
                                                                       ↓
                                             docs/report_aa_daily.js (sin)
                               (() → audit → reorganize → render → POST)
 ```
 
-- **분류 체인**: [`scripts/utils/classification_provider.js`](scripts/utils/classification_provider.js) 단일 흐름. `rule → inline-llm → fallback`. 호출자(`migrator.js`, `audit_aa_space.js`, `reorganize_aa_space.js`)는 `classifyWithChain(ctx, aaTree)`로만 접근 → 호환성 보존.
+- **분류 체인**: [`scripts/utils/classification_provider.js`](scripts/utils/classification_provider.js) 단일 흐름. `human → structural → inline-llm(본문) → fallback(미분류+의견)` (2026-07-31 재설계 — rule 단계 폐기, 판단 기준 SSOT: `reference/classification_guidelines.md`). 호출자(`migrator.js`, `audit_aa_space.js`, `reorganize_aa_space.js`)는 `classifyWithChain(ctx, aaTree)`로만 접근 → 호환성 보존.
 - **LLM**: 공식 Anthropic SDK ([`scripts/utils/llm_api.js`](scripts/utils/llm_api.js)). 모델 `claude-haiku-4-5-20251001` (env `ANTHROPIC_MODEL`로 override). `tool_use(select_folder)` 결과를 `{ok, folderId, labels, reason}`으로 정규화. throw 흡수.
 - **키 관리**: GitHub Actions Secrets `ANTHROPIC_API_KEY`. **`.env`에 절대 커밋 금지**. 키 부재 시 LLM 단계 skip → fallback.
 - **출력 채널**: Confluence 일일 리포트 페이지(AA 스페이스 "자동화 리포트" 폴더). 오늘 리포트 없음 = 장애.
 - **자가 정화**: [`scripts/audit_aa_space.js`](scripts/audit_aa_space.js) + [`scripts/reorganize_aa_space.js`](scripts/reorganize_aa_space.js) 모두 `run*({dryRun, deps?})` export → 오케스트레이터([`scripts/report_aa_daily.js`](scripts/report_aa_daily.js))에서 in-process 실행.
 - **마이그레이션**: [`scripts/migrator.js`](scripts/migrator.js) 멱등 — `findPageByTitleInAA`로 동명 페이지를 제자리 동기화(본문·배너·첨부·라벨).
-- **사용하지 않음**: Dify 워크플로우, human queue, Auto-PR(`peter-evans/create-pull-request` 제거됨), `scripts/classifiers/claude.js`, `scripts/classifiers/human.js` (호출 경로 없음).
+- **사용하지 않음**: Dify 워크플로우, human queue, Auto-PR(`peter-evans/create-pull-request` 제거됨), `scripts/classifiers/claude.js` (호출 경로 없음).
 
 ### 2-1. 워크플로우 (`.github/workflows/confluence_automation.yml`)
 - **cron**: `'0 0 * * *'` (KST 09:00) → `daily-report` 1 job.
