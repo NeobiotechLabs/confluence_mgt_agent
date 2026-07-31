@@ -20,7 +20,7 @@
 AA 스페이스 이관 + 일일 자동 리포트 + 자가 정화(audit·reorganize) **동작 중**.
 분류 체인 `human → structural → llm(본문) → fallback(미분류+의견)` 완전 재구현 완료.
 자연어 지침(`classification_guidelines.md`)이 `analysis_rules.json` regex를 대체.
-audit에서 ruleClassifier 의존 제거, policyHash에 guidelines 파일 해시 추가.
+§4 AI 권고판을 LLM 생성 분석으로 전환 (운영 데이터 종합 → 구체적 권고 3~5개).
 
 - 테스트: **223/223 PASS**
 - 미커밋 변경: 없음 (전체 커밋 완료)
@@ -52,10 +52,11 @@ audit에서 ruleClassifier 의존 제거, policyHash에 guidelines 파일 해시
 - `audit_aa_space.js` — `ruleClassifier` 의존 제거. `shouldCommitHumanDecision`을 단순화 (rule 호출 제거, always-true).
 - `report/report_lib.js` — `policyHash()` CONFIG_FILES에 `../reference/classification_guidelines.md` 추가.
 
-### 남은 보류 작업
+### 남은 보류 작업 (작업 13-15)
 
-- **워크플로우 순서 변경**: `migrate → daily-report → notify-failure` (이전 세션 합의, 미구현)
-- **§2 루프 A 실데이터**: migrator 이관 결과를 부록에 첨부 (Phase 2-B, 보류)
+- **작업 13 — 외부 이관 결과 부록 통합 (§2 루프 A)**: `migrator.js`에 `runMigrate({dryRun, deps})` export 추가 → `report_aa_daily.js`에서 호출 → 부록 items에 `kind: 'migrate-a'` 머지 → `render.js` §2 표 렌더. 스펙: `docs/ideation/autoloop_and_report.md` §2.
+- **작업 14 — 워크플로우 순서 변경**: `migrate → daily-report → notify-failure`. 작업 13 완료 후.
+- **작업 15 — 탈락 후보 판정**: LLM이 이관 가치 없는 페이지를 판별해 탈락 사유 표시.
 
 ---
 

@@ -1,6 +1,6 @@
 # 프로젝트 할일 / 진행 상황 (ToDo)
 
-> 마지막 갱신: 2026-07-31 (작업 11 — audit ruleClassifier 제거 + policyHash guidelines 추가, 문서 동기화)
+> 마지막 갱신: 2026-07-31 (작업 12 — §4 AI 권고 LLM화 + §4/§5 중복 제거 + §3 표 from→top, 작업 13-15 계획 수립)
 >
 > 이 문서는 **현재 정책과 상태**를 기준으로 작성되었습니다. 옛 정책(Dify, human 큐, v1 폴더 규칙 등)은 더 이상 사실이 아니므로 이 문서에 남아 있지 않습니다.
 
@@ -9,8 +9,8 @@
 ## 0. 한 줄 요약
 
 - **목표**: 사내 Confluence 신규 스페이스(AA)를 잘 구조화해서, MPS(Planning/Evaluation) 작성용 RAG 원천으로 유지.
-- **현재 상태**: AA 스페이스 이관 + 일일 자동 리포트 + 자가 정화(audit·reorganize) 동작 중. 분류 체인은 **human → structural → inline-llm(본문) → fallback(미분류 + LLM 의견)** 4단계로 재설계 완료(2026-07-31, 작업 11 Tasks 1-7). 제목 regex(rule) 단계는 폐기, 판단 기준 SSOT는 `reference/classification_guidelines.md`. 유틸 스크립트 5종 추가(작업 10). 테스트 223/223 PASS.
-- **다음 작업**: (1) §4 advisory 키워드-가중치 → LLM 분석 대체, (2) 사람 검토 이동 → 지침 업데이트 학습 루프, (3) 워크플로우 순서 변경(`migrate → daily-report`).
+- **현재 상태**: AA 스페이스 이관 + 일일 자동 리포트 + 자가 정화(audit·reorganize) 동작 중. 분류 체인 **human → structural → llm(본문) → fallback(미분류+의견)** 완전 재구현(작업 11). §4 AI 권고판을 LLM 생성 분석으로 전환(작업 12). 유틸 스크립트 5종(작업 10). 테스트 237/237 PASS.
+- **다음 큰 작업**: **작업 13 — 외부 이관 결과 부록 통합** (`migrator.js` export 리팩터 → §2 루프 A 표). 그 후 작업 14(워크플로우 순서), 작업 15(탈락 후보).
 - **사내 LLM 게이트웨이(작업 6)**: 사용자 명시 지시로 **폐기** — "사내 LLM은 현재 관심없어 나중에 필요하면 다시 추가할게". `scripts/utils/llm_api.js`의 공식 Anthropic SDK 경로만 유지.
 
 ---
@@ -234,7 +234,39 @@
 - **Tasks 1-7 구현 완료**: 본문 추출 → 지침 파일 → LLM 호출 → 체인 재편 → 엔진 와이어링 → reorganize 통합 → 문서 동기화.
 - **정리 작업 완료**: `audit_aa_space.js`에서 `ruleClassifier` 의존 제거(shouldCommitHumanDecision 단순화), `report_lib.js` policyHash에 `classification_guidelines.md` 해시 추가.
 - **호환성**: `classifyWithChain(ctx, aaTree)` 시그니처 유지.
-- **잔여 후속 작업**: (1) §4 advisory LLM화, (2) 지침 학습 루프, (3) 워크플로우 순서 변경(`migrate → daily-report`).
+- **잔여 후속 작업**: (1) §4 advisory LLM화 ✅ (아래 작업 12), (2) 지침 학습 루프, (3) 워크플로우 순서 변경(`migrate → daily-report`).
+
+### 작업 12 — §4/§5 중복 제거 + §4 AI 권고 LLM화 — ✅ 2026-07-31 완료
+- **§4/§5 중복 제거**: §4는 LLM 생성 권고만, §5는 운영 노이즈(orphan/failed/repeated)만 표시.
+  - `render.js`: `noticeSection`에서 advisories 루프 제거 — §5 본문에 LLM 권고 중복 안 됨.
+  - 기존 테스트 갱신 + 신규 4건 추가 (§3 표 escape, §4/§5 분리 검증).
+- **§3 표 from=null → "top (최상위 고아)" 표시**: 최상위 고아 페이지의 from을 명시.
+- **§4 AI 권고 LLM화**: `generateSpaceAdvisory(report_lib.js)` — 폴더 트리·미분류 목록·KB 미매칭 샘플·자가 정화 이동 로그를 종합해 LLM이 구체적 권고 3~5개 생성.
+  - 시스템 프롬프트: 한 권고 = 한 문장, 페이지 제목/폴더 이름 직접 인용, 액션 명시.
+  - `report_aa_daily.js` §8-4: ANTHROPIC_API_KEY 있을 때 LLM 권고 생성, 자리표시 advisory 제거.
+  - 테스트 9건 신규 (응답 파싱, 번호 제거, 빈 응답, 5개 제한, graceful 퇴화, 프롬프트 조립).
+  - 237/237 PASS.
+- **변경 파일**: `scripts/report/render.js`, `scripts/report/report_lib.js`, `scripts/report_aa_daily.js`, `tests/report/render.test.js`, `tests/report/generate_space_advisory.test.js`.
+
+### 작업 13 — 외부 이관 결과 부록 통합 (§2 루프 A) — 미착수
+- **목표**: `migrator.js`의 이관 결과를 리포트 §2 표에 통합. ideation 문서 §2의 "이관 후보 페이지 표" 구현.
+- **필요 변경**:
+  1. `migrator.js`에 `runMigrate({dryRun, deps})` export 추가 — 현재는 CLI only (main 함수).
+  2. export된 결과를 `report_aa_daily.js`에서 호출해 부록 items에 `kind: 'migrate-a'` 머지.
+  3. `render.js`에 §2 표 렌더 (이관 후보/이관 성공/탈락 후보를 한 표에).
+- **의존성**: `migrator.js` 리팩터가 선행 — export 추가 + stdout 로그 제거 + 구조화된 반환값.
+- **스펙 참조**: `docs/ideation/autoloop_and_report.md` §2.
+
+### 작업 14 — 워크플로우 순서 변경 — 미착수
+- **목표**: `migrate → daily-report → notify-failure` (현재: `daily-report → migrate → notify-failure`).
+- **의미**: 외부 이관을 먼저 실행하고, 그 결과를 리포트에 반영.
+- **선행**: 작업 13 완료 후.
+
+### 작업 15 — 탈락 후보 판정 — 미착수
+- **목표**: LLM이 "너무 의미없는 페이지"를 판별해 탈락 사유를 부록에 표시.
+- **의미**: 모든 이관 후보 페이지에 대해 분류만 하는 게 아니라, 이관 여부 자체를 판단.
+- **구현**: `callLLMForClassification`에 "이관 가치 없음" 옵션 추가 또는 별도 프롬프트.
+- **스펙 참조**: `docs/ideation/autoloop_and_report.md` §4-§7.
 
 ---
 
