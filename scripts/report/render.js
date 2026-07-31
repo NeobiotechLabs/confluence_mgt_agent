@@ -42,7 +42,10 @@ function movesSection(items, failedMoves) {
   if (moves.length === 0) {
     parts.push('<p><em>오늘 자동 이동 없음.</em></p>');
   } else {
-    const rows = moves.map(it => `<tr><td>${cell(it.title)}</td><td>${cell(it.fromFolderId)} → ${cell(it.toFolderId)}</td><td>${cell(it.source)}</td><td>${cell(it.reason)}</td><td>${cell(it.seenCount)}</td></tr>`);
+    const rows = moves.map(it => {
+      const fromDisplay = it.fromFolderId ? cell(it.fromFolderId) : '<em>top (최상위 고아)</em>';
+      return `<tr><td>${cell(it.title)}</td><td>${fromDisplay} → ${cell(it.toFolderId)}</td><td>${cell(it.source)}</td><td>${cell(it.reason)}</td><td>${cell(it.seenCount)}</td></tr>`;
+    });
     parts.push(`<table><tbody>
 <tr><th>페이지</th><th>이동(from → to)</th><th>판정 소스</th><th>사유</th><th>seen</th></tr>
 ${rows.join('\n')}
@@ -102,14 +105,59 @@ ${rows}
   return parts.join('\n');
 }
 
-function noticeSection(appendix, failedMoves, advisories) {
+/**
+ * §2 루프 A — 외부 이관 결과 표 렌더 (작업 13).
+ * kind:'migrate-a' items만 필터링하여 표로 표시.
+ * 상태별 그룹: created → synced → skipped → failed.
+ */
+function migrateSection(items) {
+  const migrateItems = (items || []).filter(it => it && it.kind === 'migrate-a');
+  const parts = ['<h2>§2 루프 A — 외부 이관 결과</h2>'];
+  if (migrateItems.length === 0) {
+    parts.push('<p><em>이관 결과 없음 (실행 안 됨 또는 후보 0건)</em></p>');
+    return parts.join('\n');
+  }
+
+  const STATUS_LABEL = { created: '신규 이관', synced: '동기화', skipped: '스킵', failed: '실패' };
+  const rows = migrateItems.map(it => {
+    const statusLabel = STATUS_LABEL[it.status] || it.status;
+    const target = it.targetFolderTitle || it.targetFolderId || '—';
+    const detail = it.error || it.reason || '—';
+    return `<tr>
+<td>${cell(it.title)}</td>
+<td>${cell(it.sourceSpace)}</td>
+<td>${cell(target)}</td>
+<td>${cell(statusLabel)}</td>
+<td>${cell(it.classifierSource || '—')}</td>
+<td>${cell(detail)}</td>
+</tr>`;
+  }).join('\n');
+
+  parts.push(`<p>총 ${migrateItems.length}건 처리</p>`);
+  parts.push(`<table><tbody>
+<tr><th>페이지</th><th>소스 스페이스</th><th>대상 폴더</th><th>상태</th><th>분류 소스</th><th>사유/오류</th></tr>
+${rows}
+</tbody></table>`);
+  return parts.join('\n');
+}
+
+function noticeSection(appendix, failedMoves, advisories, repeatedHumanDecisions) {
   const notices = [];
   const orphans = appendix.metrics?.topLevelOrphans || 0;
   if (orphans > 0) notices.push(`최상위 고아 페이지 ${orphans}개가 홈페이지 직속에 남아 있습니다. 분류 정책을 확인하세요.`);
   if (failedMoves && failedMoves.length > 0) notices.push(`자동 이동 실패 ${failedMoves.length}건 — §3 실패 표를 확인하세요.`);
-  for (const a of advisories || []) notices.push(a);
+  // advisories는 운영 노이즈만 (§5의 목적). §4 LLM 권고는 §4 단독 표시 — 중복 방지.
+
+  // Gap 2: 휴먼 결정 누적 — 같은 폴더로 3회 이상 휴먼 이동이 반복되면 룰 승격 권고
+  const repeated = Array.isArray(repeatedHumanDecisions) ? repeatedHumanDecisions : [];
+  for (const r of repeated) {
+    const sampleTitles = (r.titles || []).slice(0, 3).join(', ');
+    const suffix = (r.titles || []).length > 3 ? ` 외 ${(r.titles || []).length - 3}건` : '';
+    notices.push(`⚠️ 휴먼 결정 누적: "${escapeHtml(r.targetFolderTitle)}" 폴더로 ${r.count}회 휴먼 이동 (${sampleTitles}${suffix}, 최초 ${r.firstDecidedAt}). analysis_rules.json에 명시 룰 추가를 검토하세요.`);
+  }
+
   if (notices.length === 0) return '';
-  const lis = notices.map(n => `<li>${escapeHtml(n)}</li>`).join('');
+  const lis = notices.map(n => `<li>${n}</li>`).join('');
   return `<h2>§5 관리자 알림</h2>
 <ac:structured-macro ac:name="warning" ac:schema-version="1"><ac:rich-text-body>
 <ul>${lis}</ul>
@@ -147,7 +195,7 @@ ${APPENDIX_MARKER}
  * @returns {string} storage format HTML
  */
 function renderReportStorage(ctx) {
-  const { appendix, deltas = {}, failedMoves = [], advisories = [] } = ctx;
+  const { appendix, deltas = {}, failedMoves = [], advisories = [], repeatedHumanDecisions = [] } = ctx;
   const parts = [];
 
   parts.push(`<ac:structured-macro ac:name="info" ac:schema-version="1"><ac:rich-text-body>
@@ -156,14 +204,13 @@ function renderReportStorage(ctx) {
 
   parts.push(metricsSection(appendix.metrics || {}, deltas));
 
-  parts.push(`<h2>§2 루프 A — 휴먼 결정 학습</h2>
-<p><em>미실행 (Phase 2 예정)</em></p>`);
+  parts.push(migrateSection(appendix.items || []));
 
   parts.push(movesSection(appendix.items || [], failedMoves));
 
   parts.push(renderAdvisoriesSection(advisories));
 
-  const notice = noticeSection(appendix, failedMoves, advisories);
+  const notice = noticeSection(appendix, failedMoves, advisories, repeatedHumanDecisions);
   if (notice) parts.push(notice);
 
   parts.push(`<h2>§6 실행 메타</h2>

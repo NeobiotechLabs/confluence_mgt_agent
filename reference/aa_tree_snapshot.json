@@ -1,0 +1,2034 @@
+{
+  "capturedAt": "2026-07-30T20:04:27.117+09:00",
+  "folders": [
+    {
+      "id": "480608401",
+      "title": "자동화 리포트",
+      "parentId": "426344771"
+    },
+    {
+      "id": "479232027",
+      "title": "기술 조사 / 시장 분석",
+      "parentId": "426344771"
+    },
+    {
+      "id": "479232003",
+      "title": "DYN — 의료기기 IEC 62304 산출물",
+      "parentId": "426344771"
+    },
+    {
+      "id": "479133745",
+      "title": "분류 보류",
+      "parentId": "426344771"
+    },
+    {
+      "id": "479133725",
+      "title": "주간·월간 보고",
+      "parentId": "426344771"
+    },
+    {
+      "id": "479133705",
+      "title": "DN — Dynamic Navigation",
+      "parentId": "426344771"
+    },
+    {
+      "id": "479002637",
+      "title": "Device — HW 부품/업체 조사",
+      "parentId": "426344771"
+    },
+    {
+      "id": "478740517",
+      "title": "전사 How-To / 개발 가이드",
+      "parentId": "426344771"
+    },
+    {
+      "id": "478740497",
+      "title": "SmileArch — Smile Design v2.0",
+      "parentId": "426344771"
+    },
+    {
+      "id": "478642178",
+      "title": "전사 AI 전략 / 로드맵",
+      "parentId": "426344771"
+    },
+    {
+      "id": "478543900",
+      "title": "26 연구소",
+      "parentId": "433586202"
+    },
+    {
+      "id": "438927376",
+      "title": "정리 중",
+      "parentId": "426344771"
+    },
+    {
+      "id": "437256200",
+      "title": "Dynamic Navigation 프로젝트",
+      "parentId": "433356836"
+    },
+    {
+      "id": "435257365",
+      "title": "26 SW 과제",
+      "parentId": "433586202"
+    },
+    {
+      "id": "435028020",
+      "title": "26 Device 과제",
+      "parentId": "433586202"
+    },
+    {
+      "id": "434864215",
+      "title": "26 AI 과제",
+      "parentId": "433586202"
+    },
+    {
+      "id": "434339867",
+      "title": "정부과제",
+      "parentId": "433356836"
+    },
+    {
+      "id": "434339847",
+      "title": "MPS 이력",
+      "parentId": "426344771"
+    },
+    {
+      "id": "434307121",
+      "title": "AI·ML 기술",
+      "parentId": "434143237"
+    },
+    {
+      "id": "434307101",
+      "title": "Device 프로젝트",
+      "parentId": "433356836"
+    },
+    {
+      "id": "434307081",
+      "title": "팀 운영 가이드",
+      "parentId": "426344771"
+    },
+    {
+      "id": "434274307",
+      "title": "특허·논문 분석",
+      "parentId": "434143237"
+    },
+    {
+      "id": "434176022",
+      "title": "2025년 보고",
+      "parentId": "433586182"
+    },
+    {
+      "id": "434143257",
+      "title": "제품·시장 조사",
+      "parentId": "434143237"
+    },
+    {
+      "id": "434143237",
+      "title": "기술 조사 & 인사이트",
+      "parentId": "426344771"
+    },
+    {
+      "id": "433913929",
+      "title": "2026년 보고",
+      "parentId": "433586182"
+    },
+    {
+      "id": "433913899",
+      "title": "SW 프로젝트",
+      "parentId": "433356836"
+    },
+    {
+      "id": "433815584",
+      "title": "AI 프로젝트",
+      "parentId": "433356836"
+    },
+    {
+      "id": "433586226",
+      "title": "기술 표준 & 아키텍처",
+      "parentId": "434143237"
+    },
+    {
+      "id": "433586202",
+      "title": "2026년 월간·주간",
+      "parentId": "434339847"
+    },
+    {
+      "id": "433586182",
+      "title": "주간·월간 보고 (보관)",
+      "parentId": "426344771"
+    },
+    {
+      "id": "433356856",
+      "title": "연간 MPS",
+      "parentId": "434339847"
+    },
+    {
+      "id": "433356836",
+      "title": "프로젝트 현황",
+      "parentId": "426344771"
+    }
+  ],
+  "pages": [
+    {
+      "id": "426344771",
+      "title": "AA 스페이스 운영 정책 가이드",
+      "parentId": null,
+      "labels": [
+        "group-center",
+        "doctype-guideline",
+        "status-evergreen"
+      ]
+    },
+    {
+      "id": "433356836",
+      "title": "프로젝트 현황",
+      "parentId": "426344771",
+      "labels": [
+        "group-center",
+        "doctype-project-status",
+        "status-active",
+        "is-folder",
+        "last-parent-426344771"
+      ]
+    },
+    {
+      "id": "433356856",
+      "title": "연간 MPS",
+      "parentId": "434339847",
+      "labels": [
+        "is-folder",
+        "doctype-mps-annual",
+        "group-center",
+        "status-active",
+        "rag-priority",
+        "last-parent-434339847"
+      ]
+    },
+    {
+      "id": "433586182",
+      "title": "주간·월간 보고 (보관)",
+      "parentId": "426344771",
+      "labels": [
+        "is-folder",
+        "doctype-mps-weekly",
+        "group-center",
+        "status-active",
+        "last-parent-426344771"
+      ]
+    },
+    {
+      "id": "433586202",
+      "title": "2026년 월간·주간",
+      "parentId": "434339847",
+      "labels": [
+        "group-center",
+        "year-2026",
+        "status-active",
+        "is-folder",
+        "last-parent-434339847"
+      ]
+    },
+    {
+      "id": "433586226",
+      "title": "기술 표준 & 아키텍처",
+      "parentId": "434143237",
+      "labels": [
+        "is-folder",
+        "doctype-tech-survey",
+        "group-sw",
+        "status-active",
+        "last-parent-434143237"
+      ]
+    },
+    {
+      "id": "433815584",
+      "title": "AI 프로젝트",
+      "parentId": "433356836",
+      "labels": [
+        "is-folder",
+        "doctype-project-status",
+        "group-ai",
+        "status-active",
+        "last-parent-433356836"
+      ]
+    },
+    {
+      "id": "433913899",
+      "title": "SW 프로젝트",
+      "parentId": "433356836",
+      "labels": [
+        "is-folder",
+        "doctype-project-status",
+        "group-sw",
+        "status-active",
+        "last-parent-433356836"
+      ]
+    },
+    {
+      "id": "433913929",
+      "title": "2026년 보고",
+      "parentId": "433586182",
+      "labels": [
+        "year-2026",
+        "group-center",
+        "doctype-mps-weekly",
+        "is-folder",
+        "last-parent-433586182"
+      ]
+    },
+    {
+      "id": "434143237",
+      "title": "기술 조사 & 인사이트",
+      "parentId": "426344771",
+      "labels": [
+        "is-folder",
+        "doctype-tech-survey",
+        "group-center",
+        "status-active",
+        "last-parent-426344771"
+      ]
+    },
+    {
+      "id": "434143257",
+      "title": "제품·시장 조사",
+      "parentId": "434143237",
+      "labels": [
+        "is-folder",
+        "doctype-market-survey",
+        "group-center",
+        "status-active",
+        "last-parent-434143237"
+      ]
+    },
+    {
+      "id": "434176022",
+      "title": "2025년 보고",
+      "parentId": "433586182",
+      "labels": [
+        "is-folder",
+        "year-2025",
+        "group-center",
+        "doctype-mps-weekly",
+        "last-parent-433586182"
+      ]
+    },
+    {
+      "id": "434274307",
+      "title": "특허·논문 분석",
+      "parentId": "434143237",
+      "labels": [
+        "is-folder",
+        "doctype-patent",
+        "group-center",
+        "status-active",
+        "last-parent-434143237"
+      ]
+    },
+    {
+      "id": "434307081",
+      "title": "팀 운영 가이드",
+      "parentId": "426344771",
+      "labels": [
+        "is-folder",
+        "doctype-guideline",
+        "group-center",
+        "status-evergreen",
+        "last-parent-426344771"
+      ]
+    },
+    {
+      "id": "434307101",
+      "title": "Device 프로젝트",
+      "parentId": "433356836",
+      "labels": [
+        "is-folder",
+        "doctype-project-status",
+        "group-device",
+        "status-active",
+        "last-parent-433356836"
+      ]
+    },
+    {
+      "id": "434307121",
+      "title": "AI·ML 기술",
+      "parentId": "434143237",
+      "labels": [
+        "is-folder",
+        "doctype-tech-survey",
+        "group-ai",
+        "status-active",
+        "last-parent-434143237"
+      ]
+    },
+    {
+      "id": "434339847",
+      "title": "MPS 이력",
+      "parentId": "426344771",
+      "labels": [
+        "is-folder",
+        "doctype-mps-monthly",
+        "group-center",
+        "status-active",
+        "last-parent-426344771"
+      ]
+    },
+    {
+      "id": "434339867",
+      "title": "정부과제",
+      "parentId": "433356836",
+      "labels": [
+        "is-folder",
+        "doctype-gov-project",
+        "group-center",
+        "status-active",
+        "last-parent-433356836"
+      ]
+    },
+    {
+      "id": "434864215",
+      "title": "26 AI 과제",
+      "parentId": "433586202",
+      "labels": [
+        "is-folder",
+        "group-ai",
+        "year-2026",
+        "last-parent-433586202"
+      ]
+    },
+    {
+      "id": "434864394",
+      "title": "SW - 2월 월간 MPS",
+      "parentId": "435257365",
+      "labels": [
+        "group-center",
+        "doctype-mps-monthly",
+        "year-2026",
+        "status-completed",
+        "rag-source",
+        "migrated-sd",
+        "last-parent-435257365"
+      ]
+    },
+    {
+      "id": "434864471",
+      "title": "Device - '26 4월 월간 MPS (SIDEX 준비 · 대면평가 · 협약 수정계획)",
+      "parentId": "438927376",
+      "labels": [
+        "group-center",
+        "doctype-mps-monthly",
+        "year-2026",
+        "status-completed",
+        "rag-source",
+        "migrated-sd",
+        "last-parent-438927376"
+      ]
+    },
+    {
+      "id": "434864504",
+      "title": "2026-05-07 Weekly MPS Evaluation & Planning",
+      "parentId": "438927376",
+      "labels": [
+        "group-center",
+        "doctype-mps-weekly",
+        "year-2026",
+        "status-completed",
+        "rag-source",
+        "migrated-sd",
+        "last-parent-438927376"
+      ]
+    },
+    {
+      "id": "434897288",
+      "title": "2026 강원지역혁신클러스터육성(R&D) 선도형 사업비",
+      "parentId": "434339867",
+      "labels": [
+        "group-center",
+        "doctype-gov-project",
+        "year-2026",
+        "status-active",
+        "rag-source",
+        "migrated-sd",
+        "last-parent-434339867"
+      ]
+    },
+    {
+      "id": "434897809",
+      "title": "RAG / RAG + FT / Prompt개선 RAG 비교",
+      "parentId": "434307121",
+      "labels": [
+        "group-ai",
+        "doctype-tech-survey",
+        "status-active",
+        "month-2026-03",
+        "last-parent-434307121"
+      ]
+    },
+    {
+      "id": "434929892",
+      "title": "2026 글로벌기업산업기술연계 참여연구원 구성",
+      "parentId": "434339867",
+      "labels": [
+        "group-center",
+        "doctype-gov-project",
+        "year-2026",
+        "status-active",
+        "rag-source",
+        "migrated-sd",
+        "last-parent-434339867"
+      ]
+    },
+    {
+      "id": "434929948",
+      "title": "Weekly MPS Evaluation & Planning",
+      "parentId": "433913929",
+      "labels": [
+        "group-center",
+        "doctype-mps-weekly",
+        "year-2026",
+        "status-completed",
+        "rag-source",
+        "migrated-sd",
+        "last-parent-433913929"
+      ]
+    },
+    {
+      "id": "434930504",
+      "title": "[논문 리뷰] 기술 요구사항 자동 추출을 위한 소형 언어 모델(SLM)의 데이터 중심 파인튜닝",
+      "parentId": "434307121",
+      "labels": [
+        "group-ai",
+        "doctype-tech-survey",
+        "status-active",
+        "month-2026-01",
+        "last-parent-434307121"
+      ]
+    },
+    {
+      "id": "434930543",
+      "title": "FT/RAG 파이프라인 문제,원인 분석",
+      "parentId": "434307121",
+      "labels": [
+        "group-ai",
+        "doctype-tech-survey",
+        "status-active",
+        "month-2026-02",
+        "last-parent-434307121"
+      ]
+    },
+    {
+      "id": "434930566",
+      "title": "Base / RAG / Fine-Tuning 답변비교",
+      "parentId": "434307121",
+      "labels": [
+        "group-ai",
+        "doctype-tech-survey",
+        "status-active",
+        "month-2026-06",
+        "last-parent-434307121"
+      ]
+    },
+    {
+      "id": "434962778",
+      "title": "AI - '26 3월 월간 MPS",
+      "parentId": "434864215",
+      "labels": [
+        "group-center",
+        "doctype-mps-monthly",
+        "year-2026",
+        "status-completed",
+        "rag-source",
+        "migrated-sd",
+        "last-parent-434864215"
+      ]
+    },
+    {
+      "id": "434962903",
+      "title": "2026-05-27 Weekly MPS Evaluation & Planning",
+      "parentId": "438927376",
+      "labels": [
+        "group-center",
+        "doctype-mps-weekly",
+        "year-2026",
+        "status-completed",
+        "rag-source",
+        "migrated-sd",
+        "last-parent-438927376"
+      ]
+    },
+    {
+      "id": "434995410",
+      "title": "SW - '26 1월 월간 MPS",
+      "parentId": "435257365",
+      "labels": [
+        "group-center",
+        "doctype-mps-monthly",
+        "year-2026",
+        "status-completed",
+        "rag-source",
+        "migrated-sd",
+        "last-parent-435257365"
+      ]
+    },
+    {
+      "id": "435028020",
+      "title": "26 Device 과제",
+      "parentId": "433586202",
+      "labels": [
+        "is-folder",
+        "group-device",
+        "year-2026",
+        "last-parent-433586202"
+      ]
+    },
+    {
+      "id": "435060910",
+      "title": "2026 중기부 소부장 참여연구원 구성",
+      "parentId": "434339867",
+      "labels": [
+        "group-center",
+        "doctype-gov-project",
+        "year-2026",
+        "status-active",
+        "rag-source",
+        "migrated-sd",
+        "last-parent-434339867"
+      ]
+    },
+    {
+      "id": "435061508",
+      "title": "AI RAG Chatbot for Medical Device Regulation Expertise",
+      "parentId": "434307121",
+      "labels": [
+        "group-ai",
+        "doctype-tech-survey",
+        "status-active",
+        "month-2026-03",
+        "last-parent-434307121"
+      ]
+    },
+    {
+      "id": "435093727",
+      "title": "SW - 3월 월간 MPS",
+      "parentId": "435257365",
+      "labels": [
+        "group-center",
+        "doctype-mps-monthly",
+        "year-2026",
+        "status-completed",
+        "rag-source",
+        "migrated-sd",
+        "last-parent-435257365"
+      ]
+    },
+    {
+      "id": "435093774",
+      "title": "2026-04-10 Weekly MPS Evaluation & Planning",
+      "parentId": "438927376",
+      "labels": [
+        "group-center",
+        "doctype-mps-weekly",
+        "year-2026",
+        "status-completed",
+        "rag-source",
+        "migrated-sd",
+        "last-parent-438927376"
+      ]
+    },
+    {
+      "id": "435093835",
+      "title": "2026-04-23 Weekly MPS Evaluation & Planning",
+      "parentId": "438927376",
+      "labels": [
+        "group-center",
+        "doctype-mps-weekly",
+        "year-2026",
+        "status-completed",
+        "rag-source",
+        "migrated-sd",
+        "last-parent-438927376"
+      ]
+    },
+    {
+      "id": "435126649",
+      "title": "Device - '26 1월 월간 MPS",
+      "parentId": "435028020",
+      "labels": [
+        "group-center",
+        "doctype-mps-monthly",
+        "year-2026",
+        "status-completed",
+        "rag-source",
+        "migrated-sd",
+        "last-parent-435028020"
+      ]
+    },
+    {
+      "id": "435159276",
+      "title": "2026 글로벌 R&D 수요조사_연구개발계획서",
+      "parentId": "434339867",
+      "labels": [
+        "group-center",
+        "doctype-gov-project",
+        "year-2026",
+        "phase-planning",
+        "rag-source",
+        "migrated-sd",
+        "last-parent-434339867"
+      ]
+    },
+    {
+      "id": "435159311",
+      "title": "AI - '26 1월 월간 MPS",
+      "parentId": "434864215",
+      "labels": [
+        "group-center",
+        "doctype-mps-monthly",
+        "year-2026",
+        "status-completed",
+        "rag-source",
+        "migrated-sd",
+        "last-parent-434864215"
+      ]
+    },
+    {
+      "id": "435224787",
+      "title": "AI - '26 2월 월간 MPS",
+      "parentId": "434864215",
+      "labels": [
+        "group-center",
+        "doctype-mps-monthly",
+        "year-2026",
+        "status-completed",
+        "rag-source",
+        "migrated-sd",
+        "last-parent-434864215"
+      ]
+    },
+    {
+      "id": "435257365",
+      "title": "26 SW 과제",
+      "parentId": "433586202",
+      "labels": [
+        "is-folder",
+        "group-sw",
+        "year-2026",
+        "last-parent-433586202"
+      ]
+    },
+    {
+      "id": "435257630",
+      "title": "2026-03-05 Weekly MPS Evaluation & Planning",
+      "parentId": "438927376",
+      "labels": [
+        "group-center",
+        "doctype-mps-weekly",
+        "year-2026",
+        "status-completed",
+        "rag-source",
+        "migrated-sd",
+        "last-parent-438927376"
+      ]
+    },
+    {
+      "id": "435258108",
+      "title": "RAG(Base/FT_Model) 답변 비교",
+      "parentId": "434307121",
+      "labels": [
+        "group-ai",
+        "doctype-tech-survey",
+        "status-active",
+        "month-2026-02",
+        "last-parent-434307121"
+      ]
+    },
+    {
+      "id": "435258140",
+      "title": "RAG 전략 평가 보고서 (100문항 실험)",
+      "parentId": "434307121",
+      "labels": [
+        "group-ai",
+        "doctype-tech-survey",
+        "status-active",
+        "month-2026-03",
+        "doctype-report",
+        "last-parent-434307121"
+      ]
+    },
+    {
+      "id": "435290473",
+      "title": "Device - '26 2월 월간 MPS",
+      "parentId": "435028020",
+      "labels": [
+        "group-center",
+        "doctype-mps-monthly",
+        "year-2026",
+        "status-completed",
+        "rag-source",
+        "migrated-sd",
+        "last-parent-435028020"
+      ]
+    },
+    {
+      "id": "435290586",
+      "title": "SW - '26 4월 월간 MPS (CBCT Segmentation & VD Landmark)",
+      "parentId": "438927376",
+      "labels": [
+        "group-center",
+        "doctype-mps-monthly",
+        "year-2026",
+        "status-completed",
+        "rag-source",
+        "migrated-sd",
+        "last-parent-438927376"
+      ]
+    },
+    {
+      "id": "435323147",
+      "title": "형상 관리 계획서 (Configuration Management Plan)",
+      "parentId": "434307081",
+      "labels": [
+        "group-center",
+        "doctype-guideline",
+        "year-2026",
+        "status-evergreen",
+        "rag-source",
+        "migrated-sd",
+        "last-parent-434307081"
+      ]
+    },
+    {
+      "id": "435323194",
+      "title": "Device - '26 3월 월간 MPS",
+      "parentId": "435028020",
+      "labels": [
+        "group-center",
+        "doctype-mps-monthly",
+        "year-2026",
+        "status-completed",
+        "rag-source",
+        "migrated-sd",
+        "last-parent-435028020"
+      ]
+    },
+    {
+      "id": "435323235",
+      "title": "2026-03-27 Weekly MPS Evaluation & Planning",
+      "parentId": "438927376",
+      "labels": [
+        "group-center",
+        "doctype-mps-weekly",
+        "year-2026",
+        "status-completed",
+        "rag-source",
+        "migrated-sd",
+        "last-parent-438927376"
+      ]
+    },
+    {
+      "id": "435323311",
+      "title": "AI - '26 4월 월간 MPS (R&D Project Copilot 고도화)",
+      "parentId": "438927376",
+      "labels": [
+        "group-center",
+        "doctype-mps-monthly",
+        "year-2026",
+        "status-completed",
+        "rag-source",
+        "migrated-sd",
+        "last-parent-438927376"
+      ]
+    },
+    {
+      "id": "435487084",
+      "title": "주간 업무 공유 진행 방향",
+      "parentId": "433913929",
+      "labels": [
+        "group-center",
+        "doctype-mps-weekly",
+        "year-2026",
+        "status-active",
+        "rag-source",
+        "migrated-sd",
+        "last-parent-433913929"
+      ]
+    },
+    {
+      "id": "437223427",
+      "title": "HUD 기반 임플란트 수술 내비게이션 시스템 개발 계획 및 일정 관리",
+      "parentId": "434339867",
+      "labels": [
+        "project-navigation",
+        "status-active",
+        "group-ai",
+        "doctype-plan",
+        "month-2025-06",
+        "last-parent-434339867"
+      ]
+    },
+    {
+      "id": "437256200",
+      "title": "Dynamic Navigation 프로젝트",
+      "parentId": "433356836",
+      "labels": [
+        "is-folder",
+        "last-parent-433356836"
+      ]
+    },
+    {
+      "id": "437256232",
+      "title": "2026년 HUD 버전 Dynamic Navigation 개발 일정 (Draft)",
+      "parentId": "437256200",
+      "labels": [
+        "status-active",
+        "project-navigation",
+        "month-2026-06",
+        "doctype-plan",
+        "group-ai",
+        "last-parent-437256200"
+      ]
+    },
+    {
+      "id": "437256323",
+      "title": "jira-mcp-server 구조 요약 및 적용 가능성 분석",
+      "parentId": "434143237",
+      "labels": [
+        "doctype-tech-survey",
+        "month-2026-06",
+        "group-ai",
+        "status-evergreen",
+        "last-parent-434143237"
+      ]
+    },
+    {
+      "id": "437846074",
+      "title": "임플란트 연구소 파일 목록 및 분석",
+      "parentId": "434307101",
+      "labels": [
+        "group-device",
+        "doctype-project-status",
+        "year-2026",
+        "status-active",
+        "last-parent-434307101"
+      ]
+    },
+    {
+      "id": "438468636",
+      "title": "Gate 통합 검증 규칙",
+      "parentId": "434307081",
+      "labels": [
+        "status-active",
+        "doctype-rule",
+        "month-2026-05",
+        "last-parent-434307081"
+      ]
+    },
+    {
+      "id": "438927376",
+      "title": "정리 중",
+      "parentId": "426344771",
+      "labels": [
+        "is-folder",
+        "last-parent-426344771"
+      ]
+    },
+    {
+      "id": "439058568",
+      "title": "CrownGen: Patient-customized Crown Generation via Point Diffusion Model",
+      "parentId": "434274307",
+      "labels": [
+        "project-smilearch",
+        "doctype-research",
+        "group-ai",
+        "doctype-model",
+        "last-parent-434274307"
+      ]
+    },
+    {
+      "id": "439582769",
+      "title": "Dynamic Navigation UI피드백_ 6차 디자인 수정 시안",
+      "parentId": "437256200",
+      "labels": [
+        "group-device",
+        "project-navigation",
+        "doctype-spec",
+        "month-2026-06",
+        "status-active",
+        "last-parent-437256200"
+      ]
+    },
+    {
+      "id": "439582811",
+      "title": "IR 카메라 마운트 업체 조사",
+      "parentId": "479133705",
+      "labels": [
+        "group-device",
+        "doctype-survey",
+        "status-active",
+        "project-navigation",
+        "year-2026",
+        "last-parent-479133705"
+      ]
+    },
+    {
+      "id": "439582853",
+      "title": "해외 치과용 입체정위기 사용자 평 및 경쟁제품 조사 보고서",
+      "parentId": "437256200",
+      "labels": [
+        "project-navigation",
+        "month-2026-06",
+        "doctype-market-survey",
+        "last-parent-437256200"
+      ]
+    },
+    {
+      "id": "439582903",
+      "title": "Diffusion 모델 학습 로그",
+      "parentId": "434864215",
+      "labels": [
+        "project-smilearch",
+        "group-ai",
+        "doctype-model",
+        "last-parent-434864215"
+      ]
+    },
+    {
+      "id": "439582954",
+      "title": "경계 예측 모델 학습 로그",
+      "parentId": "434864215",
+      "labels": [
+        "project-smilearch",
+        "doctype-model",
+        "group-ai",
+        "last-parent-434864215"
+      ]
+    },
+    {
+      "id": "439975961",
+      "title": "DN_풋 스위치 업체",
+      "parentId": "479133705",
+      "labels": [
+        "group-device",
+        "doctype-survey",
+        "project-navigation",
+        "year-2026",
+        "status-active",
+        "last-parent-479133705"
+      ]
+    },
+    {
+      "id": "440008711",
+      "title": "적용 장벽 문제 분석",
+      "parentId": "434143237",
+      "labels": [
+        "month-2026-06",
+        "group-ai",
+        "doctype-report",
+        "doctype-tech-survey",
+        "last-parent-434143237"
+      ]
+    },
+    {
+      "id": "440008731",
+      "title": "DN_임플란트 엔진 장착",
+      "parentId": "437256200",
+      "labels": [
+        "month-2026-06",
+        "project-navigation",
+        "doctype-spec",
+        "last-parent-437256200"
+      ]
+    },
+    {
+      "id": "440008769",
+      "title": "DN_환자용 트레이_유치악 초안",
+      "parentId": "435028020",
+      "labels": [
+        "project-navigation",
+        "doctype-survey",
+        "month-2026-05",
+        "status-active",
+        "last-parent-435028020"
+      ]
+    },
+    {
+      "id": "440008876",
+      "title": "DN_HW",
+      "parentId": "437256200",
+      "labels": [
+        "group-device",
+        "project-navigation",
+        "month-2026-06",
+        "doctype-survey",
+        "last-parent-437256200"
+      ]
+    },
+    {
+      "id": "440008911",
+      "title": "Dynamic Navigation UI피드백_ 4차 메인 SUB 디자인 시안",
+      "parentId": "437256200",
+      "labels": [
+        "group-device",
+        "month-2026-06",
+        "doctype-report",
+        "last-parent-437256200"
+      ]
+    },
+    {
+      "id": "440107014",
+      "title": "DN_환자용 트레이_유치악 산출물",
+      "parentId": "437256200",
+      "labels": [
+        "group-device",
+        "project-navigation",
+        "doctype-hw",
+        "month-2026-06",
+        "last-parent-437256200"
+      ]
+    },
+    {
+      "id": "440107035",
+      "title": "Dynamic Navigation 기능 정리 (진행중)",
+      "parentId": "437256200",
+      "labels": [
+        "project-navigation",
+        "month-2026-06",
+        "doctype-spec",
+        "last-parent-437256200"
+      ]
+    },
+    {
+      "id": "440107089",
+      "title": "DN_임플란트 엔진 장착 조사",
+      "parentId": "437256200",
+      "labels": [
+        "project-navigation",
+        "month-2026-05",
+        "doctype-survey",
+        "last-parent-437256200"
+      ]
+    },
+    {
+      "id": "440172611",
+      "title": "DN_환자용 트레이 위치 결정 스텐드 레진",
+      "parentId": "435028020",
+      "labels": [
+        "group-device",
+        "month-2026-06",
+        "doctype-survey",
+        "last-parent-435028020"
+      ]
+    },
+    {
+      "id": "440238127",
+      "title": "DN_환자용 IR 마커 초안",
+      "parentId": "435028020",
+      "labels": [
+        "group-device",
+        "doctype-hw",
+        "month-2026-05",
+        "last-parent-435028020"
+      ]
+    },
+    {
+      "id": "440238179",
+      "title": "Dynamic Navigation UI피드백_ 5차 대표화면 디자인 시안",
+      "parentId": "437256200",
+      "labels": [
+        "project-navigation",
+        "month-2026-06",
+        "doctype-spec",
+        "last-parent-437256200"
+      ]
+    },
+    {
+      "id": "441090055",
+      "title": "2026-06-11 Weekly MPS Evaluation & Planning",
+      "parentId": "433586182",
+      "labels": [
+        "group-ai",
+        "month-2026-06",
+        "doctype-mps-weekly",
+        "status-active",
+        "last-parent-433586182"
+      ]
+    },
+    {
+      "id": "441155657",
+      "title": "DN_SW",
+      "parentId": "437256200",
+      "labels": [
+        "project-navigation",
+        "month-2026-06",
+        "doctype-report",
+        "last-parent-437256200"
+      ]
+    },
+    {
+      "id": "478543900",
+      "title": "26 연구소",
+      "parentId": "433586202",
+      "labels": [
+        "group-center",
+        "year-2026",
+        "is-folder",
+        "last-parent-433586202"
+      ]
+    },
+    {
+      "id": "478543923",
+      "title": "위험관리 보고서 (Risk Management Report) — FMEA",
+      "parentId": "479232003",
+      "labels": [
+        "group-device",
+        "project-navigation",
+        "doctype-rmr",
+        "year-2026",
+        "status-active",
+        "gate-",
+        "rag-source",
+        "migrated-sd",
+        "last-parent-479232003"
+      ]
+    },
+    {
+      "id": "478544020",
+      "title": "DN_화면설계",
+      "parentId": "479133705",
+      "labels": [
+        "group-device",
+        "project-navigation",
+        "doctype-design",
+        "year-2026",
+        "status-active",
+        "rag-source",
+        "migrated-sd",
+        "last-parent-479133705"
+      ]
+    },
+    {
+      "id": "478544043",
+      "title": "DN_기능 정리",
+      "parentId": "479133705",
+      "labels": [
+        "group-device",
+        "project-navigation",
+        "doctype-design",
+        "year-2026",
+        "status-active",
+        "rag-source",
+        "migrated-sd",
+        "last-parent-479133705"
+      ]
+    },
+    {
+      "id": "478544093",
+      "title": "Planning 화면의 풋스위치 기능 및 버튼 구성 설명",
+      "parentId": "479133705",
+      "labels": [
+        "group-device",
+        "project-navigation",
+        "doctype-design",
+        "year-2026",
+        "status-active",
+        "rag-source",
+        "migrated-sd",
+        "last-parent-479133705"
+      ]
+    },
+    {
+      "id": "478544116",
+      "title": "대규모 CBCT 통합 세그멘테이션 데이터 구축 및 모델 학습 계획",
+      "parentId": "478740497",
+      "labels": [
+        "group-ai",
+        "project-smilearch",
+        "doctype-doctype-data",
+        "year-2026",
+        "status-active",
+        "rag-source",
+        "migrated-sd",
+        "last-parent-478740497"
+      ]
+    },
+    {
+      "id": "478642178",
+      "title": "전사 AI 전략 / 로드맵",
+      "parentId": "426344771",
+      "labels": [
+        "doctype-strategy",
+        "group-ai",
+        "status-active",
+        "is-folder",
+        "last-parent-426344771"
+      ]
+    },
+    {
+      "id": "478642198",
+      "title": "사용목적 정의서 (DYN-8)",
+      "parentId": "479232003",
+      "labels": [
+        "group-device",
+        "project-navigation",
+        "doctype-iu",
+        "year-2026",
+        "status-active",
+        "gate-",
+        "rag-source",
+        "migrated-sd",
+        "last-parent-479232003"
+      ]
+    },
+    {
+      "id": "478642225",
+      "title": "의료기기 분류 문서 (DYN-10)",
+      "parentId": "479232003",
+      "labels": [
+        "group-device",
+        "project-navigation",
+        "doctype-classification",
+        "year-2026",
+        "status-active",
+        "gate-",
+        "rag-source",
+        "migrated-sd",
+        "last-parent-479232003"
+      ]
+    },
+    {
+      "id": "478642252",
+      "title": "소프트웨어 개발 및 유지보수 계획서 (DYN-11)",
+      "parentId": "479232003",
+      "labels": [
+        "group-device",
+        "project-navigation",
+        "doctype-sdmp",
+        "year-2026",
+        "status-active",
+        "gate-",
+        "rag-source",
+        "migrated-sd",
+        "last-parent-479232003"
+      ]
+    },
+    {
+      "id": "478642358",
+      "title": "Implant Planning",
+      "parentId": "479133705",
+      "labels": [
+        "group-device",
+        "project-navigation",
+        "doctype-design",
+        "year-2026",
+        "status-active",
+        "rag-source",
+        "migrated-sd",
+        "last-parent-479133705"
+      ]
+    },
+    {
+      "id": "478707843",
+      "title": "신경관 세그멘테이션 파이프라인 비교 및 평가 계획 (draft)",
+      "parentId": "478740497",
+      "labels": [
+        "group-ai",
+        "project-smilearch",
+        "doctype-doctype-plan",
+        "year-2026",
+        "status-active",
+        "rag-source",
+        "migrated-sd",
+        "last-parent-478740497"
+      ]
+    },
+    {
+      "id": "478707877",
+      "title": "Organization 전역 AI PR 자동 리뷰 시스템 구축 가이드 (Qodo Merge)",
+      "parentId": "478740517",
+      "labels": [
+        "group-center",
+        "doctype-guideline",
+        "year-2026",
+        "status-evergreen",
+        "rag-source",
+        "migrated-sd",
+        "last-parent-478740517"
+      ]
+    },
+    {
+      "id": "478740497",
+      "title": "SmileArch — Smile Design v2.0",
+      "parentId": "426344771",
+      "labels": [
+        "group-ai",
+        "project-smilearch",
+        "status-active",
+        "is-folder",
+        "last-parent-426344771"
+      ]
+    },
+    {
+      "id": "478740517",
+      "title": "전사 How-To / 개발 가이드",
+      "parentId": "426344771",
+      "labels": [
+        "doctype-guideline",
+        "group-center",
+        "status-evergreen",
+        "is-folder",
+        "last-parent-426344771"
+      ]
+    },
+    {
+      "id": "478740547",
+      "title": "Dynamic Navigation_설정_ 일반 설정",
+      "parentId": "479133705",
+      "labels": [
+        "group-device",
+        "project-navigation",
+        "doctype-config",
+        "year-2026",
+        "status-active",
+        "rag-source",
+        "migrated-sd",
+        "last-parent-479133705"
+      ]
+    },
+    {
+      "id": "478740634",
+      "title": "CBCT 해부 구조 통합 세그멘테이션 모델 성능 평가 보고서",
+      "parentId": "478740497",
+      "labels": [
+        "group-ai",
+        "project-smilearch",
+        "doctype-doctype-report",
+        "year-2026",
+        "status-active",
+        "rag-source",
+        "migrated-sd",
+        "last-parent-478740497"
+      ]
+    },
+    {
+      "id": "478937135",
+      "title": "DN_화면설계서",
+      "parentId": "479133705",
+      "labels": [
+        "group-device",
+        "project-navigation",
+        "doctype-design",
+        "year-2026",
+        "status-active",
+        "rag-source",
+        "migrated-sd",
+        "last-parent-479133705"
+      ]
+    },
+    {
+      "id": "479002637",
+      "title": "Device — HW 부품/업체 조사",
+      "parentId": "426344771",
+      "labels": [
+        "doctype-survey",
+        "group-device",
+        "status-active",
+        "is-folder",
+        "last-parent-426344771"
+      ]
+    },
+    {
+      "id": "479002666",
+      "title": "DN_가공 업체",
+      "parentId": "479133705",
+      "labels": [
+        "group-device",
+        "project-navigation",
+        "doctype-survey",
+        "year-2026",
+        "status-active",
+        "rag-source",
+        "migrated-sd",
+        "last-parent-479133705"
+      ]
+    },
+    {
+      "id": "479002731",
+      "title": "DN_레포트",
+      "parentId": "479133705",
+      "labels": [
+        "group-device",
+        "project-navigation",
+        "doctype-design",
+        "year-2026",
+        "status-active",
+        "rag-source",
+        "migrated-sd",
+        "last-parent-479133705"
+      ]
+    },
+    {
+      "id": "479002782",
+      "title": "Nerve 기능",
+      "parentId": "479133705",
+      "labels": [
+        "group-device",
+        "project-navigation",
+        "doctype-design",
+        "year-2026",
+        "status-active",
+        "rag-source",
+        "migrated-sd",
+        "last-parent-479133705"
+      ]
+    },
+    {
+      "id": "479002809",
+      "title": "Surgical 2 화면 풋스위치 기능 및 버튼 구성 설명",
+      "parentId": "479133705",
+      "labels": [
+        "group-device",
+        "project-navigation",
+        "doctype-design",
+        "year-2026",
+        "status-active",
+        "rag-source",
+        "migrated-sd",
+        "last-parent-479133705"
+      ]
+    },
+    {
+      "id": "479035423",
+      "title": "형상관리 계획서 (DYN-14)",
+      "parentId": "479232003",
+      "labels": [
+        "group-device",
+        "project-navigation",
+        "doctype-cmp",
+        "year-2026",
+        "status-active",
+        "gate-",
+        "rag-source",
+        "migrated-sd",
+        "last-parent-479232003"
+      ]
+    },
+    {
+      "id": "479035499",
+      "title": "실시간 임플란트 수술 내비게이션 시스템 제품화 검토 설문지",
+      "parentId": "479133705",
+      "labels": [
+        "group-device",
+        "project-navigation",
+        "doctype-survey",
+        "year-2026",
+        "status-active",
+        "rag-source",
+        "migrated-sd",
+        "last-parent-479133705"
+      ]
+    },
+    {
+      "id": "479068165",
+      "title": "위험관리 계획서 (DYN-12)",
+      "parentId": "479232003",
+      "labels": [
+        "group-device",
+        "project-navigation",
+        "doctype-rmp",
+        "year-2026",
+        "status-active",
+        "gate-",
+        "rag-source",
+        "migrated-sd",
+        "last-parent-479232003"
+      ]
+    },
+    {
+      "id": "479068201",
+      "title": "DN_캘리브레이션 시나리오 조사",
+      "parentId": "479133705",
+      "labels": [
+        "group-device",
+        "project-navigation",
+        "doctype-survey",
+        "year-2026",
+        "status-active",
+        "rag-source",
+        "migrated-sd",
+        "last-parent-479133705"
+      ]
+    },
+    {
+      "id": "479068232",
+      "title": "DN_레포트 상세 구성",
+      "parentId": "479133705",
+      "labels": [
+        "group-device",
+        "project-navigation",
+        "doctype-design",
+        "year-2026",
+        "status-active",
+        "rag-source",
+        "migrated-sd",
+        "last-parent-479133705"
+      ]
+    },
+    {
+      "id": "479068265",
+      "title": "DN_Surgical Report 조사",
+      "parentId": "479133705",
+      "labels": [
+        "group-device",
+        "project-navigation",
+        "doctype-survey",
+        "year-2026",
+        "status-active",
+        "rag-source",
+        "migrated-sd",
+        "last-parent-479133705"
+      ]
+    },
+    {
+      "id": "479068302",
+      "title": "기능별 참고 영상",
+      "parentId": "479133705",
+      "labels": [
+        "group-device",
+        "project-navigation",
+        "doctype-feature-spec",
+        "year-2026",
+        "status-active",
+        "rag-source",
+        "migrated-sd",
+        "last-parent-479133705"
+      ]
+    },
+    {
+      "id": "479100943",
+      "title": "보안관리 계획서 (DYN-13)",
+      "parentId": "479232003",
+      "labels": [
+        "group-device",
+        "project-navigation",
+        "doctype-smp",
+        "year-2026",
+        "status-active",
+        "gate-",
+        "rag-source",
+        "migrated-sd",
+        "last-parent-479232003"
+      ]
+    },
+    {
+      "id": "479101011",
+      "title": "Dynamic Navigation 자동 기능 세분화 및 설정(Settings) 옵션 적용안",
+      "parentId": "479133705",
+      "labels": [
+        "group-device",
+        "project-navigation",
+        "doctype-config",
+        "year-2026",
+        "status-active",
+        "rag-source",
+        "migrated-sd",
+        "last-parent-479133705"
+      ]
+    },
+    {
+      "id": "479101036",
+      "title": "설정 페이지",
+      "parentId": "479133705",
+      "labels": [
+        "group-device",
+        "project-navigation",
+        "doctype-config",
+        "year-2026",
+        "status-active",
+        "rag-source",
+        "migrated-sd",
+        "last-parent-479133705"
+      ]
+    },
+    {
+      "id": "479101079",
+      "title": "DN_화면설계 참고 자료",
+      "parentId": "479133705",
+      "labels": [
+        "group-device",
+        "project-navigation",
+        "doctype-design",
+        "year-2026",
+        "status-active",
+        "rag-source",
+        "migrated-sd",
+        "last-parent-479133705"
+      ]
+    },
+    {
+      "id": "479101102",
+      "title": "IOS 정합",
+      "parentId": "479133705",
+      "labels": [
+        "group-device",
+        "project-navigation",
+        "doctype-design",
+        "year-2026",
+        "status-active",
+        "rag-source",
+        "migrated-sd",
+        "last-parent-479133705"
+      ]
+    },
+    {
+      "id": "479133705",
+      "title": "DN — Dynamic Navigation",
+      "parentId": "426344771",
+      "labels": [
+        "group-device",
+        "project-navigation",
+        "status-active",
+        "is-folder",
+        "last-parent-426344771"
+      ]
+    },
+    {
+      "id": "479133725",
+      "title": "주간·월간 보고",
+      "parentId": "426344771",
+      "labels": [
+        "doctype-mps-weekly",
+        "group-center",
+        "status-active",
+        "is-folder",
+        "last-parent-426344771"
+      ]
+    },
+    {
+      "id": "479133745",
+      "title": "분류 보류",
+      "parentId": "426344771",
+      "labels": [
+        "needs-review",
+        "group-center",
+        "is-folder",
+        "last-parent-426344771"
+      ]
+    },
+    {
+      "id": "479166482",
+      "title": "IR마커 검증",
+      "parentId": "479133705",
+      "labels": [
+        "group-device",
+        "project-navigation",
+        "doctype-design",
+        "year-2026",
+        "status-active",
+        "rag-source",
+        "migrated-sd",
+        "last-parent-479133705"
+      ]
+    },
+    {
+      "id": "479166579",
+      "title": "Splint 정합",
+      "parentId": "479133705",
+      "labels": [
+        "group-device",
+        "project-navigation",
+        "doctype-design",
+        "year-2026",
+        "status-active",
+        "rag-source",
+        "migrated-sd",
+        "last-parent-479133705"
+      ]
+    },
+    {
+      "id": "479166609",
+      "title": "Surgical 1 화면 풋스위치 기능 및 버튼 구성 안내",
+      "parentId": "479133705",
+      "labels": [
+        "group-device",
+        "project-navigation",
+        "doctype-design",
+        "year-2026",
+        "status-active",
+        "rag-source",
+        "migrated-sd",
+        "last-parent-479133705"
+      ]
+    },
+    {
+      "id": "479199250",
+      "title": "DN_작업 일정",
+      "parentId": "479133705",
+      "labels": [
+        "group-device",
+        "project-navigation",
+        "doctype-design",
+        "year-2026",
+        "status-active",
+        "rag-source",
+        "migrated-sd",
+        "last-parent-479133705"
+      ]
+    },
+    {
+      "id": "479199309",
+      "title": "DN_캘리브레이션 블럭 초안",
+      "parentId": "479133705",
+      "labels": [
+        "group-device",
+        "project-navigation",
+        "doctype-design",
+        "year-2026",
+        "status-active",
+        "rag-source",
+        "migrated-sd",
+        "last-parent-479133705"
+      ]
+    },
+    {
+      "id": "479232003",
+      "title": "DYN — 의료기기 IEC 62304 산출물",
+      "parentId": "426344771",
+      "labels": [
+        "doctype-regulatory",
+        "group-device",
+        "project-navigation",
+        "status-active",
+        "is-folder",
+        "last-parent-426344771"
+      ]
+    },
+    {
+      "id": "479232027",
+      "title": "기술 조사 / 시장 분석",
+      "parentId": "426344771",
+      "labels": [
+        "doctype-market-survey",
+        "group-center",
+        "status-active",
+        "is-folder",
+        "last-parent-426344771"
+      ]
+    },
+    {
+      "id": "479232047",
+      "title": "System Requirements Specification (SysRS) (DYN-9)",
+      "parentId": "479232003",
+      "labels": [
+        "group-device",
+        "project-navigation",
+        "doctype-syrs",
+        "year-2026",
+        "status-active",
+        "gate-",
+        "rag-source",
+        "migrated-sd",
+        "last-parent-479232003"
+      ]
+    },
+    {
+      "id": "479232156",
+      "title": "Calibration",
+      "parentId": "479133705",
+      "labels": [
+        "group-device",
+        "project-navigation",
+        "doctype-design",
+        "year-2026",
+        "status-active",
+        "rag-source",
+        "migrated-sd",
+        "last-parent-479133705"
+      ]
+    },
+    {
+      "id": "479297553",
+      "title": "Surgical Mode",
+      "parentId": "479133705",
+      "labels": [
+        "group-device",
+        "project-navigation",
+        "doctype-design",
+        "year-2026",
+        "status-active",
+        "rag-source",
+        "migrated-sd",
+        "last-parent-479133705"
+      ]
+    },
+    {
+      "id": "479297576",
+      "title": "Curve 기능",
+      "parentId": "479133705",
+      "labels": [
+        "group-device",
+        "project-navigation",
+        "doctype-design",
+        "year-2026",
+        "status-active",
+        "rag-source",
+        "migrated-sd",
+        "last-parent-479133705"
+      ]
+    },
+    {
+      "id": "479297605",
+      "title": "개별 치아 세그멘테이션 파이프라인 성능 비교 실험 계획서",
+      "parentId": "478740497",
+      "labels": [
+        "group-ai",
+        "project-smilearch",
+        "doctype-doctype-plan",
+        "year-2026",
+        "status-active",
+        "rag-source",
+        "migrated-sd",
+        "last-parent-478740497"
+      ]
+    },
+    {
+      "id": "479920331",
+      "title": "[Software Requirements List] HUD 기반 임플란트 수술계획·내비게이션 시스템",
+      "parentId": "479133745",
+      "labels": [
+        "needs-review",
+        "last-parent-479133745"
+      ]
+    },
+    {
+      "id": "480182559",
+      "title": "SW - 5월 월간 MPS",
+      "parentId": "479133745",
+      "labels": [
+        "last-parent-479133745",
+        "needs-review"
+      ]
+    },
+    {
+      "id": "480247977",
+      "title": "AI - '26 6월 월간 MPS",
+      "parentId": "479133745",
+      "labels": [
+        "needs-review",
+        "last-parent-479133745"
+      ]
+    },
+    {
+      "id": "480247997",
+      "title": "AI - '26 5월 월간 MPS",
+      "parentId": "479133745",
+      "labels": [
+        "needs-review",
+        "last-parent-479133745"
+      ]
+    },
+    {
+      "id": "480248017",
+      "title": "Device - '26 7월 MPS",
+      "parentId": "479133745",
+      "labels": [
+        "needs-review",
+        "last-parent-479133745"
+      ]
+    },
+    {
+      "id": "480575702",
+      "title": "SW - 7월 월간 MPS",
+      "parentId": "479133745",
+      "labels": [
+        "needs-review",
+        "last-parent-479133745"
+      ]
+    },
+    {
+      "id": "480575733",
+      "title": "Dynamic Navigation_설정_플래닝 설정",
+      "parentId": "479133705",
+      "labels": [
+        "group-device",
+        "project-navigation",
+        "doctype-config",
+        "year-2026",
+        "status-active",
+        "last-parent-479133705"
+      ]
+    },
+    {
+      "id": "480608401",
+      "title": "자동화 리포트",
+      "parentId": "426344771",
+      "labels": [
+        "is-folder",
+        "bot-report",
+        "last-parent-426344771"
+      ]
+    },
+    {
+      "id": "480608495",
+      "title": "AI - '26 7월 월간 MPS",
+      "parentId": "479133745",
+      "labels": [
+        "needs-review",
+        "last-parent-479133745"
+      ]
+    },
+    {
+      "id": "480837832",
+      "title": "Device - '26 6월 MPS",
+      "parentId": "479133745",
+      "labels": [
+        "needs-review",
+        "last-parent-479133745"
+      ]
+    },
+    {
+      "id": "480903309",
+      "title": "auto_report_260729_1922",
+      "parentId": "480608401",
+      "labels": [
+        "bot-report",
+        "auto-report",
+        "last-parent-480608401"
+      ]
+    },
+    {
+      "id": "480903384",
+      "title": "Device - '26 5월 MPS",
+      "parentId": "479133745",
+      "labels": [
+        "needs-review",
+        "last-parent-479133745"
+      ]
+    },
+    {
+      "id": "480903413",
+      "title": "SW - 6월 월간 MPS",
+      "parentId": "479133745",
+      "labels": [
+        "needs-review",
+        "last-parent-479133745"
+      ]
+    },
+    {
+      "id": "480903446",
+      "title": "auto_report_260729_1937",
+      "parentId": "480608401",
+      "labels": [
+        "bot-report",
+        "auto-report",
+        "last-parent-480608401"
+      ]
+    },
+    {
+      "id": "481918982",
+      "title": "auto_report_260730_1127",
+      "parentId": "480608401",
+      "labels": [
+        "bot-report",
+        "auto-report"
+      ]
+    }
+  ]
+}

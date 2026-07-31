@@ -6,8 +6,7 @@ const path = require('path');
 const { confluenceRequest } = require('./utils/confluence_api');
 const { fetchAATree, fetchAASpaceHomepageId } = require('./utils/aa_space_tree');
 const { listAAPages } = require('./utils/aa_pages');
-const { deleteLabel } = require('./utils/migration_utils');
-const { ruleClassifier } = require('./classifiers/rule');
+const { deleteLabel, addLabels } = require('./utils/migration_utils');
 
 const DECISIONS_PATH = path.join(__dirname, '..', 'config', 'classification_decisions.json');
 const REPORT_DIR = path.join(__dirname, '..', '.github', 'reports');
@@ -20,17 +19,11 @@ function detectMove(page) {
   return { from: lastParentId, to: page.parentId };
 }
 
-async function shouldCommitHumanDecision(page, move, aaTree, homePageId) {
-  // 1) 최상위 → 특정 폴더로 이동 (Rule이 매칭 못 했을 가능성)
-  if (move.from === homePageId || !move.from) return true;
-  // 2) RuleClassifier가 모르는 카테고리
-  const ruleResult = await ruleClassifier.classify({
-    pageId: page.id, title: page.title, body: '', ancestors: [],
-    sourceSpace: '?', sourceUrl: '', pageDate: '', existingLabels: page.labels,
-  }, aaTree);
-  if (!ruleResult.ok) return true;
-  // 3) Rule이 다른 폴더로 분류했다면 → 휴먼이 다른 데로 옮긴 것 → 등록
-  return ruleResult.folderId !== move.to;
+function shouldCommitHumanDecision(page, move, aaTree, homePageId) {
+  // 최상위 → 특정 폴더 이동 또는 폴더 → 다른 폴더 이동이면 휴먼 결정을 커밋한다.
+  // 분류 체인에서 rule 단계가 제거(2026-07-31)되어 ruleClassifier 의존을 삭제했으며,
+  // 휴먼이 실제로 페이지를 옮겼는지(detectMove가 parentId 변경으로 판별)만 판단 근거로 삼는다.
+  return true;
 }
 
 function commitDecision(page, move) {
@@ -99,7 +92,11 @@ async function runAudit({ dryRun = false, pages, aaTree, homePageId, deps } = {}
   const topLevel = [];
   const humanMoves = [];
   const errors = [];
+  // CI에서는 체크아웃 리셋으로 파일이 휘발되므로 commitDecision은 로컬에서만 의미.
+  // dryRun은 쓰기 금지이므로 커밋 금지. stampLastParent는 양쪽 모두에서 실행(라벨 갱신은 부작용이 아니며 재보고 방지에 필요).
   const shouldCommit = !dryRun && !process.env.CI;
+  const _commitDecision = deps?.commitDecision || commitDecision;
+  const _addLabels = deps?.addLabels || addLabels;
 
   for (const p of pages) {
     // P6 자기 배제: 봇이 생성한 리포트 페이지는 감사 대상이 아니다.
@@ -111,10 +108,15 @@ async function runAudit({ dryRun = false, pages, aaTree, homePageId, deps } = {}
     try {
       const move = detectMove(p);
       if (move && await shouldCommitHumanDecision(p, move, aaTree, homePageId)) {
-        if (shouldCommit) commitDecision(p, move);
+        if (shouldCommit) {
+          _commitDecision(p, move);
+          await _addLabels(p.id, ['human-classified']);
+        }
         humanMoves.push({ page: p, move, committed: shouldCommit });
       }
-      if (p.parentId && !dryRun) {
+      // stampLastParent는 dryRun과 무관하게 항상 실행:
+      // CI에서도 라벨을 갱신해야 같은 이동이 다음 실행에서 재보고되지 않는다.
+      if (p.parentId) {
         await stampLastParent(p.id, p.parentId, p.labels, deps);
       }
     } catch (e) {

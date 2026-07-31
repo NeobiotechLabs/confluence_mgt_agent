@@ -1,6 +1,6 @@
 # 프로젝트 할일 / 진행 상황 (ToDo)
 
-> 마지막 갱신: 2026-07-30 (작업 9 — §4 AI 권고판 (Phase 2-A) TDD 시작)
+> 마지막 갱신: 2026-07-31 (작업 13-14 완료 — 외부 이관 결과 부록 통합 + 워크플로우 단일화)
 >
 > 이 문서는 **현재 정책과 상태**를 기준으로 작성되었습니다. 옛 정책(Dify, human 큐, v1 폴더 규칙 등)은 더 이상 사실이 아니므로 이 문서에 남아 있지 않습니다.
 
@@ -9,8 +9,8 @@
 ## 0. 한 줄 요약
 
 - **목표**: 사내 Confluence 신규 스페이스(AA)를 잘 구조화해서, MPS(Planning/Evaluation) 작성용 RAG 원천으로 유지.
-- **현재 상태**: AA 스페이스 이관 + 일일 자동 리포트 + 자가 정화(audit·reorganize) 동작 중. 분류 체인은 **rule → inline-llm(Anthropic) → fallback** 단일 흐름으로 단순화 완료. 룰 매칭 추적(작업 8) — `reference/unmatched_pages.json` SSOT에 `kind:'unmatched'` append-only 머지로 매일 누락 가시화.
-- **다음 큰 작업**: **작업 9 — §4 AI 권고판 (Phase 2-A, TDD 시작)**. 사용자 결정(2026-07-30): 신뢰도 산출 = 키워드 가중치(예: '정확히'/'일치'/'유사'/'could be'/'maybe' → 점수 매핑), seenCount 임계치 = **3회**(주 5일 cron 기준 3영업일 ≈ 3일). 범위: 오배치 의심 / 반복 애매 항목. 세부 결정·우선순위는 §4 하위 항목.
+- **현재 상태**: AA 스페이스 이관 + 일일 자동 리포트 + 자가 정화(audit·reorganize) 동작 중. 분류 체인 **human → structural → llm(본문) → fallback(미분류+의견)** 완전 재구현(작업 11). §4 AI 권고판을 LLM 생성 분석으로 전환(작업 12). **§2 루프 A 외부 이관 결과 부록 통합**(작업 13). **워크플로우 단일화**(작업 14 — migrate→daily-report 통합). 유틸 스크립트 5종(작업 10). 테스트 250/250 PASS.
+- **다음 큰 작업**: **작업 15 — 탈락 후보 판정** (LLM 이관 가치 판단).
 - **사내 LLM 게이트웨이(작업 6)**: 사용자 명시 지시로 **폐기** — "사내 LLM은 현재 관심없어 나중에 필요하면 다시 추가할게". `scripts/utils/llm_api.js`의 공식 Anthropic SDK 경로만 유지.
 
 ---
@@ -19,14 +19,14 @@
 
 | 영역 | 현재 |
 |---|---|
-| 분류 체인 | `rule → inline-llm(Anthropic SDK) → fallback(unsortedFolderId, needs-review)` |
+| 분류 체인 | `human → structural → inline-llm(본문, Anthropic SDK) → fallback(미분류 + LLM 의견 코멘트)` (2026-07-31 재설계) |
 | LLM 모델 | `claude-haiku-4-5-20251001` (env `ANTHROPIC_MODEL`로 override 가능) |
 | LLM 키 | GitHub Actions Secrets `ANTHROPIC_API_KEY`. `.env`에는 넣지 않음(워크플로우 env 주입) |
 | 출력 채널 | Confluence 일일 리포트 페이지(AA 스페이스 "자동화 리포트" 폴더) |
 | Cron | 매일 KST 09:00 — `scripts/report_aa_daily.js` 단일 job |
 | 마이그레이션 | `scripts/migrator.js`(멱등 — `findPageByTitleInAA`로 동명 페이지 제자리 동기화) |
 | 자가 정화 | `scripts/audit_aa_space.js` + `scripts/reorganize_aa_space.js` |
-| 더 이상 사용 안 함 | Dify 워크플로우, human queue, `scripts/classifiers/claude.js`, `scripts/classifiers/human.js` (engine이 위임만 하고 호출 경로 없음) |
+| 더 이상 사용 안 함 | Dify 워크플로우, human queue, `scripts/classifiers/claude.js` (호환 시그니처만 잔존, 호출 경로 없음). `human.js`는 체인 0단계(human)에서 호출 중 |
 
 상세 의도/배경/변경 절차: [`reference/classification_rules.md`](classification_rules.md).
 
@@ -45,6 +45,10 @@
 | **일일 리포트(실실행)** | `npm run report:aa` |
 | 로컬 CI 시뮬레이션 | `npm run ci:local:dryrun` |
 | LLM 환경 점검 | `npm run check:llm` |
+| AA 디렉토리 트리 | `npm run tree:aa` |
+| AA 스냅샷 + diff | `npm run snapshot:aa` |
+| 원본 작성일 기준 일괄 삭제 | `node scripts/delete_aa_before.js --before=YYYY-MM-DD --dry-run` |
+| 이관 누락 탐색 | `npm run find:unmigrated --space=SD --from=2025-01-01 --dry-run` |
 | 테스트 | `npm test` |
 
 ---
@@ -126,6 +130,51 @@
 - **변경 파일**: `scripts/report/report_lib.js`, `scripts/report/unmatched_state_io.js`(신규), `scripts/report_aa_daily.js`, `reference/classification_rules.md`, 4건 신규 테스트.
 - **SSOT 신규**: `reference/unmatched_pages.json`(append-only, 원자적 쓰기).
 
+### 3-7. 유틸 스크립트 5종 (작업 10) — 2026-07-31
+- **사용자 요청**: "AA 운영에 필요한 유틸성 스크립트 5개 만들어줘".
+- **구현 (TDD, 33건 신규 테스트)**:
+  1. `scripts/tree_aa.js` — AA 디렉토리 트리 뷰. `formatTreeWithCounts(tree, pages)` + `buildFolderPageCounts(pages)`. 📁 폴더 (페이지 수) 포맷 + orphan + total. `npm run tree:aa`.
+  2. `scripts/snapshot_aa_tree.js` — 로컬 디렉토리 맵 스냅샷 + diff. `buildSnapshot(folders, pages, capturedAt)` → `reference/aa_tree_snapshot.json` 저장, 이전 스냅샷과 자동 diff (`computeSnapshotDiff`, `formatDiff`). `npm run snapshot:aa`.
+  3. `scripts/delete_aa_before.js` — 원본 작성일 기준 AA 페이지 일괄 삭제. `extractOriginalDate(html)` (배너 regex: "원본 작성일" > "원본 최종수정일", `\s*` 유연 매칭) + Confluence `createdAt` fallback. `filterDeleteCandidates(pages, dateMap, beforeDate)` 보호 라벨 제외. `--dry-run` 지원.
+  4. `scripts/find_unmigrated.js` — 소스 스페이스에서 이관 누락 페이지 탐색. `filterByDateRange(pages, from, to)` + `findUnmigratedPages(sourcePages, aaTitles)` 제목 기반 교차 대조. `--space=SD --from=YYYY-MM-DD --dry-run`.
+  5. `scripts/report_aa_daily.js` (수정) — dry-run 시 `reference/aa_report_dryrun.html` 파일 저장.
+- **날짜 추출 수정**: 33/174 → 174/174. 원인: (a) 배너 없는 페이지에 Confluence createdAt fallback, (b) "원본 최종수정일" 공백 없는 변형에 `\s*` 매칭.
+- **USER_GUIDE.md 갱신**: §3.6 유틸 스크립트 섹션 신설, §1.6·§2.2·§3.3·§5.1 수정.
+- **package.json**: `tree:aa`, `snapshot:aa`, `delete:aa:before`, `delete:aa:before:dryrun`, `find:unmigrated`, `find:unmigrated:sd` 추가.
+- **테스트**: `tests/utils/` 4종 (tree_aa 8건, snapshot_aa_tree 7건, delete_aa_before 11건, find_unmigrated 7건). **`npm test` 185/185 PASS**.
+- **미커밋**: 5개 파일 변경 + 1개 신규(aa_report_dryrun.html, 산출물).
+
+### 3-8. LLM 본문 기반 분류 재설계 (작업 11, Tasks 1-7) — 2026-07-31 완료
+- **문제**: 제목 regex 분류(`rule` 단계)는 작성자가 제목을 어떻게 달지 예측 불가 → 룰 무한 추가 유지보수.
+- **사용자 합의(2026-07-31)**: 제목 regex 폐기, **페이지 본문 기반 LLM 분류**로 전환.
+- **새 체인**: `human → structural → inline-llm(본문 기반) → fallback(미분류 + LLM 의견)`.
+- **Tasks**:
+  1. `content_extractor.js` — 본문 추출 유틸 (HTML strip + ~2000자 truncation).
+  2. `reference/classification_guidelines.md` — 판단 기준 SSOT 자연어 지침 파일 신설. `classification_prompt.js` — system prompt 빌더.
+  3. `llm_api.js` `callLLMForClassification` — 본문 입력 + `confidence` 파싱 + `llmOpinion`/`suggestedFolderId` 정규화.
+  4. `classification_provider.js` — 체인 재편 (`human → structural → inline-llm → fallback`).
+  5. `engine.js` — 와이어링 (실 client + body 전달).
+  6. `reorganize_aa_space.js` — 본문 fetch + 미분류 시 LLM 의견 코멘트 첨부.
+  7. 문서 동기화 (분류 규칙서, USER_GUIDE, CLAUDE.md, ToDo).
+- **폐기된 단계**: `rule` 단계는 분류 체인에서 제거. `scripts/classifiers/rule.js` 모듈은 보존하되 리포트 unmatched 추적에만 사용. `audit_aa_space.js`에서도 ruleClassifier 의존 제거 완료.
+- **신규 필드**: `confidence?: 'high'`, `llmOpinion?: string|null`, `suggestedFolderId?: string|null`.
+- **SSOT 변경**: 분류 판단 기준은 `config/analysis_rules.json` → `reference/classification_guidelines.md`.
+- **잔여 작업**: (1) §4 advisory 키워드-가중치 → LLM 분석 대체 ✅ (작업 12), (2) 사람 검토 이동 → 지침 업데이트 학습 루프, (3) 워크플로우 순서 변경 ✅ (작업 14).
+
+### 3-9. 외부 이관 결과 부록 통합 (작업 13) — 2026-07-31
+- **목표**: `migrator.js`의 이관 결과를 리포트 §2 표에 통합.
+- **구현**:
+  - `scripts/migrator.js`: `runMigrate({dryRun, deps})` export 추가. 모든 외부 의존(deps) 주입 가능. `{items: [{kind:'migrate-a', pageId, title, sourceSpace, targetFolderId, status, classifierSource, reason, ...}]}` 반환.
+  - `scripts/report_aa_daily.js`: `runMigrate({dryRun})` 호출 → `migrateResult.items`를 부록 `items[]`에 머지.
+  - `scripts/report/render.js`: `migrateSection(items)` — §2 표 렌더 (페이지/소스스페이스/대상폴더/상태/분류소스/사유). 상태: created(신규), synced(동기화), skipped(스킵), failed(실패).
+- **테스트(TDD)**: 13건 신규. `tests/migrator/run_migrate.test.js` 8건 + `tests/report/render_migrate_a.test.js` 5건. **250/250 PASS**.
+- **변경 파일**: `scripts/migrator.js`, `scripts/report_aa_daily.js`, `scripts/report/render.js`, 2건 신규 테스트.
+
+### 3-10. 워크플로우 단일화 (작업 14) — 2026-07-31
+- **목표**: 마이그레이션을 `report_aa_daily.js`에 통합하여 별도 `migrate` job 제거.
+- **구현**: `.github/workflows/confluence_automation.yml`에서 `migrate` job 삭제, `notify-failure` needs를 `daily-report`만 참조. 실행 순서: `migrate → audit → reorganize → report` (단일 프로세스).
+- **변경 파일**: `.github/workflows/confluence_automation.yml`.
+
 ---
 
 ## 4. 진행 중 / 다음 작업
@@ -185,6 +234,55 @@
 - **Phase 2-B (보류, 후속)**: §2 루프 A 실데이터 — `scripts/migrator.js`의 이관 결과를 부록에 첨부하는 어댑터 + render §2 + items 머지.
 - **테스트(TDD)**: `tests/report/recommend_misplacements.test.js`, `tests/report/render_advisories.test.js` 신규. 추정 10~14건.
 - **다음 작업(작업 10 후보, 보류)**: §2 루프 A 실데이터 활성화, 정책 승격(반복 항목 → 명시 룰 변환 워크플로우).
+
+### 작업 11 — LLM 본문 기반 분류 재설계 — ✅ 2026-07-31 완료 (Tasks 1-7)
+- **문제**: 제목 regex 분류는 작성자가 제목을 어떻게 달지 예측 불가 → 룰 무한 추가 유지보수.
+- **사용자 합의(2026-07-31)**: "아예 내용을 기반으로 LLM이 판단" → 완전 재설계.
+- **새 체인**: `human(과거 결정) → structural check → LLM(본문 기반) → fallback(미분류 + LLM 의견)`
+- **핵심 변경**:
+  - rule 단계 제거 → 자연어 지침 파일(`reference/classification_guidelines.md`)로 대체 (SSOT)
+  - LLM 입력: `ctx.title`만 → **페이지 본문** (HTML strip + ~2000자 truncation)
+  - fallback: `needs-review` → **미분류 폴더 + LLM 의견 첨부**
+  - advisory: 키워드 가중치 → **LLM 생성 의미 있는 분석** (잔여 작업)
+  - 학습 루프: 미분류 → 사람 검토 → 이동 → 지침 업데이트 → LLM 개선 (잔여 작업)
+- **Tasks 1-7 구현 완료**: 본문 추출 → 지침 파일 → LLM 호출 → 체인 재편 → 엔진 와이어링 → reorganize 통합 → 문서 동기화.
+- **정리 작업 완료**: `audit_aa_space.js`에서 `ruleClassifier` 의존 제거(shouldCommitHumanDecision 단순화), `report_lib.js` policyHash에 `classification_guidelines.md` 해시 추가.
+- **호환성**: `classifyWithChain(ctx, aaTree)` 시그니처 유지.
+- **잔여 후속 작업**: (1) §4 advisory LLM화 ✅ (아래 작업 12), (2) 지침 학습 루프, (3) 워크플로우 순서 변경(`migrate → daily-report`).
+
+### 작업 12 — §4/§5 중복 제거 + §4 AI 권고 LLM화 — ✅ 2026-07-31 완료
+- **§4/§5 중복 제거**: §4는 LLM 생성 권고만, §5는 운영 노이즈(orphan/failed/repeated)만 표시.
+  - `render.js`: `noticeSection`에서 advisories 루프 제거 — §5 본문에 LLM 권고 중복 안 됨.
+  - 기존 테스트 갱신 + 신규 4건 추가 (§3 표 escape, §4/§5 분리 검증).
+- **§3 표 from=null → "top (최상위 고아)" 표시**: 최상위 고아 페이지의 from을 명시.
+- **§4 AI 권고 LLM화**: `generateSpaceAdvisory(report_lib.js)` — 폴더 트리·미분류 목록·KB 미매칭 샘플·자가 정화 이동 로그를 종합해 LLM이 구체적 권고 3~5개 생성.
+  - 시스템 프롬프트: 한 권고 = 한 문장, 페이지 제목/폴더 이름 직접 인용, 액션 명시.
+  - `report_aa_daily.js` §8-4: ANTHROPIC_API_KEY 있을 때 LLM 권고 생성, 자리표시 advisory 제거.
+  - 테스트 9건 신규 (응답 파싱, 번호 제거, 빈 응답, 5개 제한, graceful 퇴화, 프롬프트 조립).
+  - 237/237 PASS.
+- **변경 파일**: `scripts/report/render.js`, `scripts/report/report_lib.js`, `scripts/report_aa_daily.js`, `tests/report/render.test.js`, `tests/report/generate_space_advisory.test.js`.
+
+### 작업 13 — 외부 이관 결과 부록 통합 (§2 루프 A) — ✅ 2026-07-31 완료
+- **목표**: `migrator.js`의 이관 결과를 리포트 §2 표에 통합. ideation 문서 §2의 "이관 후보 페이지 표" 구현.
+- **구현**:
+  1. `migrator.js`에 `runMigrate({dryRun, deps})` export 추가 — 모든 외부 의존 deps 주입 가능(테스트 밀폐).
+  2. `report_aa_daily.js`에서 `runMigrate({dryRun})` 호출 → `kind: 'migrate-a'` items를 부록에 머지.
+  3. `render.js`에 `migrateSection(items)` — §2 표 렌더 (페이지/소스스페이스/대상폴더/상태/분류소스/사유).
+- **상태 매핑**: `created`(신규 이관) / `synced`(동기화) / `skipped`(분류 실패) / `failed`(오류).
+- **테스트(TDD)**: 13건 신규 (`tests/migrator/run_migrate.test.js` 8건 + `tests/report/render_migrate_a.test.js` 5건). **250/250 PASS**.
+- **스펙 참조**: `docs/ideation/autoloop_and_report.md` §2.
+
+### 작업 14 — 워크플로우 단일화 — ✅ 2026-07-31 완료
+- **목표**: 마이그레이션을 `report_aa_daily.js`에 통합하여 별도 `migrate` job 제거.
+- **구현**: `.github/workflows/confluence_automation.yml`에서 `migrate` job 삭제, `notify-failure` needs를 `daily-report`만 참조.
+- **의미**: `migrate → audit → reorganize → report`가 단일 프로세스에서 순차 실행. 별도 job 간 checkout/install 중복 제거.
+- **변경 파일**: `.github/workflows/confluence_automation.yml`.
+
+### 작업 15 — 탈락 후보 판정 — 미착수
+- **목표**: LLM이 "너무 의미없는 페이지"를 판별해 탈락 사유를 부록에 표시.
+- **의미**: 모든 이관 후보 페이지에 대해 분류만 하는 게 아니라, 이관 여부 자체를 판단.
+- **구현**: `runMigrate` 내 `classifyWithChain` 호출 시 "이관 가치 없음" 옵션 추가 또는 별도 프롬프트.
+- **스펙 참조**: `docs/ideation/autoloop_and_report.md` §4-§7.
 
 ---
 

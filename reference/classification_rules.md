@@ -14,15 +14,22 @@
 `scripts/utils/classification_provider.js`의 분류 체인은 단일 순서를 따릅니다.
 
 ```
-rule → inline-llm(Anthropic) → fallback(unsortedFolderId, needs-review)
+human → structural → inline-llm(본문 기반) → fallback(미분류 + LLM 의견)
 ```
 
-- **human 단계 제거**: 사내 휴먼 큐 기반 분류는 정책상 폐기. 룰 또는 LLM으로 자동 분류가 원칙.
-- **claude 단계 제거**: 옛 `scripts/classifiers/claude.js`도 더 이상 호출되지 않음. `llm_api.js`(공식 SDK wrapper)로 일원화.
-- **dify 단계 제거**: 토큰 만료와 무관하게 정책적으로 사용 안 함.
-- **ANTHROPIC_API_KEY 미설정 시**: rule 단계만 수행, 미매치 시 fallback. 비용·보안 가드.
+- **rule 단계 제거 (2026-07-31 재설계)**: 제목 정규식 분류는 "작성자가 제목을 어떻게 달지 예측 불가 → 룰 무한 추가" 문제가 있어 폐기. 판단 기준은 자연어 지침 파일 `reference/classification_guidelines.md`가 대신하며 LLM이 페이지 본문(앞 2000자)을 읽고 1차 판단한다. `scripts/classifiers/rule.js`는 모듈로 남아 `audit_aa_space.js`의 휴먼 결정 휴리스틱과 리포트 unmatched 추적에만 사용된다.
+- **structural 단계**: 이미 유효 폴더에 있는 페이지는 LLM 호출 없이 현 위치 유지 (비용 절감).
+- **confidence**: LLM이 `select_folder` 응답에 `confidence: high|low`를 포함. `low`는 폴더에 넣지 않고 미분류로 보내며, LLM 의견(reason)을 페이지 코멘트로 첨부해 사람 검토의 입력으로 쓴다.
+- **fallback**: `unsortedFolderId`(미분류 폴더) + `needs-review` 라벨 + `llmOpinion`/`suggestedFolderId` 보존.
+- **human 단계**: `classification_decisions.json`의 과거 휴먼 결정 우선 — 체인 최상단 유지.
+- **ANTHROPIC_API_KEY 미설정 시**: human + structural만 수행, 미매치 시 fallback(`reason: 'llm-skipped-no-key'`). 비용·보안 가드.
 
 ## 3. `config/analysis_rules.json` (SSOT)
+
+> **역할 변경 (2026-07-31)**: 이 JSON은 더 이상 분류 체인의 1차 구동 룰이 아닙니다.
+> (1) `audit_aa_space.js`의 휴먼 결정 커밋 휴리스틱, (2) 일일 리포트 unmatched 추적,
+> (3) `reference/classification_guidelines.md`와의 동기화 가드 테스트가 참조합니다.
+> 분류 판단 기준의 SSOT는 `reference/classification_guidelines.md`입니다.
 
 - 카테고리별 `match.title_patterns`(정규식 문자열 배열), `match.ancestor_contains`, `exclude.title_patterns`, `fields.labels_template`, `fields.subCategory_*`로 구성.
 - `description` 필드에 정책 의도(예: "포용적 수집이 원칙이며 제외는 명백한 noise만")가 들어 있음.
@@ -38,11 +45,14 @@ rule → inline-llm(Anthropic) → fallback(unsortedFolderId, needs-review)
 ```js
 {
   ok: true,
-  source: 'rule' | 'inline-llm' | 'fallback',
+  source: 'human' | 'structural' | 'inline-llm' | 'fallback',
   folderId: string,           // AA 폴더 ID
   folderTitle: string?,        // 선택
   labels: string[],            // 부착할 라벨
   reason: string,              // 로그/감사용
+  confidence?: 'high',         // inline-llm 성공 시에만
+  llmOpinion?: string|null,    // fallback 전용 — LLM 판단 근거 (코멘트 첨부용)
+  suggestedFolderId?: string|null, // fallback 전용 — LLM 잠정 후보 폴더
 }
 ```
 
@@ -78,8 +88,8 @@ rule → inline-llm(Anthropic) → fallback(unsortedFolderId, needs-review)
 
 | 변경 종류 | 절차 |
 |---|---|
-| 룰 패턴 추가/수정 | `config/analysis_rules.json` PR + 본 문서 갱신 |
-| 체인 단계 추가/제거 | `classification_provider.js` PR + `engine.js` 시그니처 갱신 + 테스트 갱신 |
+| 분류 기준 추가/수정 | `reference/classification_guidelines.md` PR + 본 문서 갱신. 카테고리 폴더 신설·통폐합 시 `config/analysis_rules.json` 카테고리명도 동기화(가드 테스트 존재) |
+| 체인 단계 추가/제거 | `classification_provider.js` PR + `engine.js` 시그니처 갱신 + 테스트 갱신 + 본 문서 §2 갱신 |
 | 모델 변경 | `ANTHROPIC_MODEL` env 주입(워크플로우) — 코드 변경 불필요 |
 | 키 회전 | GitHub Secrets 갱신 — 코드 변경 불필요 |
 | 룰 자동 재감사 | 일별 cron(`daily-report`)이 자동 수행. dry-run은 `npm run report:aa:dryrun` |

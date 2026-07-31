@@ -57,6 +57,235 @@ async function findPageByTitleInAA(title, deps = {}) {
   }
 }
 
+/**
+ * 마이그레이션을 실행하고 구조화된 결과를 반환.
+ * report_aa_daily.js(§2 루프 A)와 CLI(runMigrator)에서 공통으로 호출.
+ *
+ * @param {{dryRun?: boolean, deps?: Object}} opts
+ * @param {boolean} opts.dryRun - true면 실제 생성/업데이트 없이 후보 탐색만
+ * @param {Object} opts.deps - 의존성 주입 (테스트 밀폐). 미지정 시 실제 모듈 사용.
+ * @returns {Promise<{items: Array}>} items: kind:'migrate-a' 객체 배열
+ */
+async function runMigrate(opts = {}) {
+  const { dryRun = false, deps = {} } = opts;
+  const items = [];
+
+  // 의존성 주입 (기본값: 실제 모듈)
+  const req = deps.confluenceRequest || confluenceRequest;
+  const _fetchPageDetail = deps.fetchPageDetail || fetchPageDetail;
+  const _fetchPageLabels = deps.fetchPageLabels || fetchPageLabels;
+  const _classifyWithChain = deps.classifyWithChain || classifyWithChain;
+  const _createPage = deps.createPage || createPage;
+  const _updatePageBody = deps.updatePageBody || updatePageBody;
+  const _addLabels = deps.addLabels || addLabels;
+  const _copyAttachments = deps.copyAttachments || copyAttachments;
+  const _buildBanner = deps.buildBanner || buildBanner;
+  const _fixBodyReferences = deps.fixBodyReferences || fixBodyReferences;
+  const _findPageByTitleInAA = deps.findPageByTitleInAA || findPageByTitleInAA;
+  const _fetchAATree = deps.fetchAATree || fetchAATree;
+
+  // 1. spaces_config.json 로드
+  const configPath = path.join(__dirname, '..', 'spaces_config.json');
+  if (!fs.existsSync(configPath)) {
+    return { items };
+  }
+  const spacesConfig = deps.spacesConfig || JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+
+  // 2. 활성 스페이스 필터
+  const RESERVED_KEYS = ['GLOBAL_RULE_VERSION', 'LOOKBACK_DAYS'];
+  const activeSpaceKeys = Object.keys(spacesConfig).filter(
+    key => !RESERVED_KEYS.includes(key) && spacesConfig[key].active
+  );
+  if (activeSpaceKeys.length === 0) return { items };
+
+  // 3. AA 트리 + 스페이스 ID
+  const aaTree = await _fetchAATree();
+  const contextTree = aaTree.toText();
+  if (!contextTree) return { items };
+
+  let targetSpaceId;
+  try {
+    const spaces = await req('GET', `/wiki/api/v2/spaces?keys=${AA_SPACE_KEY}`);
+    if (spaces && spaces.results && spaces.results.length > 0) {
+      targetSpaceId = spaces.results[0].id;
+    } else {
+      return { items };
+    }
+  } catch {
+    return { items };
+  }
+
+  // 4. 룩백 기간
+  const lookbackDays = spacesConfig.LOOKBACK_DAYS || 7;
+  const sinceDate = new Date();
+  sinceDate.setDate(sinceDate.getDate() - lookbackDays);
+  const sinceDateStr = sinceDate.toISOString().split('T')[0];
+
+  // 5. 스페이스 순회
+  for (const sourceSpace of activeSpaceKeys) {
+    const cql = encodeURIComponent(
+      `space="${sourceSpace}" AND type="page" AND lastmodified >= "${sinceDateStr}" order by lastmodified desc`);
+    const searchUrl = `/wiki/rest/api/content/search?cql=${cql}&limit=200&expand=body.storage`;
+
+    let candidates;
+    try {
+      const res = await req('GET', searchUrl);
+      candidates = res.results || [];
+    } catch {
+      continue;
+    }
+    if (candidates.length === 0) continue;
+
+    // globalRuleVersion (배너용)
+    const globalRuleVersion = spacesConfig.GLOBAL_RULE_VERSION || '1.0';
+
+    for (const page of candidates) {
+      const pageBody = page.body?.storage?.value || '';
+      const truncatedBody = pageBody.substring(0, 20000);
+
+      try {
+        const srcMeta = await _fetchPageDetail(page.id);
+        const pageDate = srcMeta.createdAt ? srcMeta.createdAt.substring(0, 10) : '';
+
+        const existingLabels = await _fetchPageLabels(page.id);
+        const chainResult = await _classifyWithChain({
+          pageId: page.id,
+          title: page.title,
+          body: truncatedBody,
+          ancestors: [],
+          sourceSpace,
+          sourceUrl: page._links?.webui || '',
+          pageDate,
+          existingLabels,
+        }, aaTree);
+
+        const decision = chainResult.ok ? {
+          is_valid: true,
+          target_folder_id: chainResult.folderId,
+          target_folder_title: chainResult.folderTitle,
+          needs_new_category: false,
+          reason: chainResult.reason,
+          labels: chainResult.labels,
+          classifier_source: chainResult.source,
+        } : {
+          is_valid: false,
+          target_folder_id: null,
+          needs_new_category: false,
+          reason: chainResult.reason || 'no-classifier-matched',
+          classifier_source: chainResult.source || 'miss',
+        };
+
+        // needs_new_category 또는 invalid → skip
+        if (decision.needs_new_category || !decision.is_valid || !decision.target_folder_id) {
+          items.push({
+            kind: 'migrate-a',
+            pageId: page.id,
+            title: page.title,
+            sourceSpace,
+            targetFolderId: null,
+            targetFolderTitle: null,
+            status: 'skipped',
+            classifierSource: decision.classifier_source || 'miss',
+            reason: decision.reason,
+          });
+          continue;
+        }
+
+        // 멱등성: 동명 페이지 존재 → 동기화, 없으면 생성
+        const existing = await _findPageByTitleInAA(srcMeta.title);
+        const isSync = !!existing;
+
+        let destId;
+        let destTitle;
+
+        if (dryRun) {
+          // dry-run: 후보만 items에 추가, 실제 생성/업데이트 안 함
+          items.push({
+            kind: 'migrate-a',
+            pageId: page.id,
+            title: page.title,
+            sourceSpace,
+            targetFolderId: decision.target_folder_id,
+            targetFolderTitle: decision.target_folder_title || null,
+            status: isSync ? 'synced' : 'created',
+            classifierSource: decision.classifier_source,
+            reason: decision.reason,
+            ...(isSync ? { destPageId: existing.id } : {}),
+          });
+          continue;
+        }
+
+        if (isSync) {
+          destId = existing.id;
+          destTitle = existing.title;
+          try {
+            const destMeta = await req('GET', `/wiki/api/v2/pages/${destId}`);
+            if (destMeta.parentId && String(destMeta.parentId) !== String(decision.target_folder_id)) {
+              // 폴더 이동은 하지 않음 — 내용만 동기화
+            }
+          } catch { /* 부모 폴더 정보는 부가 정보 */ }
+        } else {
+          const newPage = await _createPage(targetSpaceId, decision.target_folder_id, srcMeta.title, '<p>복사 중...</p>');
+          destId = newPage.id;
+          destTitle = newPage.title;
+        }
+
+        const { skippedVideos } = await _copyAttachments(page.id, destId);
+
+        const bannerHtml = _buildBanner({
+          ruleVersion: globalRuleVersion,
+          pageVersion: '1',
+          sourceSpaceKey: sourceSpace,
+          sourcePageUrl: srcMeta.url,
+          sourcePageTitle: srcMeta.title,
+          authorDisplayName: srcMeta.authorDisplayName,
+          originalCreatedAt: pageDate,
+          labels: decision.labels,
+        }, skippedVideos);
+
+        let newBody = _fixBodyReferences(srcMeta.body, page.id, destId);
+        newBody = bannerHtml + newBody;
+        await _updatePageBody(destId, destTitle, newBody);
+
+        if (decision.labels && decision.labels.length > 0) {
+          await _addLabels(destId, decision.labels);
+        }
+
+        items.push({
+          kind: 'migrate-a',
+          pageId: page.id,
+          title: page.title,
+          sourceSpace,
+          targetFolderId: decision.target_folder_id,
+          targetFolderTitle: decision.target_folder_title || null,
+          status: isSync ? 'synced' : 'created',
+          classifierSource: decision.classifier_source,
+          reason: decision.reason,
+          destPageId: destId,
+        });
+
+      } catch (e) {
+        items.push({
+          kind: 'migrate-a',
+          pageId: page.id,
+          title: page.title,
+          sourceSpace,
+          targetFolderId: null,
+          targetFolderTitle: null,
+          status: 'failed',
+          classifierSource: null,
+          reason: null,
+          error: e.message,
+        });
+      }
+
+      if (!dryRun) await delay(1500);
+    }
+  }
+
+  return { items };
+}
+
 async function runMigrator() {
   console.log(`🚀 [Migrator] 다중 스페이스 이관 작업을 시작합니다.`);
 
@@ -73,8 +302,6 @@ async function runMigrator() {
   }
 
   console.log('📡 [1/3] AA 스페이스의 최신 폴더 구조(context_tree)를 수집합니다...');
-  // ClassifierChain용 트리 객체 (chain은 folders 배열/트리 메타를 필요로 함).
-  // 텍스트 렌더링도 동일한 트리에서 파생 (aaTree.toText()).
   const aaTree = await fetchAATree();
   const contextTree = aaTree.toText();
   if (!contextTree) return console.error('❌ 컨텍스트 트리를 가져오지 못해 작업을 중단합니다.');
@@ -115,10 +342,10 @@ async function runMigrator() {
     console.log(`==================================================`);
     console.log(`📂 대상 스페이스: ${sourceSpace}`);
     console.log(`📡 [2/3] ${sourceSpace} 스페이스에서 ${sinceDateStr} 이후 수정된 문서를 검색합니다...`);
-    
+
       const cql = encodeURIComponent(`space="${sourceSpace}" AND type="page" AND lastmodified >= "${sinceDateStr}" order by lastmodified desc`);
       const searchUrl = `/wiki/rest/api/content/search?cql=${cql}&limit=200&expand=body.storage`;
-      
+
       let candidates;
       try {
         const res = await confluenceRequest('GET', searchUrl);
@@ -135,14 +362,14 @@ async function runMigrator() {
       for (const page of candidates) {
         console.log(`\n--------------------------------------------------`);
         console.log(`📄 분석 중: [${page.title}] (ID: ${page.id})`);
-        
+
         const pageBody = page.body?.storage?.value || '';
         const truncatedBody = pageBody.substring(0, 20000);
 
         try {
           console.log(`✨ [진행 중] 원본 페이지 메타데이터 및 날짜 조회 중...`);
           const srcMeta = await fetchPageDetail(page.id);
-          const pageDate = srcMeta.createdAt ? srcMeta.createdAt.substring(0, 10) : ''; 
+          const pageDate = srcMeta.createdAt ? srcMeta.createdAt.substring(0, 10) : '';
 
           // ClassifierChain 결과는 { ok, source, folderId, folderTitle, labels, reason } 모양.
           // 하위 호환을 위해 기존 호출자 모양으로 정규화 (lines 108-120 그대로 동작).
@@ -185,7 +412,7 @@ async function runMigrator() {
           console.log(`⏭️ [스킵] 유효하지 않거나 타겟 폴더가 없습니다.`);
           continue;
         }
-        
+
         // 멱등성 보장: AA에 동명 페이지가 이미 있으면(이전 이관분) 새로 만들지 않고
         // 제자리 덮어쓰기 동기화(본문·배너·첨부·라벨 갱신). 폴더 이동은 하지 않는다 —
         // 재배치는 audit/reorganize(루프 B)의 책임이며, 분류기 판단 변동으로 기존 페이지를
@@ -249,11 +476,11 @@ async function runMigrator() {
       } catch (e) {
         console.error(`❌ [오류] '${page.title}' 처리 중 에러 발생:`, e.message);
       }
-      
+
       await delay(1500);
     }
   }
-  
+
   console.log(`\n🎉 [Migrator] 모든 작업이 완료되었습니다!`);
 }
 
@@ -261,4 +488,4 @@ if (require.main === module) {
   runMigrator();
 }
 
-module.exports = { runMigrator, findPageByTitleInAA, cqlEscape };
+module.exports = { runMigrator, runMigrate, findPageByTitleInAA, cqlEscape };

@@ -9,9 +9,26 @@
       },
       "targetFolderId": "target-folder",
       "targetFolderTitle": "기구설계 > Implant Robot",
-      "labels": ["group-device", "project-implant-robot"],
+      "labels": [
+        "group-device",
+        "project-implant-robot"
+      ],
       "decidedBy": "jaehwan.sim",
       "decidedAt": "2026-07-28T10:00:00Z",
+      "source": "human-ui-move"
+    },
+    {
+      "id": "dec-2026-07-30-1785396073860",
+      "match": {
+        "titleRegex": "휴먼이 옮긴 페이지"
+      },
+      "targetFolderId": "222",
+      "targetFolderTitle": "(resolved at runtime)",
+      "labels": [
+        "human-classified"
+      ],
+      "decidedBy": "audit-bot",
+      "decidedAt": "2026-07-30T07:21:13.861Z",
       "source": "human-ui-move"
     }
   ]

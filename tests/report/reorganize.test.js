@@ -78,3 +78,133 @@ test('reorganize: 홈페이지 ID 미해결(null) → 이동 전체 스킵(degra
   assert.strictEqual(result.degraded, true);
   assert.strictEqual(result.skippedCount, 5);
 });
+
+// Gap 3: human-classified 라벨이 붙은 페이지는 재이동 금지
+test('reorganize: human-classified 라벨이 있으면 분류 체인 진입 없이 스킵', async () => {
+  const pagesWithHuman = [
+    { id: 'home', title: 'AA 홈', parentId: null, labels: [] },
+    { id: 'h1', title: '휴먼결정페이지', parentId: 'home', labels: ['human-classified'] }, // 최상위지만 human-classified
+    { id: 'o1', title: '일반고아', parentId: 'home', labels: [] },
+  ];
+  const classified = [];
+  const moves = [];
+  const result = await runReorganize({
+    dryRun: false,
+    pages: pagesWithHuman,
+    aaTree: fakeTree,
+    homePageId: 'home',
+    deps: {
+      classify: async (ctx) => { classified.push(ctx.pageId); return decision; },
+      move: async (id, to) => { moves.push([id, to]); },
+    },
+  });
+  assert.ok(!classified.includes('h1'), 'human-classified는 분류 체인 진입 금지');
+  assert.deepStrictEqual(classified, ['o1']);
+  assert.deepStrictEqual(moves, [['o1', 'dest']]);
+  assert.strictEqual(result.skippedCount, 2); // home + h1
+});
+
+// ── Task 6: 본문 fetch + fallback 의견 코멘트 ────────────────────────────────
+test('reorganize: fetchBody는 분류 후보(고아)에만 호출된다', async () => {
+  const fetched = [];
+  await runReorganize({
+    dryRun: true,
+    pages: makePages(),
+    aaTree: fakeTree,
+    homePageId: 'home',
+    deps: {
+      classify: async () => decision,
+      move: async () => {},
+      fetchBody: async (id) => { fetched.push(id); return 'BODY'; },
+    },
+  });
+  assert.deepStrictEqual(fetched, ['o1'], '고아 o1만 본문 fetch — 폴더/보고서/폴더안 페이지는 안 됨');
+});
+
+test('reorganize: ctx.body에 fetch 결과가 담겨 classify에 전달된다', async () => {
+  let receivedCtx = null;
+  await runReorganize({
+    dryRun: true,
+    pages: makePages(),
+    aaTree: fakeTree,
+    homePageId: 'home',
+    deps: {
+      classify: async (ctx) => { receivedCtx = ctx; return decision; },
+      move: async () => {},
+      fetchBody: async () => '<p>본문HTML</p>',
+    },
+  });
+  assert.strictEqual(receivedCtx.body, '<p>본문HTML</p>');
+  assert.strictEqual(receivedCtx.currentFolderId, 'home');
+});
+
+test('reorganize: fallback+의견 이동 시 코멘트 첨부 (exec), dry-run에서는 안 함', async () => {
+  const comments = [];
+  const fallbackDecision = {
+    ok: true, source: 'fallback', folderId: 'unsorted', folderTitle: '미분류',
+    labels: ['needs-review'], reason: 'low-confidence', llmOpinion: 'DN과 Device 경합', suggestedFolderId: 'f-dn',
+  };
+  const opts = (dryRun) => ({
+    dryRun,
+    pages: makePages(),
+    aaTree: fakeTree,
+    homePageId: 'home',
+    deps: {
+      classify: async () => fallbackDecision,
+      move: async () => {},
+      fetchBody: async () => 'b',
+      comment: async (pid, html) => { comments.push([pid, html]); },
+    },
+  });
+  await runReorganize(opts(false));
+  assert.strictEqual(comments.length, 1);
+  assert.strictEqual(comments[0][0], 'o1');
+  assert.ok(comments[0][1].includes('DN과 Device 경합'), '의견 본문 포함');
+  assert.ok(comments[0][1].includes('f-dn'), '잠정 후보 포함');
+
+  comments.length = 0;
+  await runReorganize(opts(true));
+  assert.strictEqual(comments.length, 0, 'dry-run에서는 코멘트 금지');
+});
+
+test('reorganize: fallback이어도 의견이 null이면 코멘트 없음', async () => {
+  const comments = [];
+  await runReorganize({
+    dryRun: false,
+    pages: makePages(),
+    aaTree: fakeTree,
+    homePageId: 'home',
+    deps: {
+      classify: async () => ({ ok: true, source: 'fallback', folderId: 'unsorted', labels: ['needs-review'], reason: 'llm-skipped-no-key', llmOpinion: null }),
+      move: async () => {},
+      fetchBody: async () => '',
+      comment: async (pid, html) => { comments.push([pid, html]); },
+    },
+  });
+  assert.strictEqual(comments.length, 0);
+});
+
+test('reorganize: fetchBody throw → 해당 페이지 failed[] 기록, 진행 계속', async () => {
+  const result = await runReorganize({
+    dryRun: true,
+    pages: makePages(),
+    aaTree: fakeTree,
+    homePageId: 'home',
+    deps: {
+      classify: async () => decision,
+      move: async () => {},
+      fetchBody: async () => { throw new Error('fetch-boom'); },
+    },
+  });
+  assert.strictEqual(result.failed.length, 1);
+  assert.match(result.failed[0].error, /fetch-boom/);
+});
+
+// formatOpinionComment 단위 검증
+const { formatOpinionComment } = require(path.join(__dirname, '..', '..', 'scripts', 'reorganize_aa_space.js'));
+test('formatOpinionComment: 의견·후보를 이스케이프해 포함', () => {
+  const html = formatOpinionComment({ llmOpinion: '<b>위험</b> & 경합', suggestedFolderId: 'f-1', reason: 'low-confidence' });
+  assert.ok(html.includes('&lt;b&gt;위험&lt;/b&gt; &amp; 경합'), 'HTML 이스케이프');
+  assert.ok(html.includes('f-1'));
+  assert.ok(html.includes('자동 분류 보류'));
+});

@@ -171,6 +171,18 @@ async function movePage(pageId, newParentId) {
   });
 }
 
+/**
+ * 페이지에 코멘트(inline comment) 추가 — v1 child/comment 엔드포인트.
+ * 미분류 페이지에 LLM 분류 의견을 첨부해 사람 검토 루프의 입력으로 쓴다.
+ */
+async function addComment(pageId, htmlBody) {
+  return confluenceRequest('POST', `/wiki/rest/api/content/${pageId}/child/comment`, {
+    type: 'comment',
+    container: { id: String(pageId) },
+    body: { representation: 'storage', value: htmlBody },
+  });
+}
+
 // ─── 3. 첨부파일 복사 관련 ──────────────────────────────────────────────────
 async function fetchAttachments(pageId) {
   try {
@@ -327,6 +339,7 @@ module.exports = {
   syncLabels,
   movePage,
   addLabels,
+  addComment,
   copyAttachments,
   buildBanner,
   fixBodyReferences,

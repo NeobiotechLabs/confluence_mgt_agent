@@ -24,6 +24,12 @@
     "migrate:all": "node scripts/migrator.js",
     "ci:local": "node scripts/report_aa_daily.js && node scripts/migrator.js",
     "ci:local:dryrun": "node scripts/report_aa_daily.js --dry-run && echo [DRY] report render only. migrator has no dry-run - migration step skipped (actual run: npm run migrate:all)",
+    "tree:aa": "node scripts/tree_aa.js",
+    "snapshot:aa": "node scripts/snapshot_aa_tree.js",
+    "delete:aa:before": "node scripts/delete_aa_before.js --",
+    "delete:aa:before:dryrun": "node scripts/delete_aa_before.js --before=2026-01-01 --dry-run",
+    "find:unmigrated": "node scripts/find_unmigrated.js --",
+    "find:unmigrated:sd": "node scripts/find_unmigrated.js --space=SD --from=2025-01-01 --dry-run",
     "check:llm": "node scripts/check_llm_env.js",
     "test": "node --test \"tests/**/*.test.js\""
   },
