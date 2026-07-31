@@ -42,7 +42,10 @@ function movesSection(items, failedMoves) {
   if (moves.length === 0) {
     parts.push('<p><em>오늘 자동 이동 없음.</em></p>');
   } else {
-    const rows = moves.map(it => `<tr><td>${cell(it.title)}</td><td>${cell(it.fromFolderId)} → ${cell(it.toFolderId)}</td><td>${cell(it.source)}</td><td>${cell(it.reason)}</td><td>${cell(it.seenCount)}</td></tr>`);
+    const rows = moves.map(it => {
+      const fromDisplay = it.fromFolderId ? cell(it.fromFolderId) : '<em>top (최상위 고아)</em>';
+      return `<tr><td>${cell(it.title)}</td><td>${fromDisplay} → ${cell(it.toFolderId)}</td><td>${cell(it.source)}</td><td>${cell(it.reason)}</td><td>${cell(it.seenCount)}</td></tr>`;
+    });
     parts.push(`<table><tbody>
 <tr><th>페이지</th><th>이동(from → to)</th><th>판정 소스</th><th>사유</th><th>seen</th></tr>
 ${rows.join('\n')}
@@ -107,7 +110,7 @@ function noticeSection(appendix, failedMoves, advisories, repeatedHumanDecisions
   const orphans = appendix.metrics?.topLevelOrphans || 0;
   if (orphans > 0) notices.push(`최상위 고아 페이지 ${orphans}개가 홈페이지 직속에 남아 있습니다. 분류 정책을 확인하세요.`);
   if (failedMoves && failedMoves.length > 0) notices.push(`자동 이동 실패 ${failedMoves.length}건 — §3 실패 표를 확인하세요.`);
-  for (const a of advisories || []) notices.push(a);
+  // advisories는 운영 노이즈만 (§5의 목적). §4 LLM 권고는 §4 단독 표시 — 중복 방지.
 
   // Gap 2: 휴먼 결정 누적 — 같은 폴더로 3회 이상 휴먼 이동이 반복되면 룰 승격 권고
   const repeated = Array.isArray(repeatedHumanDecisions) ? repeatedHumanDecisions : [];

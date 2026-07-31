@@ -505,6 +505,10 @@ async function generateSpaceAdvisory(ctx, opts, deps) {
     });
     const blocks = Array.isArray(msg.content) ? msg.content : [];
     const textBlock = blocks.find(b => b && b.type === 'text');
+    if (typeof process !== 'undefined' && process.env?.DEBUG_LLM_ADVISORY) {
+      console.log(`[DEBUG_LLM_ADVISORY] blocks=${blocks.length} hasText=${!!textBlock} textLen=${textBlock?.text?.length || 0}`);
+      if (textBlock?.text) console.log(`[DEBUG_LLM_ADVISORY] text preview: ${textBlock.text.slice(0, 200)}`);
+    }
     if (!textBlock || typeof textBlock.text !== 'string') return [];
     return parseAdvisoryText(textBlock.text);
   } catch (_) {

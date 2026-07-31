@@ -569,9 +569,11 @@ async function main() {
         kbUnknownSample,
         moves,
       }, { model, max_tokens: 1024 }, { client: llmClient });
+      console.log(`[§4 LLM] 권고 ${advisoriesLLM.length}건 수신`);
       for (const adv of advisoriesLLM) advisories.push(adv);
-    } catch (_) {
+    } catch (e) {
       // LLM 호출 실패 시 자리표시 줄을 복구하지 않고 그냥 진행 (심박 우선)
+      console.warn(`[§4 LLM] 실패: ${e.message}`);
     }
   }
 
