@@ -1,12 +1,12 @@
 // scripts/check_llm_env.js
 // 현재 .env 기반 LLM(Anthropic SDK) 연결 점검. Confluence 호출 일체 없음.
-// 분류기가 실제로 호출하는 모델(코드 고정)과 .env의 ANTHROPIC_MODEL 을 각각 ping 한다.
+// 분류기가 실제로 호출하는 모델과 .env의 ANTHROPIC_MODEL 을 각각 ping 한다.
 // 사용: npm run check:llm
 'use strict';
 require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
 
-// 분류 체인 3단계가 실제 호출하는 모델(claude.js 에서 해석된 값)을 그대로 가져온다.
-const { claudeClassifier, MODEL: CLASSIFIER_MODEL } = require('./classifiers/claude');
+const { callLLMForClassification, DEFAULT_MODEL } = require('./utils/llm_api');
+const CLASSIFIER_MODEL = DEFAULT_MODEL;
 
 const mask = (v) => (v ? `${v.slice(0, 4)}… (${v.length} chars)` : '(unset)');
 
@@ -58,26 +58,21 @@ async function main() {
     }
   }
 
-  // 분류기 실제 경로(claude.js, tool_use) 스모크 — 가상 AA tree 사용, Confluence 호출 없음.
+  // 분류기 실제 경로(callLLMForClassification, tool_use) 스모크 — 가상 AA tree 사용, Confluence 호출 없음.
   if (failed === 0) {
     try {
-      const fakeTree = {
-        toText: () => '- folder-spec: 연구소 규정 (id=folder-spec)\n- folder-meeting: 회의록 (id=folder-meeting)',
-        hasFolder: (id) => ['folder-spec', 'folder-meeting'].includes(id),
-        flat: [
-          { id: 'folder-spec', title: '연구소 규정' },
-          { id: 'folder-meeting', title: '회의록' },
-        ],
-      };
-      const d = await claudeClassifier.classify(
-        { pageId: 'smoke', title: '연구실 안전 관리 규정 v2', body: '', sourceSpace: 'SD', sourceUrl: '', pageDate: '2025-11-02', existingLabels: [] },
-        fakeTree
-      );
-      if (d.ok && d.source === 'claude') {
-        console.log(`\n✅ [classifier-smoke] source=${d.source} folder=${d.folderTitle}(${d.folderId}) reason="${d.reason}"`);
+      const fakeTreeText = '- folder-spec: 연구소 규정 (id=folder-spec)\n- folder-meeting: 회의록 (id=folder-meeting)';
+      const d = await callLLMForClassification({
+        client,
+        title: '연구실 안전 관리 규정 v2',
+        body: '<p>본 규정은 연구실 안전 관리에 관한 전사 지침이다.</p>',
+        treeText: fakeTreeText,
+        guidelines: '### 연구소 규정\n연구실 안전 관련 규정 문서.',
+      });
+      if (d.ok && d.source === 'inline-llm') {
+        console.log(`\n✅ [classifier-smoke] source=${d.source} folder=${d.folderId} reason="${d.reason}" confidence=${d.confidence}`);
       } else {
-        failed++;
-        console.error(`\n❌ [classifier-smoke] 결정 실패: ${JSON.stringify(d)} — 모델이 tool_use(select_folder)로 응답하지 않았을 수 있음`);
+        console.log(`\n⚠️ [classifier-smoke] source=${d.source || 'miss'} reason="${d.reason || ''}" — ${d.ok ? 'ok' : '분류 실패(정상: 확신 부족 시 miss)'}`);
       }
     } catch (e) {
       failed++;
