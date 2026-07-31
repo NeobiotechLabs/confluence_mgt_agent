@@ -1,6 +1,6 @@
 # 프로젝트 할일 / 진행 상황 (ToDo)
 
-> 마지막 갱신: 2026-07-30 (작업 9 — §4 AI 권고판 (Phase 2-A) TDD 시작)
+> 마지막 갱신: 2026-07-31 (작업 10 — 유틸 스크립트 5종 완료, 작업 11 — LLM 본문 기반 분류 재설계 합의)
 >
 > 이 문서는 **현재 정책과 상태**를 기준으로 작성되었습니다. 옛 정책(Dify, human 큐, v1 폴더 규칙 등)은 더 이상 사실이 아니므로 이 문서에 남아 있지 않습니다.
 
@@ -9,8 +9,8 @@
 ## 0. 한 줄 요약
 
 - **목표**: 사내 Confluence 신규 스페이스(AA)를 잘 구조화해서, MPS(Planning/Evaluation) 작성용 RAG 원천으로 유지.
-- **현재 상태**: AA 스페이스 이관 + 일일 자동 리포트 + 자가 정화(audit·reorganize) 동작 중. 분류 체인은 **rule → inline-llm(Anthropic) → fallback** 단일 흐름으로 단순화 완료. 룰 매칭 추적(작업 8) — `reference/unmatched_pages.json` SSOT에 `kind:'unmatched'` append-only 머지로 매일 누락 가시화.
-- **다음 큰 작업**: **작업 9 — §4 AI 권고판 (Phase 2-A, TDD 시작)**. 사용자 결정(2026-07-30): 신뢰도 산출 = 키워드 가중치(예: '정확히'/'일치'/'유사'/'could be'/'maybe' → 점수 매핑), seenCount 임계치 = **3회**(주 5일 cron 기준 3영업일 ≈ 3일). 범위: 오배치 의심 / 반복 애매 항목. 세부 결정·우선순위는 §4 하위 항목.
+- **현재 상태**: AA 스페이스 이관 + 일일 자동 리포트 + 자가 정화(audit·reorganize) 동작 중. 분류 체인은 **rule → inline-llm(Anthropic) → fallback** 단일 흐름으로 단순화 완료. 유틸 스크립트 5종 추가(작업 10). 테스트 185/185 PASS.
+- **다음 큰 작업**: **작업 11 — LLM 본문 기반 분류 재설계**. 사용자 합의(2026-07-31): 제목 regex 분류를 폐기하고 **페이지 본문 기반 LLM 분류**로 전환. 새 체인: `human → structural check → LLM(본문) → fallback(미분류 + LLM 의견)`. 자연어 지침 파일이 `analysis_rules.json` regex를 대체. 미분류 페이지에 LLM 의견 첨부 → 사람 검토 → 지침 업데이트 학습 루프. 상세 설계: [`docs/HANDOFF.md`](../docs/HANDOFF.md) §3.
 - **사내 LLM 게이트웨이(작업 6)**: 사용자 명시 지시로 **폐기** — "사내 LLM은 현재 관심없어 나중에 필요하면 다시 추가할게". `scripts/utils/llm_api.js`의 공식 Anthropic SDK 경로만 유지.
 
 ---
@@ -45,6 +45,10 @@
 | **일일 리포트(실실행)** | `npm run report:aa` |
 | 로컬 CI 시뮬레이션 | `npm run ci:local:dryrun` |
 | LLM 환경 점검 | `npm run check:llm` |
+| AA 디렉토리 트리 | `npm run tree:aa` |
+| AA 스냅샷 + diff | `npm run snapshot:aa` |
+| 원본 작성일 기준 일괄 삭제 | `node scripts/delete_aa_before.js --before=YYYY-MM-DD --dry-run` |
+| 이관 누락 탐색 | `npm run find:unmigrated --space=SD --from=2025-01-01 --dry-run` |
 | 테스트 | `npm test` |
 
 ---
@@ -126,6 +130,20 @@
 - **변경 파일**: `scripts/report/report_lib.js`, `scripts/report/unmatched_state_io.js`(신규), `scripts/report_aa_daily.js`, `reference/classification_rules.md`, 4건 신규 테스트.
 - **SSOT 신규**: `reference/unmatched_pages.json`(append-only, 원자적 쓰기).
 
+### 3-7. 유틸 스크립트 5종 (작업 10) — 2026-07-31
+- **사용자 요청**: "AA 운영에 필요한 유틸성 스크립트 5개 만들어줘".
+- **구현 (TDD, 33건 신규 테스트)**:
+  1. `scripts/tree_aa.js` — AA 디렉토리 트리 뷰. `formatTreeWithCounts(tree, pages)` + `buildFolderPageCounts(pages)`. 📁 폴더 (페이지 수) 포맷 + orphan + total. `npm run tree:aa`.
+  2. `scripts/snapshot_aa_tree.js` — 로컬 디렉토리 맵 스냅샷 + diff. `buildSnapshot(folders, pages, capturedAt)` → `reference/aa_tree_snapshot.json` 저장, 이전 스냅샷과 자동 diff (`computeSnapshotDiff`, `formatDiff`). `npm run snapshot:aa`.
+  3. `scripts/delete_aa_before.js` — 원본 작성일 기준 AA 페이지 일괄 삭제. `extractOriginalDate(html)` (배너 regex: "원본 작성일" > "원본 최종수정일", `\s*` 유연 매칭) + Confluence `createdAt` fallback. `filterDeleteCandidates(pages, dateMap, beforeDate)` 보호 라벨 제외. `--dry-run` 지원.
+  4. `scripts/find_unmigrated.js` — 소스 스페이스에서 이관 누락 페이지 탐색. `filterByDateRange(pages, from, to)` + `findUnmigratedPages(sourcePages, aaTitles)` 제목 기반 교차 대조. `--space=SD --from=YYYY-MM-DD --dry-run`.
+  5. `scripts/report_aa_daily.js` (수정) — dry-run 시 `reference/aa_report_dryrun.html` 파일 저장.
+- **날짜 추출 수정**: 33/174 → 174/174. 원인: (a) 배너 없는 페이지에 Confluence createdAt fallback, (b) "원본 최종수정일" 공백 없는 변형에 `\s*` 매칭.
+- **USER_GUIDE.md 갱신**: §3.6 유틸 스크립트 섹션 신설, §1.6·§2.2·§3.3·§5.1 수정.
+- **package.json**: `tree:aa`, `snapshot:aa`, `delete:aa:before`, `delete:aa:before:dryrun`, `find:unmigrated`, `find:unmigrated:sd` 추가.
+- **테스트**: `tests/utils/` 4종 (tree_aa 8건, snapshot_aa_tree 7건, delete_aa_before 11건, find_unmigrated 7건). **`npm test` 185/185 PASS**.
+- **미커밋**: 5개 파일 변경 + 1개 신규(aa_report_dryrun.html, 산출물).
+
 ---
 
 ## 4. 진행 중 / 다음 작업
@@ -185,6 +203,21 @@
 - **Phase 2-B (보류, 후속)**: §2 루프 A 실데이터 — `scripts/migrator.js`의 이관 결과를 부록에 첨부하는 어댑터 + render §2 + items 머지.
 - **테스트(TDD)**: `tests/report/recommend_misplacements.test.js`, `tests/report/render_advisories.test.js` 신규. 추정 10~14건.
 - **다음 작업(작업 10 후보, 보류)**: §2 루프 A 실데이터 활성화, 정책 승격(반복 항목 → 명시 룰 변환 워크플로우).
+
+### 작업 11 — LLM 본문 기반 분류 재설계 — 합의 완료, 구현 미착수 (2026-07-31)
+- **문제**: 제목 regex 분류는 작성자가 제목을 어떻게 달지 예측 불가 → 룰 무한 추가 유지보수.
+- **사용자 합의**: "아예 내용을 기반으로 LLM이 판단" → 완전 재설계.
+- **새 체인**: `human(과거 결정) → structural check → LLM(본문 기반) → fallback(미분류 + LLM 의견)`
+- **핵심 변경**:
+  - rule 단계 제거 → 자연어 지침 파일(`reference/classification_guidelines.md` 예정)로 대체
+  - LLM 입력: `ctx.title`만 → **페이지 본문** (HTML strip + ~2000자 truncation)
+  - fallback: `needs-review` → **미분류 폴더 + LLM 의견 첨부**
+  - advisory: 키워드 가중치 → **LLM 생성 의미 있는 분석**
+  - 학습 루프: 미분류 → 사람 검토 → 이동 → 지침 업데이트 → LLM 개선
+- **탐색 완료**: 코드베이스 3개 영역 (분류 체인, 감사·재조직, 리포트·advisory) 에이전트 탐색 완료.
+- **구현 계획(TDD)**: [`docs/HANDOFF.md`](../docs/HANDOFF.md) §3-5에 7단계 상세.
+- **호환성**: `classifyWithChain(ctx, aaTree)` 시그니처 유지.
+- **기타 보류**: 워크플로우 순서 `migrate → daily-report → notify-failure` (합의, 미구현).
 
 ---
 

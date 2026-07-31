@@ -11,15 +11,20 @@ const DELETE_INTERVAL_MS = 300; // rate limit 보호
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 /**
- * 페이지 본문 HTML에서 배너의 "원본 작성일"을 추출.
+ * 페이지 본문 HTML에서 배너의 원본 날짜를 추출.
+ * 우선순위: "원본 작성일" > "원본 최종수정일"(공백 유연)
  * @param {string} html - Confluence storage format HTML
  * @returns {string|null} 'YYYY-MM-DD' 또는 null
  */
 function extractOriginalDate(html) {
   if (!html || typeof html !== 'string') return null;
-  // 배너 형식: <tr><td><strong>원본 작성일</strong></td><td>2024-03-15</td></tr>
-  const m = html.match(/<strong>원본 작성일<\/strong><\/td><td>(\d{4}-\d{2}-\d{2})/);
-  return m ? m[1] : null;
+  // 1차: 원본 작성일
+  const m1 = html.match(/<strong>원본 작성일<\/strong><\/td><td>(\d{4}-\d{2}-\d{2})/);
+  if (m1) return m1[1];
+  // 2차: 원본 최종수정일 / 원본 최종 수정일 (공백 유연 — \s*로 매칭)
+  const m2 = html.match(/<strong>원본\s*최종\s*수정일<\/strong><\/td><td>(\d{4}-\d{2}-\d{2})/);
+  if (m2) return m2[1];
+  return null;
 }
 
 /**
@@ -43,15 +48,24 @@ function filterDeleteCandidates(pages, dateMap, beforeDate) {
 
 /**
  * 페이지 본문을 가져와 원본 작성일을 추출.
+ * 배너에 "원본 작성일"이 없으면 Confluence 페이지 생성일(createdAt)을 fallback으로 사용.
+ * 이관되지 않은(AA에서 직접 생성된) 페이지도 삭제 후보에 포함되도록.
+ * @returns {{date: string|null, source: 'banner'|'confluence'}}
  */
 async function fetchOriginalDate(pageId) {
   try {
     const page = await confluenceRequest(
       'GET', `/wiki/api/v2/pages/${pageId}?body-format=storage`);
     const html = page.body?.storage?.value || '';
-    return extractOriginalDate(html);
+    // 1차: 배너에서 원본 작성일 추출
+    const bannerDate = extractOriginalDate(html);
+    if (bannerDate) return { date: bannerDate, source: 'banner' };
+    // 2차: Confluence API의 createdAt을 fallback
+    const createdAt = page.createdAt;
+    if (createdAt) return { date: createdAt.split('T')[0], source: 'confluence' };
+    return { date: null, source: null };
   } catch {
-    return null;
+    return { date: null, source: null };
   }
 }
 
@@ -92,20 +106,29 @@ async function main() {
     !p.labels || !p.labels.some(l => PROTECTED_LABELS.has(l)));
   console.log(`   보호 라벨 제외: ${unprotected.length}개\n`);
 
-  // 2) 각 페이지의 원본 작성일 추출
+  // 2) 각 페이지의 원본 작성일 추출 (배너 우선, 없으면 Confluence 생성일 fallback)
   console.log('🔍 원본 작성일 추출 중...');
   const dateMap = new Map();
+  const sourceMap = new Map(); // pageId → 'banner' | 'confluence'
   let processed = 0;
+  let bannerCount = 0;
+  let confluenceCount = 0;
   for (const p of unprotected) {
-    const date = await fetchOriginalDate(p.id);
-    if (date) dateMap.set(p.id, date);
+    const result = await fetchOriginalDate(p.id);
+    if (result.date) {
+      dateMap.set(p.id, result.date);
+      sourceMap.set(p.id, result.source);
+      if (result.source === 'banner') bannerCount++;
+      else if (result.source === 'confluence') confluenceCount++;
+    }
     processed++;
     if (processed % 20 === 0) {
       console.log(`   ${processed}/${unprotected.length} 처리 완료...`);
     }
     await sleep(100); // rate limit
   }
-  console.log(`   날짜 추출 성공: ${dateMap.size}/${unprotected.length}개\n`);
+  console.log(`   날짜 추출 성공: ${dateMap.size}/${unprotected.length}개`);
+  console.log(`     배너(원본 작성일): ${bannerCount}개, Confluence 생성일: ${confluenceCount}개\n`);
 
   // 3) 삭제 후보
   const candidates = filterDeleteCandidates(pages, dateMap, beforeDate);
@@ -120,7 +143,9 @@ async function main() {
   console.log('\n삭제 대상:');
   for (const c of candidates) {
     const date = dateMap.get(c.id);
-    console.log(`  🗑️ ${c.title} (원본: ${date}, id: ${c.id})`);
+    const source = sourceMap.get(c.id);
+    const sourceLabel = source === 'banner' ? '원본' : 'Confluence';
+    console.log(`  🗑️ ${c.title} (${sourceLabel}: ${date}, id: ${c.id})`);
   }
 
   if (dryRun) {

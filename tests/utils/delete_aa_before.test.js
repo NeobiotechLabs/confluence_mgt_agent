@@ -34,6 +34,29 @@ test('extractOriginalDate: HTML 엔티티 포함이어도 추출', () => {
   assert.strictEqual(extractOriginalDate(html), '2025-12-31');
 });
 
+test('extractOriginalDate: 원본 작성일 없으면 원본 최종수정일 추출 (공백 없음)', () => {
+  const html = `
+    <table>
+      <tr><td><strong>원본 최종수정일</strong></td><td>2025-08-20</td></tr>
+      <tr><td><strong>이관/동기화일</strong></td><td>2026-07-29</td></tr>
+    </table>`;
+  assert.strictEqual(extractOriginalDate(html), '2025-08-20');
+});
+
+test('extractOriginalDate: 원본 최종 수정일 (공백 있음)도 추출', () => {
+  const html = '<tr><td><strong>원본 최종 수정일</strong></td><td>2025-08-20</td></tr>';
+  assert.strictEqual(extractOriginalDate(html), '2025-08-20');
+});
+
+test('extractOriginalDate: 원본 작성일이 원본 최종수정일보다 우선', () => {
+  const html = `
+    <table>
+      <tr><td><strong>원본 작성일</strong></td><td>2024-01-15</td></tr>
+      <tr><td><strong>원본 최종수정일</strong></td><td>2025-08-20</td></tr>
+    </table>`;
+  assert.strictEqual(extractOriginalDate(html), '2024-01-15');
+});
+
 // ── filterDeleteCandidates ───────────────────────────────────────────────────
 test('filterDeleteCandidates: 보호 라벨 있으면 제외', () => {
   const pages = [

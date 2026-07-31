@@ -1,5 +1,5 @@
 {
-  "capturedAt": "2026-07-30T18:01:14.146+09:00",
+  "capturedAt": "2026-07-30T20:04:27.117+09:00",
   "folders": [
     {
       "id": "480608401",
@@ -395,20 +395,6 @@
       ]
     },
     {
-      "id": "434864339",
-      "title": "IR Marker Tracking Robot Development",
-      "parentId": "434307101",
-      "labels": [
-        "group-device",
-        "doctype-project-status",
-        "year-2024",
-        "status-active",
-        "rag-source",
-        "migrated-sd",
-        "last-parent-434307101"
-      ]
-    },
-    {
       "id": "434864394",
       "title": "SW - 2월 월간 MPS",
       "parentId": "435257365",
@@ -451,32 +437,6 @@
       ]
     },
     {
-      "id": "434864998",
-      "title": "RAG 시스템 비교",
-      "parentId": "434307121",
-      "labels": [
-        "group-ai",
-        "doctype-tech-survey",
-        "status-active",
-        "month-2025-08",
-        "last-parent-434307121"
-      ]
-    },
-    {
-      "id": "434897257",
-      "title": "GPT 기반 대화형 로봇 제어 개발 방안",
-      "parentId": "434307101",
-      "labels": [
-        "group-device",
-        "doctype-project-status",
-        "year-2024",
-        "status-active",
-        "rag-source",
-        "migrated-sd",
-        "last-parent-434307101"
-      ]
-    },
-    {
       "id": "434897288",
       "title": "2026 강원지역혁신클러스터육성(R&D) 선도형 사업비",
       "parentId": "434339867",
@@ -488,31 +448,6 @@
         "rag-source",
         "migrated-sd",
         "last-parent-434339867"
-      ]
-    },
-    {
-      "id": "434897726",
-      "title": "Device - '26 연간 MPS",
-      "parentId": "433586182",
-      "labels": [
-        "group-center",
-        "doctype-mps-annual",
-        "status-completed",
-        "month-2026-06",
-        "group-ai",
-        "last-parent-433586182"
-      ]
-    },
-    {
-      "id": "434897782",
-      "title": "개선된 RAG 시스템 정리",
-      "parentId": "434307121",
-      "labels": [
-        "group-ai",
-        "doctype-tech-survey",
-        "status-active",
-        "month-2025-09",
-        "last-parent-434307121"
       ]
     },
     {
@@ -542,20 +477,6 @@
       ]
     },
     {
-      "id": "434929917",
-      "title": "CI/CD",
-      "parentId": "434307081",
-      "labels": [
-        "group-center",
-        "doctype-guideline",
-        "year-2024",
-        "status-evergreen",
-        "rag-source",
-        "migrated-sd",
-        "last-parent-434307081"
-      ]
-    },
-    {
       "id": "434929948",
       "title": "Weekly MPS Evaluation & Planning",
       "parentId": "433913929",
@@ -567,20 +488,6 @@
         "rag-source",
         "migrated-sd",
         "last-parent-433913929"
-      ]
-    },
-    {
-      "id": "434930164",
-      "title": "2025-06-18 Progress",
-      "parentId": "434176022",
-      "labels": [
-        "group-center",
-        "doctype-mps-monthly",
-        "year-2025",
-        "status-completed",
-        "rag-source",
-        "migrated-sd",
-        "last-parent-434176022"
       ]
     },
     {
@@ -620,62 +527,6 @@
       ]
     },
     {
-      "id": "434962608",
-      "title": "Quality Attributes",
-      "parentId": "434307101",
-      "labels": [
-        "group-device",
-        "doctype-project-status",
-        "year-2024",
-        "status-active",
-        "rag-source",
-        "migrated-sd",
-        "last-parent-434307101"
-      ]
-    },
-    {
-      "id": "434962637",
-      "title": "Robot S/W 구조 및 인터페이스 정의",
-      "parentId": "434307101",
-      "labels": [
-        "group-device",
-        "doctype-project-status",
-        "year-2024",
-        "status-active",
-        "rag-source",
-        "migrated-sd",
-        "last-parent-434307101"
-      ]
-    },
-    {
-      "id": "434962666",
-      "title": "음성 명령 상시 Listening 및 Wake word 적용 검토",
-      "parentId": "434307101",
-      "labels": [
-        "group-device",
-        "doctype-project-status",
-        "year-2024",
-        "status-active",
-        "rag-source",
-        "migrated-sd",
-        "last-parent-434307101"
-      ]
-    },
-    {
-      "id": "434962707",
-      "title": "ChatGPT: 치과 임플란트 수술 정확도 향상을 위한 “상용 로봇암 + S/W 부분 자동화” 제품화 제안",
-      "parentId": "434307101",
-      "labels": [
-        "group-device",
-        "doctype-project-status",
-        "year-2025",
-        "status-active",
-        "rag-source",
-        "migrated-sd",
-        "last-parent-434307101"
-      ]
-    },
-    {
       "id": "434962778",
       "title": "AI - '26 3월 월간 MPS",
       "parentId": "434864215",
@@ -704,58 +555,6 @@
       ]
     },
     {
-      "id": "434963253",
-      "title": "2025-11-03 Weekly MPS Evaluation & Planning",
-      "parentId": "438927376",
-      "labels": [
-        "group-center",
-        "doctype-mps-weekly",
-        "year-2025",
-        "status-completed",
-        "rag-source",
-        "migrated-sd",
-        "last-parent-438927376"
-      ]
-    },
-    {
-      "id": "434963302",
-      "title": "2025-11-12 Weekly MPS Evaluation & Planning",
-      "parentId": "438927376",
-      "labels": [
-        "group-center",
-        "doctype-mps-weekly",
-        "year-2025",
-        "status-completed",
-        "rag-source",
-        "migrated-sd",
-        "last-parent-438927376"
-      ]
-    },
-    {
-      "id": "434963413",
-      "title": "4. MCP",
-      "parentId": "434307121",
-      "labels": [
-        "group-ai",
-        "doctype-tech-survey",
-        "status-active",
-        "month-2025-04",
-        "last-parent-434307121"
-      ]
-    },
-    {
-      "id": "434963446",
-      "title": "A2A & MCP",
-      "parentId": "434307121",
-      "labels": [
-        "group-ai",
-        "doctype-tech-survey",
-        "status-active",
-        "month-2025-04",
-        "last-parent-434307121"
-      ]
-    },
-    {
       "id": "434995410",
       "title": "SW - '26 1월 월간 MPS",
       "parentId": "435257365",
@@ -770,84 +569,6 @@
       ]
     },
     {
-      "id": "434995600",
-      "title": "MPS 작성 가이드",
-      "parentId": "434307081",
-      "labels": [
-        "group-center",
-        "doctype-mps-monthly",
-        "year-2025",
-        "status-completed",
-        "rag-source",
-        "migrated-sd",
-        "last-parent-434307081"
-      ]
-    },
-    {
-      "id": "434995799",
-      "title": "2025-10-23 Weekly MPS Evaluation & Planning",
-      "parentId": "438927376",
-      "labels": [
-        "group-center",
-        "doctype-mps-weekly",
-        "year-2025",
-        "status-completed",
-        "rag-source",
-        "migrated-sd",
-        "last-parent-438927376"
-      ]
-    },
-    {
-      "id": "434995943",
-      "title": "KDX 2025 - 정민규",
-      "parentId": "434143257",
-      "labels": [
-        "doctype-market-survey",
-        "status-active",
-        "doctype-report",
-        "month-2025-04",
-        "group-center",
-        "year-2025",
-        "last-parent-434143257"
-      ]
-    },
-    {
-      "id": "434995998",
-      "title": "LlamaIndex기반 RAG시스템 리뷰",
-      "parentId": "434307121",
-      "labels": [
-        "group-ai",
-        "doctype-tech-survey",
-        "status-active",
-        "month-2025-07",
-        "last-parent-434307121"
-      ]
-    },
-    {
-      "id": "434996027",
-      "title": "RAG시스템 구축 시도 및 결과 분석",
-      "parentId": "434307121",
-      "labels": [
-        "group-ai",
-        "doctype-tech-survey",
-        "status-active",
-        "month-2025-09",
-        "last-parent-434307121"
-      ]
-    },
-    {
-      "id": "434996064",
-      "title": "Fine-tuning-학습 유형",
-      "parentId": "434307121",
-      "labels": [
-        "group-ai",
-        "doctype-tech-survey",
-        "status-active",
-        "month-2025-12",
-        "last-parent-434307121"
-      ]
-    },
-    {
       "id": "435028020",
       "title": "26 Device 과제",
       "parentId": "433586202",
@@ -856,48 +577,6 @@
         "group-device",
         "year-2026",
         "last-parent-433586202"
-      ]
-    },
-    {
-      "id": "435028157",
-      "title": "Voice Robot Arm Control with Confirmation",
-      "parentId": "434307101",
-      "labels": [
-        "group-device",
-        "doctype-project-status",
-        "year-2024",
-        "status-active",
-        "rag-source",
-        "migrated-sd",
-        "last-parent-434307101"
-      ]
-    },
-    {
-      "id": "435028459",
-      "title": "2025-09-26 Weekly MPS Evaluation & Planning",
-      "parentId": "438927376",
-      "labels": [
-        "group-center",
-        "doctype-mps-weekly",
-        "year-2025",
-        "status-completed",
-        "rag-source",
-        "migrated-sd",
-        "last-parent-438927376"
-      ]
-    },
-    {
-      "id": "435060857",
-      "title": "Neobiotech GPT 로봇 데모 시나리오",
-      "parentId": "434307101",
-      "labels": [
-        "group-device",
-        "doctype-project-status",
-        "year-2024",
-        "status-active",
-        "rag-source",
-        "migrated-sd",
-        "last-parent-434307101"
       ]
     },
     {
@@ -915,72 +594,6 @@
       ]
     },
     {
-      "id": "435060947",
-      "title": "연구소 S/W Configuration Management",
-      "parentId": "434307081",
-      "labels": [
-        "group-center",
-        "doctype-guideline",
-        "year-2024",
-        "status-evergreen",
-        "rag-source",
-        "migrated-sd",
-        "last-parent-434307081"
-      ]
-    },
-    {
-      "id": "435061327",
-      "title": "MPS 작성 가이드 - update",
-      "parentId": "434307081",
-      "labels": [
-        "group-center",
-        "doctype-mps-monthly",
-        "year-2025",
-        "status-completed",
-        "rag-source",
-        "migrated-sd",
-        "last-parent-434307081"
-      ]
-    },
-    {
-      "id": "435061374",
-      "title": "SW - '26 연간 MPS",
-      "parentId": "433356856",
-      "labels": [
-        "group-center",
-        "doctype-mps-annual",
-        "status-completed",
-        "month-2025-11",
-        "doctype-report",
-        "last-parent-433356856"
-      ]
-    },
-    {
-      "id": "435061448",
-      "title": "Confluence RAG 시스템 전체 구조 분석 및 정리",
-      "parentId": "434307121",
-      "labels": [
-        "group-ai",
-        "doctype-tech-survey",
-        "status-active",
-        "month-2025-07",
-        "last-parent-434307121"
-      ]
-    },
-    {
-      "id": "435061473",
-      "title": "LLM Repo 정리",
-      "parentId": "434176022",
-      "labels": [
-        "group-ai",
-        "status-active",
-        "month-2025-11",
-        "doctype-report",
-        "doctype-tech-survey",
-        "last-parent-434176022"
-      ]
-    },
-    {
       "id": "435061508",
       "title": "AI RAG Chatbot for Medical Device Regulation Expertise",
       "parentId": "434307121",
@@ -990,20 +603,6 @@
         "status-active",
         "month-2026-03",
         "last-parent-434307121"
-      ]
-    },
-    {
-      "id": "435093671",
-      "title": "Branch Strategy",
-      "parentId": "434307081",
-      "labels": [
-        "group-center",
-        "doctype-guideline",
-        "year-2024",
-        "status-evergreen",
-        "rag-source",
-        "migrated-sd",
-        "last-parent-434307081"
       ]
     },
     {
@@ -1049,46 +648,6 @@
       ]
     },
     {
-      "id": "435094251",
-      "title": "Fine-tuning",
-      "parentId": "433586182",
-      "labels": [
-        "group-ai",
-        "doctype-tech-survey",
-        "status-active",
-        "month-2025-12",
-        "last-parent-433586182"
-      ]
-    },
-    {
-      "id": "435126513",
-      "title": "Roadmap",
-      "parentId": "434307101",
-      "labels": [
-        "group-device",
-        "doctype-project-status",
-        "year-2024",
-        "status-active",
-        "rag-source",
-        "migrated-sd",
-        "last-parent-434307101"
-      ]
-    },
-    {
-      "id": "435126567",
-      "title": "Neo GPT Robot 앱 개발 결과",
-      "parentId": "434307101",
-      "labels": [
-        "group-device",
-        "doctype-project-status",
-        "year-2024",
-        "status-active",
-        "rag-source",
-        "migrated-sd",
-        "last-parent-434307101"
-      ]
-    },
-    {
       "id": "435126649",
       "title": "Device - '26 1월 월간 MPS",
       "parentId": "435028020",
@@ -1100,45 +659,6 @@
         "rag-source",
         "migrated-sd",
         "last-parent-435028020"
-      ]
-    },
-    {
-      "id": "435127130",
-      "title": "AI - '26 연간 MPS",
-      "parentId": "433586182",
-      "labels": [
-        "doctype-mps-annual",
-        "status-completed",
-        "group-ai",
-        "doctype-report",
-        "month-2025-11",
-        "last-parent-433586182"
-      ]
-    },
-    {
-      "id": "435127198",
-      "title": "Deep Learning based Computer Vision",
-      "parentId": "434307121",
-      "labels": [
-        "group-ai",
-        "doctype-tech-survey",
-        "status-active",
-        "month-2025-02",
-        "last-parent-434307121"
-      ]
-    },
-    {
-      "id": "435159232",
-      "title": "Robot 제어를 위한 GPT Function Calling",
-      "parentId": "434307101",
-      "labels": [
-        "group-device",
-        "doctype-project-status",
-        "year-2024",
-        "status-active",
-        "rag-source",
-        "migrated-sd",
-        "last-parent-434307101"
       ]
     },
     {
@@ -1170,114 +690,6 @@
       ]
     },
     {
-      "id": "435159507",
-      "title": "MPS 작성 Process",
-      "parentId": "434307081",
-      "labels": [
-        "group-center",
-        "doctype-mps-monthly",
-        "year-2025",
-        "status-completed",
-        "rag-source",
-        "migrated-sd",
-        "last-parent-434307081"
-      ]
-    },
-    {
-      "id": "435159556",
-      "title": "R&D MPS - 2025.09",
-      "parentId": "434307081",
-      "labels": [
-        "group-center",
-        "doctype-mps-monthly",
-        "year-2025",
-        "status-completed",
-        "rag-source",
-        "migrated-sd",
-        "last-parent-434307081"
-      ]
-    },
-    {
-      "id": "435159621",
-      "title": "2025-10-02 Weekly MPS Evaluation & Planning",
-      "parentId": "438927376",
-      "labels": [
-        "group-center",
-        "doctype-mps-weekly",
-        "year-2025",
-        "status-completed",
-        "rag-source",
-        "migrated-sd",
-        "last-parent-438927376"
-      ]
-    },
-    {
-      "id": "435159784",
-      "title": "KDX 2025 - 심호기",
-      "parentId": "434176022",
-      "labels": [
-        "doctype-market-survey",
-        "status-active",
-        "month-2025-04",
-        "group-ai",
-        "last-parent-434176022"
-      ]
-    },
-    {
-      "id": "435191897",
-      "title": "음성 명령 상시 Listening 및 Wake word 적용 결과",
-      "parentId": "434307101",
-      "labels": [
-        "group-device",
-        "doctype-project-status",
-        "year-2024",
-        "status-active",
-        "rag-source",
-        "migrated-sd",
-        "last-parent-434307101"
-      ]
-    },
-    {
-      "id": "435192372",
-      "title": "KDX 2025 - 김지수",
-      "parentId": "434143257",
-      "labels": [
-        "group-center",
-        "doctype-market-survey",
-        "status-active",
-        "month-2025-04",
-        "last-parent-434143257"
-      ]
-    },
-    {
-      "id": "435224704",
-      "title": "Requirementa",
-      "parentId": "434307101",
-      "labels": [
-        "group-device",
-        "doctype-project-status",
-        "year-2024",
-        "status-active",
-        "rag-source",
-        "migrated-sd",
-        "last-parent-434307101"
-      ]
-    },
-    {
-      "id": "435224748",
-      "title": "Basic Realtime IR Tracking",
-      "parentId": "434307101",
-      "labels": [
-        "group-device",
-        "doctype-project-status",
-        "year-2024",
-        "status-active",
-        "rag-source",
-        "migrated-sd",
-        "last-parent-434307101"
-      ]
-    },
-    {
       "id": "435224787",
       "title": "AI - '26 2월 월간 MPS",
       "parentId": "434864215",
@@ -1289,20 +701,6 @@
         "rag-source",
         "migrated-sd",
         "last-parent-434864215"
-      ]
-    },
-    {
-      "id": "435225008",
-      "title": "2025-09-12 Weekly MPS Evaluation & Planning",
-      "parentId": "438927376",
-      "labels": [
-        "group-center",
-        "doctype-mps-weekly",
-        "year-2025",
-        "status-completed",
-        "rag-source",
-        "migrated-sd",
-        "last-parent-438927376"
       ]
     },
     {
@@ -1356,34 +754,6 @@
       ]
     },
     {
-      "id": "435290295",
-      "title": "ChapGPT 기반 대화형 로봇 개발",
-      "parentId": "434307101",
-      "labels": [
-        "group-device",
-        "doctype-project-status",
-        "year-2024",
-        "status-active",
-        "rag-source",
-        "migrated-sd",
-        "last-parent-434307101"
-      ]
-    },
-    {
-      "id": "435290367",
-      "title": "Calibration (Vision-Robot)",
-      "parentId": "434307101",
-      "labels": [
-        "group-device",
-        "doctype-project-status",
-        "year-2024",
-        "status-active",
-        "rag-source",
-        "migrated-sd",
-        "last-parent-434307101"
-      ]
-    },
-    {
       "id": "435290473",
       "title": "Device - '26 2월 월간 MPS",
       "parentId": "435028020",
@@ -1409,75 +779,6 @@
         "rag-source",
         "migrated-sd",
         "last-parent-438927376"
-      ]
-    },
-    {
-      "id": "435290663",
-      "title": "2025-06-11 Progress",
-      "parentId": "434176022",
-      "labels": [
-        "group-center",
-        "doctype-mps-monthly",
-        "year-2025",
-        "status-completed",
-        "rag-source",
-        "migrated-sd",
-        "last-parent-434176022"
-      ]
-    },
-    {
-      "id": "435290775",
-      "title": "2025-08-14 Weekly MPS Evaluation & Planning",
-      "parentId": "438927376",
-      "labels": [
-        "group-center",
-        "doctype-mps-weekly",
-        "year-2025",
-        "status-completed",
-        "rag-source",
-        "migrated-sd",
-        "last-parent-438927376"
-      ]
-    },
-    {
-      "id": "435291020",
-      "title": "2025-11-21 Weekly MPS Evaluation & Planning",
-      "parentId": "438927376",
-      "labels": [
-        "group-center",
-        "doctype-mps-weekly",
-        "year-2025",
-        "status-completed",
-        "rag-source",
-        "migrated-sd",
-        "last-parent-438927376"
-      ]
-    },
-    {
-      "id": "435291114",
-      "title": "KDX 2025 - 박주현",
-      "parentId": "434176022",
-      "labels": [
-        "month-2025-04",
-        "group-ai",
-        "doctype-market-survey",
-        "status-active",
-        "group-center",
-        "last-parent-434176022"
-      ]
-    },
-    {
-      "id": "435323091",
-      "title": "Basic IR Tracking (2024/10/15)",
-      "parentId": "434307101",
-      "labels": [
-        "group-device",
-        "doctype-project-status",
-        "year-2024",
-        "status-active",
-        "rag-source",
-        "migrated-sd",
-        "last-parent-434307101"
       ]
     },
     {
@@ -1537,137 +838,6 @@
       ]
     },
     {
-      "id": "435323638",
-      "title": "GPT_API활용 RAG 테스트 문답_2",
-      "parentId": "434307121",
-      "labels": [
-        "group-ai",
-        "doctype-tech-survey",
-        "status-active",
-        "project-smilearch",
-        "month-2025-06",
-        "last-parent-434307121"
-      ]
-    },
-    {
-      "id": "435323661",
-      "title": "GPT_API활용 RAG 테스트 문답_1",
-      "parentId": "434307121",
-      "labels": [
-        "group-ai",
-        "doctype-tech-survey",
-        "status-active",
-        "month-2025-06",
-        "project-smilearch",
-        "last-parent-434307121"
-      ]
-    },
-    {
-      "id": "435323696",
-      "title": "GraphRAG 구현 현황 체크리스트",
-      "parentId": "434307121",
-      "labels": [
-        "group-ai",
-        "doctype-tech-survey",
-        "status-active",
-        "month-2025-10",
-        "last-parent-434307121"
-      ]
-    },
-    {
-      "id": "435355786",
-      "title": "Neo Robot-Guided Dental Implant Surgery",
-      "parentId": "434307101",
-      "labels": [
-        "group-device",
-        "doctype-project-status",
-        "year-2024",
-        "status-active",
-        "rag-source",
-        "migrated-sd",
-        "last-parent-434307101"
-      ]
-    },
-    {
-      "id": "435355809",
-      "title": "Scenario based Requirements",
-      "parentId": "434307101",
-      "labels": [
-        "group-device",
-        "doctype-project-status",
-        "year-2024",
-        "status-active",
-        "rag-source",
-        "migrated-sd",
-        "last-parent-434307101"
-      ]
-    },
-    {
-      "id": "435355868",
-      "title": "좌표계 고정 (강체 변환, Rigid Body Transformation)",
-      "parentId": "434307101",
-      "labels": [
-        "group-device",
-        "doctype-project-status",
-        "year-2024",
-        "status-active",
-        "rag-source",
-        "migrated-sd",
-        "last-parent-434307101"
-      ]
-    },
-    {
-      "id": "435356456",
-      "title": "Solution - '26 연간 MPS",
-      "parentId": "433356856",
-      "labels": [
-        "group-center",
-        "doctype-mps-annual",
-        "status-completed",
-        "month-2025-11",
-        "doctype-report",
-        "last-parent-433356856"
-      ]
-    },
-    {
-      "id": "435356506",
-      "title": "sLM",
-      "parentId": "434307121",
-      "labels": [
-        "group-ai",
-        "doctype-tech-survey",
-        "year-2025",
-        "status-active",
-        "rag-source",
-        "migrated-sd",
-        "last-parent-434307121"
-      ]
-    },
-    {
-      "id": "435356553",
-      "title": "Fine-tuning-detail",
-      "parentId": "434307121",
-      "labels": [
-        "group-ai",
-        "doctype-tech-survey",
-        "status-active",
-        "month-2025-12",
-        "last-parent-434307121"
-      ]
-    },
-    {
-      "id": "435487029",
-      "title": "RAG",
-      "parentId": "434307121",
-      "labels": [
-        "group-ai",
-        "doctype-tech-survey",
-        "status-active",
-        "month-2025-06",
-        "last-parent-434307121"
-      ]
-    },
-    {
       "id": "435487084",
       "title": "주간 업무 공유 진행 방향",
       "parentId": "433913929",
@@ -1679,30 +849,6 @@
         "rag-source",
         "migrated-sd",
         "last-parent-433913929"
-      ]
-    },
-    {
-      "id": "435519815",
-      "title": "SIDEX 2024",
-      "parentId": "434143257",
-      "labels": [
-        "group-center",
-        "doctype-market-survey",
-        "status-active",
-        "month-2024-06",
-        "last-parent-434143257"
-      ]
-    },
-    {
-      "id": "435519886",
-      "title": "RAG_Chatbot 중간정리",
-      "parentId": "434307121",
-      "labels": [
-        "group-ai",
-        "doctype-tech-survey",
-        "status-active",
-        "month-2025-09",
-        "last-parent-434307121"
       ]
     },
     {
@@ -1742,7 +888,7 @@
     },
     {
       "id": "437256323",
-      "title": "jira-mcp-server 구조 요약 ��� 적용 가능성 분석",
+      "title": "jira-mcp-server 구조 요약 및 적용 가능성 분석",
       "parentId": "434143237",
       "labels": [
         "doctype-tech-survey",
@@ -2817,15 +1963,6 @@
         "is-folder",
         "bot-report",
         "last-parent-426344771"
-      ]
-    },
-    {
-      "id": "480608421",
-      "title": "Daily Scrum",
-      "parentId": "479133745",
-      "labels": [
-        "last-parent-479133745",
-        "needs-review"
       ]
     },
     {

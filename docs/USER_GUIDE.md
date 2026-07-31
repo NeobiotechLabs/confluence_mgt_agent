@@ -6,8 +6,8 @@
 
 | 기준 시점 | 2026-07-30 |
 |---|---|
-| 분류 체인 | `rule → inline-llm → fallback` (3단계, 단일화 완료) |
-| 테스트 | `npm test` — node:test 137 PASS / fail 0 |
+| 분류 체인 | `human → rule → inline-llm → fallback` (4단계, 휴먼 결정 재삽입) |
+| 테스트 | `npm test` — node:test 184 PASS / fail 0 |
 | 일일 리포트 | Phase 1 + 작업 5·8·9 반영 (심박 + 자동 이동 + AI 권고판 + 미매칭 추적) |
 | LLM | 공식 Anthropic SDK, 모델 `claude-haiku-4-5-20251001` (env `ANTHROPIC_MODEL`로 override) |
 
@@ -99,19 +99,23 @@ Confluence **AA 스페이스 → "자동화 리포트" 폴더** (왼쪽 트리).
 
 ### 1.6 분류가 어려우면 어떻게 되나 — 핵심 흐름
 
-페이지 하나를 분류할 때 체인은 **`rule → inline-llm → fallback`** 순서로 시도한다 (`scripts/utils/classification_provider.js`).
+페이지 하나를 분류할 때 체인은 **`human → rule → inline-llm → fallback`** 순서로 시도한다 (`scripts/utils/classification_provider.js`).
 
 ```
 페이지
   │
-  ├─① rule: config/analysis_rules.json 정규칙/조상 매칭 → 확정 (빠름·무료)
+  ├─① human: config/classification_decisions.json (과거 휴먼 UI 이동 기록)
+  │    ├─ 매칭 → 즉시 확정 (titleRegex로 매칭, targetFolderId로 이동)
+  │    └─ 매칭 실패 → 다음 단계
+  │    ↓
+  ├─② rule: config/analysis_rules.json 정규칙/조상 매칭 → 확정 (빠름·무료)
   │    ↓ 실패
-  ├─② inline-llm: Anthropic SDK, tool_use(select_folder)로 폴더 선택
+  ├─③ inline-llm: Anthropic SDK, tool_use(select_folder)로 폴더 선택
   │    ├─ 성공 → {ok, folderId, labels, reason}
   │    └─ 실패/예외 → 흡수 후 {ok:false, source:'miss'}  (크래시 전파 안 함)
   │    (ANTHROPIC_API_KEY 없으면 이 단계 자체를 skip)
   │    ↓ 실패
-  └─③ fallback: "미분류" 폴더로 이동 + `needs-review` 라벨 부착
+  └─④ fallback: "미분류" 폴더로 이동 + `needs-review` 라벨 부착
        (미분류 폴더 = 제목이 '미분류'·'분류 보류'·'Unsorted' 중 하나인 is-folder)
 ```
 
@@ -166,6 +170,13 @@ Confluence **AA 스페이스 → "자동화 리포트" 폴더** (왼쪽 트리).
 6. **효과 확인** — 다음 날 리포트 §6의 `policyHash`가 바뀌었는지, §5에 "⚠️ 룰 변경 감지" 알림이 떴는지, 그리고 unmatched/미분류 수치가 줄었는지 확인.
 
 > 다른 변경 유형의 절차 요약: 체인 단계 변경 → `classification_provider.js` + `classifiers/engine.js` + 테스트 / 모델 변경 → `ANTHROPIC_MODEL` env / 키 회전 → GitHub Secrets / 미매칭 신규 룰 추가 → 위 1~6.
+
+**휴먼 결정 흐름 (Confluence UI에서 직접 이동):**
+1. 사람이 Confluence UI에서 페이지를 드래그하여 다른 폴더로 이동
+2. 다음 날 감사(audit)가 `last-parent-*` 라벨 변화로 이동 감지
+3. `config/classification_decisions.json`에 휴먼 결정 기록 + `human-classified` 라벨 자동 부여
+4. 재정렬(reorganize)은 `human-classified` 페이지를 **자동 스킵** — 봇이 되돌리지 않음
+5. 같은 폴더로 **3회 이상** 휴먼 이동이 누적되면 §5에 "⚠️ 휴먼 결정 누적" 알림 → 룰 승격 검토
 
 ### 2.3 데이터 기반 개선 사이클 (이 자동화의 본체)
 
@@ -234,10 +245,11 @@ npm test          # node --test "tests/**/*.test.js"  →  현재 137 PASS / fai
 
 | 목적 | 명령 | 확인할 것 |
 |---|---|---|
-| 일일 리포트 예행 | `npm run report:aa:dryrun` | stdout HTML에 §1~§7 완전 렌더, §7 CDATA JSON 유효, **Confluence 쓰기·삭제 0건** |
+| 일일 리포트 예행 | `npm run report:aa:dryrun` | stdout HTML에 §1~§7 완전 렌더, §7 CDATA JSON 유효, **Confluence 쓰기·삭제 0건**. 결과 HTML이 `reference/aa_report_dryrun.html`에도 저장됨 |
 | 자동 정리 예행 | `npm run reorganize:aa:dryrun` | "would move" 목록 — 의도한 폴더로 가는지 |
 | 전체 파이프라인 예행 | `npm run ci:local:dryrun` | CI와 동일한 흐름을 쓰기 없이 |
 | AA 청소 예행 | `npm run clean:aa:dryrun` | 삭제 후보 목록 |
+| 원본 작성일 기준 삭제 예행 | `node scripts/delete_aa_before.js --before=2026-01-01 --dry-run` | 배너 원본 작성일(또는 Confluence 생성일) 기준 삭제 후보 |
 
 > 규율: **새 변경은 언제나 `*:dryrun` 먼저.** dry-run은 이동·POST·DELETE·라벨 부착이 일체 금지되어 있다.
 
@@ -261,6 +273,101 @@ npm run report:aa
 | §1 미분류 수 급증 | 새 유형 페이지 유입 | §7 부록 unmatched 패턴 → 룰 또는 폴더 신설 |
 | §5 "룰 변경 감지"가 내 PR이 아닌데 등장 | config 무단 변경 의심 | git log로 config 변경자 추적 |
 | 로컬 테스트 실패 | 회귀 | RED 재현 → 원인 수정 → GREEN, 머지 전 반드시 전체 green |
+
+### 3.6 유틸리티 스크립트 (운용 도구 모음)
+
+일상 운용·점검·정리에 쓰는 스크립트 모음이다. **모두 `--dry-run`을 지원**한다.
+
+#### ① AA 디렉토리 구조 보기 (`tree_aa.js`)
+
+```bash
+npm run tree:aa
+```
+
+AA 스페이스의 폴더 구조를 ASCII 트리로 출력한다. 각 폴더 옆에 **직속 페이지 수**가 표시된다.
+
+```
+AA 스페이스 디렉토리 구조 (총 페이지: 210)
+──────────────────────────────────────────────────
+📁 기술문서 (45)
+  📁 MPS (12)
+  📁 하드웨어 (8)
+📁 회의록 (23)
+...
+```
+
+- `is-folder`, `bot-report`, `auto-report` 라벨이 붙은 페이지는 카운트에서 제외
+- 최상위 고아 페이지(폴더 미배정) 수 별도 표시
+- 용도: AA 구조 파악, 리포트 §1 수치와 대조
+
+#### ② AA 구조 스냅샷 + diff (`snapshot_aa_tree.js`)
+
+```bash
+npm run snapshot:aa
+```
+
+현재 AA 구조를 `reference/aa_tree_snapshot.json`에 저장한다. **이전 스냅샷이 있으면 자동 diff**를 출력한다.
+
+```
+📁 신규 폴더 (+1):
+  + 신규프로젝트
+📄 신규 페이지 (+5):
+  + 회의록_20260730
+  ...
+↔️ 이동된 페이지 (2):
+  + MPS_v2: 기술문서 → MPS
+```
+
+- 스냅샷 포맷: `{capturedAt, folders: [{id, title, parentId}], pages: [{id, title, parentId, labels}]}`
+- 용도: 구조 변경 추적, 대규모 정리 전/후 비교
+
+#### ③ dry-run 리포트 파일 저장
+
+```bash
+npm run report:aa:dryrun
+```
+
+dry-run 실행 시 렌더된 HTML이 `reference/aa_report_dryrun.html`에도 저장된다. 브라우저로 열어서 실제 리포트가 어떻게 나올지 미리 확인 가능.
+
+#### ④ 원본 작성일 기준 AA 페이지 일괄 삭제 (`delete_aa_before.js`)
+
+```bash
+# dry-run: 삭제 후보만 표시
+node scripts/delete_aa_before.js --before=2026-01-01 --dry-run
+
+# 실실행: 실제 삭제 (--dry-run 제거)
+node scripts/delete_aa_before.js --before=2026-01-01
+```
+
+지정 날짜 이전에 **원본 작성된** AA 페이지를 일괄 삭제한다.
+
+**날짜 추출 우선순위** (배너 → Confluence API):
+1. 배너 "원본 작성일" — 이관 시 원본 생성일 (가장 정확)
+2. 배너 "원본 최종 수정일" — 동기화된 페이지의 최종 수정일
+3. Confluence `createdAt` — 배너 없는 AA 직접 생성 페이지
+
+**보호 대상** (자동 제외):
+- `is-folder`, `bot-report`, `auto-report`, `human-classified` 라벨이 붙은 페이지
+- 날짜 추출 실패 페이지 (보수적 기본값)
+
+> ⚠️ 대량 삭제 전 반드시 dry-run으로 후보를 확인하세요. 실행 시 3초 대기 후 순차 삭제되며, 취소할 수 없습니다.
+
+#### ⑤ 이관 누락 페이지 탐색 (`find_unmigrated.js`)
+
+```bash
+# SD 스페이스에서 2025년 생성 페이지 중 AA에 없는 것
+npm run find:unmigrated --space=SD --from=2025-01-01 --to=2025-12-31 --dry-run
+
+# 기간 제한 없이 전체
+npm run find:unmigrated --space=SD --from=2020-01-01 --dry-run
+```
+
+소스 스페이스의 페이지 중 **AA에 같은 제목이 없는** 페이지를 찾는다.
+
+- 지원 스페이스: `SD`, `WND`, `Device`, `SmileArch`
+- `--from` / `--to`: 소스 스페이스의 Confluence 생성일 기준 기간 필터
+- 제목 완전 일치 기준으로 비교 (마이그레이션이 제목을 보존하므로 신뢰 가능)
+- 용도: 이관 작업 검증, 누락 페이지 발견
 
 ---
 
@@ -306,6 +413,10 @@ npm run report:aa
 | AA 폴더 셋업 | `npm run setup:aa:dryrun` / `setup:aa` / `setup:aa:update(:dryrun)` |
 | AA 청소 | `npm run clean:aa:dryrun` / `clean:aa` |
 | 소스 스페이스 스냅샷/후보 | `npm run refresh:snapshots(:sd/:wnd/:device/:smilearch)` / `analyze:candidates` |
+| **AA 디렉토리 구조 보기** | `npm run tree:aa` |
+| **AA 구조 스냅샷 + diff** | `npm run snapshot:aa` |
+| **원본 작성일 기준 삭제** | `node scripts/delete_aa_before.js --before=YYYY-MM-DD --dry-run` |
+| **이관 누락 페이지 탐색** | `npm run find:unmigrated --space=SD --from=YYYY-MM-DD --dry-run` |
 
 > 옛 `npm run migrate:mps` 등 카테고리별 이관 스크립트와 `analyze:sd`는 **현 package.json에 없거나 폐기**됨. 이관은 `migrate:all`만 사용.
 
