@@ -4,7 +4,7 @@ require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') }
 const { fetchAATree, fetchAASpaceHomepageId } = require('./utils/aa_space_tree');
 const { listAAPages } = require('./utils/aa_pages');
 const { classifyWithChain } = require('./classifiers/engine');
-const { movePage } = require('./utils/migration_utils');
+const { movePage, fetchPageDetail, addComment, escapeHtml } = require('./utils/migration_utils');
 
 function fetchAncestors(pageId, byId) {
   const ancestors = [];
@@ -26,6 +26,25 @@ function isAtTopLevel(page, homePageId) {
 }
 
 /**
+ * 미분류 이동 시 페이지에 첨부할 LLM 의견 코멘트 HTML.
+ * 사람이 Confluence에서 페이지를 검토할 때 봇의 판단 근거를 본다.
+ */
+function formatOpinionComment(decision) {
+  const date = new Date().toISOString().slice(0, 10);
+  const suggestion = decision.suggestedFolderId
+    ? `<p>잠정 후보 폴더 ID: <code>${escapeHtml(String(decision.suggestedFolderId))}</code></p>`
+    : '';
+  return [
+    '<ac:structured-macro ac:name="note" ac:schema-version="1"><ac:rich-text-body>',
+    `<p><strong>🤖 자동 분류 보류</strong> (${escapeHtml(date)}, 사유: ${escapeHtml(decision.reason || 'fallback')})</p>`,
+    `<p>LLM 의견: ${escapeHtml(decision.llmOpinion || '')}</p>`,
+    suggestion,
+    '<p><em>검토 후 알맞은 폴더로 이동해 주세요. 이동 결정은 분류 지침(reference/classification_guidelines.md) 개선에 반영됩니다.</em></p>',
+    '</ac:rich-text-body></ac:structured-macro>',
+  ].join('');
+}
+
+/**
  * AA 스페이스 재정렬: 휴먼 결정/규칙/AI 분류 체인으로 최상위 고아 페이지를 제 폴더로 이동.
  *
  * @param {Object} [opts]
@@ -43,6 +62,13 @@ function isAtTopLevel(page, homePageId) {
 async function runReorganize({ dryRun = false, pages, aaTree, homePageId, deps } = {}) {
   const classify = deps?.classify || classifyWithChain;
   const move = deps?.move || movePage;
+  const fetchBody = deps?.fetchBody || (async (id) => {
+    try {
+      const d = await fetchPageDetail(id);
+      return d.body || '';
+    } catch (_) { return ''; }
+  });
+  const comment = deps?.comment || addComment;
 
   aaTree = aaTree || await fetchAATree();
   if (homePageId === undefined) homePageId = await fetchAASpaceHomepageId('AA');
@@ -75,15 +101,24 @@ async function runReorganize({ dryRun = false, pages, aaTree, homePageId, deps }
 
     try {
       const ancestors = fetchAncestors(p.id, byId);
+      // 본문은 재분류 후보(여기까지 도달한 페이지)만 fetch — rate limit 절약.
+      const body = await fetchBody(p.id);
       const ctx = {
-        pageId: p.id, title: p.title, body: '',
+        pageId: p.id, title: p.title, body,
         ancestors, sourceSpace: 'AA', sourceUrl: '',
         pageDate: '', existingLabels: p.labels,
+        currentFolderId: p.parentId || undefined,
       };
       const decision = await classify(ctx, aaTree);
       if (!decision.ok || decision.folderId === p.parentId) { skippedCount++; continue; }
 
-      if (!dryRun) await move(p.id, decision.folderId);
+      if (!dryRun) {
+        await move(p.id, decision.folderId);
+        // 미분류행 + LLM 의견이 있으면 검토용 코멘트 첨부 (실패해도 이동은 유지)
+        if (decision.source === 'fallback' && decision.llmOpinion) {
+          await comment(p.id, formatOpinionComment(decision)).catch(() => {});
+        }
+      }
       moved.push({
         page: p,
         from: p.parentId,
@@ -91,6 +126,7 @@ async function runReorganize({ dryRun = false, pages, aaTree, homePageId, deps }
         source: decision.source,
         reason: decision.reason,
         folderTitle: decision.folderTitle,
+        llmOpinion: decision.llmOpinion || null,
         dryRun,
       });
     } catch (e) {
@@ -120,4 +156,4 @@ if (require.main === module) {
   main().catch(e => { console.error(e); process.exit(1); });
 }
 
-module.exports = { runReorganize, fetchAncestors, isAtTopLevel };
+module.exports = { runReorganize, fetchAncestors, isAtTopLevel, formatOpinionComment };
