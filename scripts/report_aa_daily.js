@@ -495,7 +495,7 @@ async function main() {
     const parsed = JSON.parse(txt);
     if (parsed && Array.isArray(parsed.rules)) kb = parsed;
   } catch { /* KB 부재/깨짐 → 권고 안 함 (Phase 3 자리표시) */ }
-  // llmResults는 현재 미수집 — 추후 classifyWithChain 결과 와이어업 자리 (Phase 2-A 후속)
+  // llmResults: 빈 캐시 객체 — runMisplacementRecommend 내부에서 의심 후보 classifyPage 결과를 채움
   const llmResults = {};
   // Phase 2-B: 의심 후보에 한해 classifyPage 호출 (systemHasKey일 때만).
   const classifyDeps = {

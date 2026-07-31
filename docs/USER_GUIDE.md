@@ -158,6 +158,8 @@ Confluence **AA 스페이스 → "자동화 리포트" 폴더** (왼쪽 트리).
 
 ### 2.1 규칙의 SSOT와 문서 역할
 
+> **참고 (2026-07-31 체인 재설계 이후)**: 분류 체인 1차 판단 기준은 이제 `reference/classification_guidelines.md`(자연어 지침)입니다. 아래 §2.1·§2.3의 룰 중심 설명은 후속 개편 전까지 참고용이며, 현재 체인 정책은 [`reference/classification_rules.md`](../reference/classification_rules.md) §2가 정본입니다.
+
 | 파일 | 역할 | 바꾸는 법 |
 |---|---|---|
 | [`config/analysis_rules.json`](../config/analysis_rules.json) | **분류 규칙 SSOT** — title_patterns(정규식), ancestor_contains, exclude, labels_template | PR + 리뷰. 버전 범프 불필요 |
