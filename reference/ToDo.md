@@ -1,6 +1,6 @@
 # 프로젝트 할일 / 진행 상황 (ToDo)
 
-> 마지막 갱신: 2026-07-31 (작업 11 — LLM 본문 기반 분류 재설계 Tasks 1-7 구현 완료, 문서 동기화)
+> 마지막 갱신: 2026-07-31 (작업 11 — audit ruleClassifier 제거 + policyHash guidelines 추가, 문서 동기화)
 >
 > 이 문서는 **현재 정책과 상태**를 기준으로 작성되었습니다. 옛 정책(Dify, human 큐, v1 폴더 규칙 등)은 더 이상 사실이 아니므로 이 문서에 남아 있지 않습니다.
 
@@ -9,7 +9,7 @@
 ## 0. 한 줄 요약
 
 - **목표**: 사내 Confluence 신규 스페이스(AA)를 잘 구조화해서, MPS(Planning/Evaluation) 작성용 RAG 원천으로 유지.
-- **현재 상태**: AA 스페이스 이관 + 일일 자동 리포트 + 자가 정화(audit·reorganize) 동작 중. 분류 체인은 **human → structural → inline-llm(본문) → fallback(미분류 + LLM 의견)** 4단계로 재설계 완료(2026-07-31, 작업 11 Tasks 1-7). 제목 regex(rule) 단계는 폐기, 판단 기준 SSOT는 `reference/classification_guidelines.md`. 유틸 스크립트 5종 추가(작업 10). 테스트 ~223 PASS 예상.
+- **현재 상태**: AA 스페이스 이관 + 일일 자동 리포트 + 자가 정화(audit·reorganize) 동작 중. 분류 체인은 **human → structural → inline-llm(본문) → fallback(미분류 + LLM 의견)** 4단계로 재설계 완료(2026-07-31, 작업 11 Tasks 1-7). 제목 regex(rule) 단계는 폐기, 판단 기준 SSOT는 `reference/classification_guidelines.md`. 유틸 스크립트 5종 추가(작업 10). 테스트 223/223 PASS.
 - **다음 작업**: (1) §4 advisory 키워드-가중치 → LLM 분석 대체, (2) 사람 검토 이동 → 지침 업데이트 학습 루프, (3) 워크플로우 순서 변경(`migrate → daily-report`).
 - **사내 LLM 게이트웨이(작업 6)**: 사용자 명시 지시로 **폐기** — "사내 LLM은 현재 관심없어 나중에 필요하면 다시 추가할게". `scripts/utils/llm_api.js`의 공식 Anthropic SDK 경로만 유지.
 
@@ -156,7 +156,7 @@
   5. `engine.js` — 와이어링 (실 client + body 전달).
   6. `reorganize_aa_space.js` — 본문 fetch + 미분류 시 LLM 의견 코멘트 첨부.
   7. 문서 동기화 (분류 규칙서, USER_GUIDE, CLAUDE.md, ToDo).
-- **폐기된 단계**: `rule` 단계는 분류 체인에서 제거. `scripts/classifiers/rule.js` 모듈은 보존하되 `audit_aa_space.js`의 휴먼 결정 휴리스틱과 리포트 unmatched 추적에만 사용.
+- **폐기된 단계**: `rule` 단계는 분류 체인에서 제거. `scripts/classifiers/rule.js` 모듈은 보존하되 리포트 unmatched 추적에만 사용. `audit_aa_space.js`에서도 ruleClassifier 의존 제거 완료.
 - **신규 필드**: `confidence?: 'high'`, `llmOpinion?: string|null`, `suggestedFolderId?: string|null`.
 - **SSOT 변경**: 분류 판단 기준은 `config/analysis_rules.json` → `reference/classification_guidelines.md`.
 - **잔여 작업**: (1) §4 advisory 키워드-가중치 → LLM 분석 대체, (2) 사람 검토 이동 → 지침 업데이트 학습 루프, (3) 워크플로우 순서 변경(`migrate → daily-report`).
@@ -232,6 +232,7 @@
   - advisory: 키워드 가중치 → **LLM 생성 의미 있는 분석** (잔여 작업)
   - 학습 루프: 미분류 → 사람 검토 → 이동 → 지침 업데이트 → LLM 개선 (잔여 작업)
 - **Tasks 1-7 구현 완료**: 본문 추출 → 지침 파일 → LLM 호출 → 체인 재편 → 엔진 와이어링 → reorganize 통합 → 문서 동기화.
+- **정리 작업 완료**: `audit_aa_space.js`에서 `ruleClassifier` 의존 제거(shouldCommitHumanDecision 단순화), `report_lib.js` policyHash에 `classification_guidelines.md` 해시 추가.
 - **호환성**: `classifyWithChain(ctx, aaTree)` 시그니처 유지.
 - **잔여 후속 작업**: (1) §4 advisory LLM화, (2) 지침 학습 루프, (3) 워크플로우 순서 변경(`migrate → daily-report`).
 

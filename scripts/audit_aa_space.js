@@ -7,7 +7,6 @@ const { confluenceRequest } = require('./utils/confluence_api');
 const { fetchAATree, fetchAASpaceHomepageId } = require('./utils/aa_space_tree');
 const { listAAPages } = require('./utils/aa_pages');
 const { deleteLabel, addLabels } = require('./utils/migration_utils');
-const { ruleClassifier } = require('./classifiers/rule');
 
 const DECISIONS_PATH = path.join(__dirname, '..', 'config', 'classification_decisions.json');
 const REPORT_DIR = path.join(__dirname, '..', '.github', 'reports');
@@ -20,17 +19,11 @@ function detectMove(page) {
   return { from: lastParentId, to: page.parentId };
 }
 
-async function shouldCommitHumanDecision(page, move, aaTree, homePageId) {
-  // 1) 최상위 → 특정 폴더로 이동 (Rule이 매칭 못 했을 가능성)
-  if (move.from === homePageId || !move.from) return true;
-  // 2) RuleClassifier가 모르는 카테고리
-  const ruleResult = await ruleClassifier.classify({
-    pageId: page.id, title: page.title, body: '', ancestors: [],
-    sourceSpace: '?', sourceUrl: '', pageDate: '', existingLabels: page.labels,
-  }, aaTree);
-  if (!ruleResult.ok) return true;
-  // 3) Rule이 다른 폴더로 분류했다면 → 휴먼이 다른 데로 옮긴 것 → 등록
-  return ruleResult.folderId !== move.to;
+function shouldCommitHumanDecision(page, move, aaTree, homePageId) {
+  // 최상위 → 특정 폴더 이동 또는 폴더 → 다른 폴더 이동이면 휴먼 결정을 커밋한다.
+  // 분류 체인에서 rule 단계가 제거(2026-07-31)되어 ruleClassifier 의존을 삭제했으며,
+  // 휴먼이 실제로 페이지를 옮겼는지(detectMove가 parentId 변경으로 판별)만 판단 근거로 삼는다.
+  return true;
 }
 
 function commitDecision(page, move) {

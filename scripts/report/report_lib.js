@@ -6,7 +6,8 @@ const path = require('path');
 
 const APPENDIX_MARKER = '<!-- aa-report-appendix:v1 -->';
 const TITLE_RE = /^auto_report_(\d{6})_(\d{4})(?:_(\d+))?$/;
-const CONFIG_FILES = ['classification_decisions.json', 'analysis_rules.json'];
+// 정책 소스 파일. guidelines 파일은 reference/에 있으므로 configDir 기준 상대 경로 사용.
+const CONFIG_FILES = ['classification_decisions.json', 'analysis_rules.json', '../reference/classification_guidelines.md'];
 
 // ── KST 시각 (UTC+9 명시 계산 — self-hosted 러너 TZ에 의존하지 않음) ──────────
 function kstNow(now = new Date()) {
