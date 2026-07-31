@@ -416,6 +416,102 @@ function computeRepeatedHumanDecisions(decisions, opts) {
   return result;
 }
 
+// ── §4 AI 권고판: LLM 생성 의미 있는 분석 ─────────────────────────────────
+// 정량 카운트("KB 미분류 136건")는 부록/§1에 남기고, §4는 LLM이 AA 폴더
+// 구조와 운영 데이터를 종합해 구체적 권고 3~5개를 생성한다.
+// client/network 실패 시 빈 배열 반환 — 심박(리포트 POST) 방해 금지.
+const SPACE_ADVISORY_SYSTEM = [
+  '당신은 사내 Confluence AA 스페이스(덴탈AI연구소 Archive) 운영 어시스턴트다.',
+  '그날의 운영 데이터(폴더 트리, 페이지 수, 미분류 목록, KB 미매칭 샘플, 자가 정화 이동 로그)를',
+  '종합해 운영자에게 줄 **구체적이고 실행 가능한 한국어 권고 3~5개**를 작성한다.',
+  '',
+  '규칙:',
+  '- 한 권고 = 한 문장. 두 줄 이상 금지.',
+  '- 권고 안에 페이지 제목/폴더 이름을 직접 인용해 추상적 표현을 피한다.',
+  '- 폴더 추가/이동/지침 업데이트/룰 추가 같은 **액션**을 명시한다.',
+  '- "전반적으로", "개선이 필요합니다" 같은 모호한 표현 금지.',
+  '- 출력은 권고만 줄 단위로. 번호 매기기("1.", "-"), 머리말, 해설 금지.',
+].join('\n');
+
+function buildSpaceAdvisoryUserMessage(ctx) {
+  const lines = [];
+  lines.push('# AA 스페이스 운영 데이터');
+  lines.push('');
+  if (ctx.treeText) {
+    lines.push('## 폴더 트리');
+    lines.push(ctx.treeText);
+    lines.push('');
+  }
+  if (ctx.folderPageCounts && Object.keys(ctx.folderPageCounts).length > 0) {
+    lines.push('## 폴더별 페이지 수');
+    for (const [id, count] of Object.entries(ctx.folderPageCounts)) {
+      lines.push(`- ${id}: ${count}`);
+    }
+    lines.push('');
+  }
+  if (Array.isArray(ctx.unclassifiedPages) && ctx.unclassifiedPages.length > 0) {
+    lines.push(`## 미분류 폴더 페이지 (${ctx.unclassifiedPages.length}건)`);
+    for (const p of ctx.unclassifiedPages.slice(0, 20)) {
+      lines.push(`- ${p.title} (id: ${p.id})`);
+    }
+    lines.push('');
+  }
+  if (Array.isArray(ctx.kbUnknownSample) && ctx.kbUnknownSample.length > 0) {
+    lines.push(`## KB 미매칭 샘플 (전체 ${ctx.kbUnknownSample.length}건 중 대표 ${Math.min(20, ctx.kbUnknownSample.length)}건)`);
+    for (const p of ctx.kbUnknownSample.slice(0, 20)) {
+      const parent = p.currentFolderId ? ` (현재 폴더: ${p.currentFolderId})` : '';
+      lines.push(`- ${p.title}${parent} (id: ${p.id})`);
+    }
+    lines.push('');
+  }
+  if (Array.isArray(ctx.moves) && ctx.moves.length > 0) {
+    lines.push(`## 오늘 자가 정화 이동 (${ctx.moves.length}건)`);
+    for (const m of ctx.moves.slice(0, 20)) {
+      lines.push(`- ${m.page?.title || m.pageId}: ${m.from || 'top'} → ${m.to} (사유: ${m.reason || '?'})`);
+    }
+    lines.push('');
+  }
+  return lines.join('\n');
+}
+
+function parseAdvisoryText(text) {
+  if (typeof text !== 'string') return [];
+  return text
+    .split('\n')
+    .map(s => s.replace(/^\s*(?:\d+[.)]\s*|-\s*|•\s*)/, '').trim())
+    .filter(s => s.length > 0)
+    .slice(0, 5);
+}
+
+/**
+ * §4 AI 권고판용 LLM 호출. 운영 데이터를 종합해 3~5개 한국어 권고를 반환한다.
+ * client/network 실패는 throw하지 않고 빈 배열로 우아하게 퇴화(리포트 POST는 계속).
+ * @param {Object} ctx - { treeText, folderPageCounts, unclassifiedPages, kbUnknownSample, moves }
+ * @param {Object} opts - { model, max_tokens }
+ * @param {Object} deps - { client: Anthropic SDK 인스턴스 }
+ * @returns {Promise<string[]>} 권고 문자열 배열 (0~5개)
+ */
+async function generateSpaceAdvisory(ctx, opts, deps) {
+  const client = deps && deps.client;
+  if (!client) return [];
+  const model = (opts && opts.model) || 'claude-haiku-4-5-20251001';
+  const max_tokens = (opts && opts.max_tokens) || 1024;
+  try {
+    const msg = await client.messages.create({
+      model,
+      max_tokens,
+      system: SPACE_ADVISORY_SYSTEM,
+      messages: [{ role: 'user', content: buildSpaceAdvisoryUserMessage(ctx || {}) }],
+    });
+    const blocks = Array.isArray(msg.content) ? msg.content : [];
+    const textBlock = blocks.find(b => b && b.type === 'text');
+    if (!textBlock || typeof textBlock.text !== 'string') return [];
+    return parseAdvisoryText(textBlock.text);
+  } catch (_) {
+    return [];
+  }
+}
+
 module.exports = {
   APPENDIX_MARKER,
   kstNow, kstStamp, kstYYMMDD, kstHHMM,
@@ -427,4 +523,5 @@ module.exports = {
   computeConfidenceScore, selectRepeatAmbiguous, recommendMisplacements,
   buildRunId, runMode,
   computeRepeatedHumanDecisions,
+  generateSpaceAdvisory,
 };

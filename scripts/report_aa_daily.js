@@ -15,6 +15,7 @@ const {
   computeDiff, diffMetrics, selectPruneCandidates, buildRunId, runMode,
   matchAgainstKnowledgeBase, findUnmatchedPages,
   recommendMisplacements, computeRepeatedHumanDecisions,
+  generateSpaceAdvisory,
 } = require('./report/report_lib');
 const { loadUnmatchedState, saveUnmatchedState } = require('./report/unmatched_state_io');
 
@@ -514,7 +515,7 @@ async function main() {
 
   // 8-3) §4 KB 미분류 자리표시 (작업 9, Phase 3): categoryOf === null 페이지 카운트 + 부록 머지
   // — kind:'kb-unknown' 항목은 다음 리포트 history 승계 → seenCount 누적.
-  // — advisories에 "ℹ️ KB 미분류 자리표시 N건" 1줄 push (사람이 KB 확장하도록 신호).
+  // — 부록에는 머지하되 advisories에 정량 카운트 줄은 띄우지 않는다 (§4는 LLM이 의미 있는 권고 생성).
   const prevUnknown = (prev && Array.isArray(prev.items))
     ? prev.items.filter(it => it && it.kind === 'kb-unknown')
     : [];
@@ -523,6 +524,56 @@ async function main() {
     kb, unsortedFolderId: aaTree.unsortedFolderId, advisories,
   });
   items.push(...unknownItems);
+
+  // 8-4) §4 AI 권고판 LLM화: 운영 데이터를 종합해 구체적 권고 3~5개 생성.
+  // — 정량 자리표시("KB 미분류 N건")를 의미 있는 권고로 대체.
+  // — client/키 미설정/네트워크 실패는 빈 배열로 우아 퇴화(심박 방해 금지).
+  if (process.env.ANTHROPIC_API_KEY) {
+    try {
+      const { Anthropic } = require('@anthropic-ai/sdk');
+      const llmClient = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+      // 기존 자리표시 advisory("ℹ️ KB 미분류 자리표시 N건 — 룰 추가 검토 필요") 제거
+      // → LLM 권고로 대체하기 위함. rule 변경/실패 메시지는 보존.
+      for (let i = advisories.length - 1; i >= 0; i--) {
+        if (typeof advisories[i] === 'string' && advisories[i].includes('KB 미분류 자리표시')) {
+          advisories.splice(i, 1);
+        }
+      }
+      const folderPageCounts = {};
+      for (const f of aaTree.flat) folderPageCounts[f.id] = 0;
+      for (const p of pages) {
+        if (p.parentId && folderPageCounts[p.parentId] !== undefined) folderPageCounts[p.parentId]++;
+      }
+      const unclassifiedPages = pages
+        .filter(p => p.parentId === aaTree.unsortedFolderId)
+        .slice(0, 20)
+        .map(p => ({ id: p.id, title: p.title }));
+      const kbUnknownSample = unknownItems
+        .slice(0, 20)
+        .map(it => ({
+          id: it.pageId,
+          title: it.title,
+          currentFolderId: it.currentFolderId,
+        }));
+      const moves = reorg.moved.slice(0, 20).map(m => ({
+        pageId: m.page.id,
+        page: { title: m.page.title },
+        from: m.from,
+        to: m.to,
+        reason: m.reason,
+      }));
+      const advisoriesLLM = await generateSpaceAdvisory({
+        treeText: aaTree.toText(),
+        folderPageCounts,
+        unclassifiedPages,
+        kbUnknownSample,
+        moves,
+      }, { model, max_tokens: 1024 }, { client: llmClient });
+      for (const adv of advisoriesLLM) advisories.push(adv);
+    } catch (_) {
+      // LLM 호출 실패 시 자리표시 줄을 복구하지 않고 그냥 진행 (심박 우선)
+    }
+  }
 
   const appendix = {
     v: 1, runAt, runId, mode, policyHash: hash, model, gitSha,
