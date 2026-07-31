@@ -32,7 +32,7 @@ async function main() {
   if (process.env.CI) console.warn('⚠️ CI 가 설정되어 있음 — 로컬에서는 해제 권장 (결정 로그 기록 스킵됨)');
 
   if (!process.env.ANTHROPIC_API_KEY) {
-    console.log('\nLLM check skipped: ANTHROPIC_API_KEY 미설정 → 분류기는 rule-only 모드로 동작합니다. (정상)');
+    console.log('\nLLM check skipped: ANTHROPIC_API_KEY 미설정 → 분류기는 human + structural + fallback만 동작합니다. (정상)');
     process.exitCode = 0;
     return;
   }
@@ -41,10 +41,10 @@ async function main() {
   const { Anthropic } = require('@anthropic-ai/sdk');
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
-  const targets = [{ model: CLASSIFIER_MODEL, label: 'classifier-actual' }];
-  if (process.env.ANTHROPIC_MODEL && process.env.ANTHROPIC_MODEL !== CLASSIFIER_MODEL) {
-    targets.push({ model: process.env.ANTHROPIC_MODEL, label: 'env-ANTHROPIC_MODEL' });
-  }
+  // ANTHROPIC_MODEL이 설정되어 있으면 그 모델만 테스트 (실제 코드 경로).
+  // 미설정 시 DEFAULT_MODEL만 테스트.
+  const effectiveModel = process.env.ANTHROPIC_MODEL || CLASSIFIER_MODEL;
+  const targets = [{ model: effectiveModel, label: process.env.ANTHROPIC_MODEL ? 'env-ANTHROPIC_MODEL' : 'classifier-default' }];
 
   let failed = 0;
   for (const { model, label } of targets) {
