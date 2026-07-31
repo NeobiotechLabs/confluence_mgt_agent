@@ -6,6 +6,7 @@ const { confluenceRequest } = require('./utils/confluence_api');
 const { fetchAATree, fetchAASpaceHomepageId } = require('./utils/aa_space_tree');
 const { listAAPages } = require('./utils/aa_pages');
 const { createPage, addLabels } = require('./utils/migration_utils');
+const { runMigrate } = require('./migrator');
 const { runAudit } = require('./audit_aa_space');
 const { runReorganize } = require('./reorganize_aa_space');
 const { renderReportStorage } = require('./report/render');
@@ -420,6 +421,16 @@ async function main() {
     console.error('audit failed:', e.message);
   }
 
+  // 4-1) migrate (§2 루프 A) — 실패해도 리포트는 계속
+  let migrateResult = { items: [] };
+  try {
+    migrateResult = await runMigrate({ dryRun });
+    console.log(`[§2 루프 A] 마이그레이션 결과: ${migrateResult.items.length}건`);
+  } catch (e) {
+    advisories.push(`마이그레이션(migrate) 실행 실패: ${e.message}`);
+    console.error('migrate failed:', e.message);
+  }
+
   // 5) reorganize — 실패해도 리포트는 계속
   let reorg = { moved: [], failed: [] };
   try {
@@ -479,8 +490,8 @@ async function main() {
   });
   if (merge.saveError) advisories.push(merge.saveError);
 
-  // moved(이동 로그)와 unmatched(룰 추가 후보)를 부록 items에 머지
-  const items = movedItems.concat(merge.items);
+  // moved(이동 로그), unmatched(룰 추가 후보), migrate-a(외부 이관)를 부록 items에 머지
+  const items = movedItems.concat(merge.items, migrateResult.items);
 
   // 8-2) §4 AI 권고판 (작업 9, Phase 2-A): KB 카테고리 ≠ parentId 의심 → misplacement-suspect
   // — 직전 부록 items 중 kind:'misplacement-suspect' 만 추출 → history.
@@ -598,7 +609,7 @@ async function main() {
     console.log('\n────── rendered storage format ──────\n');
     console.log(html);
     console.log('\n────── metrics ──────');
-    console.log(JSON.stringify({ metrics, deltas, items: items.length, advisories, unmatchedItems: merge.items.length }, null, 2));
+    console.log(JSON.stringify({ metrics, deltas, items: items.length, advisories, unmatchedItems: merge.items.length, migrateItems: migrateResult.items.length }, null, 2));
 
     // dry-run 결과를 로컬 파일로 저장 (사용자가 브라우저에서 확인 가능)
     const dryRunPath = require('path').join(__dirname, '..', 'reference', 'aa_report_dryrun.html');

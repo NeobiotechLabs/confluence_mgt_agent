@@ -105,6 +105,42 @@ ${rows}
   return parts.join('\n');
 }
 
+/**
+ * §2 루프 A — 외부 이관 결과 표 렌더 (작업 13).
+ * kind:'migrate-a' items만 필터링하여 표로 표시.
+ * 상태별 그룹: created → synced → skipped → failed.
+ */
+function migrateSection(items) {
+  const migrateItems = (items || []).filter(it => it && it.kind === 'migrate-a');
+  const parts = ['<h2>§2 루프 A — 외부 이관 결과</h2>'];
+  if (migrateItems.length === 0) {
+    parts.push('<p><em>이관 결과 없음 (실행 안 됨 또는 후보 0건)</em></p>');
+    return parts.join('\n');
+  }
+
+  const STATUS_LABEL = { created: '신규 이관', synced: '동기화', skipped: '스킵', failed: '실패' };
+  const rows = migrateItems.map(it => {
+    const statusLabel = STATUS_LABEL[it.status] || it.status;
+    const target = it.targetFolderTitle || it.targetFolderId || '—';
+    const detail = it.error || it.reason || '—';
+    return `<tr>
+<td>${cell(it.title)}</td>
+<td>${cell(it.sourceSpace)}</td>
+<td>${cell(target)}</td>
+<td>${cell(statusLabel)}</td>
+<td>${cell(it.classifierSource || '—')}</td>
+<td>${cell(detail)}</td>
+</tr>`;
+  }).join('\n');
+
+  parts.push(`<p>총 ${migrateItems.length}건 처리</p>`);
+  parts.push(`<table><tbody>
+<tr><th>페이지</th><th>소스 스페이스</th><th>대상 폴더</th><th>상태</th><th>분류 소스</th><th>사유/오류</th></tr>
+${rows}
+</tbody></table>`);
+  return parts.join('\n');
+}
+
 function noticeSection(appendix, failedMoves, advisories, repeatedHumanDecisions) {
   const notices = [];
   const orphans = appendix.metrics?.topLevelOrphans || 0;
@@ -168,8 +204,7 @@ function renderReportStorage(ctx) {
 
   parts.push(metricsSection(appendix.metrics || {}, deltas));
 
-  parts.push(`<h2>§2 루프 A — 휴먼 결정 학습</h2>
-<p><em>미실행 (Phase 2 예정)</em></p>`);
+  parts.push(migrateSection(appendix.items || []));
 
   parts.push(movesSection(appendix.items || [], failedMoves));
 

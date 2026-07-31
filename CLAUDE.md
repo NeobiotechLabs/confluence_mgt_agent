@@ -33,15 +33,14 @@ Claude Code(`claude.ai/code`)가 이 저장소에서 작업할 때 읽는 안내
 - **키 관리**: GitHub Actions Secrets `ANTHROPIC_API_KEY`. **`.env`에 절대 커밋 금지**. 키 부재 시 LLM 단계 skip → fallback.
 - **출력 채널**: Confluence 일일 리포트 페이지(AA 스페이스 "자동화 리포트" 폴더). 오늘 리포트 없음 = 장애.
 - **자가 정화**: [`scripts/audit_aa_space.js`](scripts/audit_aa_space.js) + [`scripts/reorganize_aa_space.js`](scripts/reorganize_aa_space.js) 모두 `run*({dryRun, deps?})` export → 오케스트레이터([`scripts/report_aa_daily.js`](scripts/report_aa_daily.js))에서 in-process 실행.
-- **마이그레이션**: [`scripts/migrator.js`](scripts/migrator.js) 멱등 — `findPageByTitleInAA`로 동명 페이지를 제자리 동기화(본문·배너·첨부·라벨).
+- **마이그레이션**: [`scripts/migrator.js`](scripts/migrator.js) 멱등 — `findPageByTitleInAA`로 동명 페이지를 제자리 동기화(본문·배너·첨부·라벨). `runMigrate({dryRun, deps})` export → [`scripts/report_aa_daily.js`](scripts/report_aa_daily.js)에서 in-process 실행(§2 루프 A 부록 통합).
 - **사용하지 않음**: Dify 워크플로우, human queue, Auto-PR(`peter-evans/create-pull-request` 제거됨), `scripts/classifiers/claude.js` (호출 경로 없음).
 
 ### 2-1. 워크플로우 (`.github/workflows/confluence_automation.yml`)
 - **cron**: `'0 0 * * *'` (KST 09:00) → `daily-report` 1 job.
-- **`daily-report`**: `node scripts/report_aa_daily.js` (env: `CONFLUENCE_*`, `ANTHROPIC_API_KEY`, `GITHUB_SHA`/`RUN_ID`).
-- **`migrate`**: `needs: daily-report` → 수동/워크플로우 디스패치.
+- **`daily-report`**: `node scripts/report_aa_daily.js` (env: `CONFLUENCE_*`, `ANTHROPIC_API_KEY`, `GITHUB_SHA`/`RUN_ID`). 마이그레이션 → 감사 → 재정렬 → 리포트 순차 실행.
 - **`permissions`**: `contents: read` (PR 생성 권한 제거).
-- **실패 알림**: `notify-failure` job이 `daily-report`·`migrate`의 결과에 따라 동작.
+- **실패 알림**: `notify-failure` job이 `daily-report` 결과에 따라 동작.
 
 ### 2-2. 디렉토리
 | 경로 | 내용 |
@@ -49,7 +48,7 @@ Claude Code(`claude.ai/code`)가 이 저장소에서 작업할 때 읽는 안내
 | `scripts/` | CLI 스크립트 (`analyze_sd`, `migrator`, `audit_aa_space`, `reorganize_aa_space`, `clean_aa_space`, `report_aa_daily`, `report/`, `classifiers/`, `utils/`, `setup_aa_space` 등) |
 | `scripts/utils/` | `aa_pages.js`, `classification_provider.js`, `llm_api.js`, `migration_utils.js` — 재사용 모듈 |
 | `scripts/classifiers/` | `engine.js` (호환 시그니처 위임), `rule.js` (SSOT 룰 matcher) |
-| `tests/` | `node:test` 기반. `classifiers/`, `migrator/`, `report/`, `utils/` (총 56 PASS) |
+| `tests/` | `node:test` 기반. `classifiers/`, `migrator/`, `report/`, `utils/` (총 250 PASS) |
 | `docs/` | `AUTOMATION_GUIDE.md`, `HANDOFF.md`, `STATUS.md`, `spec_auto_report.md`, `superpowers/` |
 | `reference/` | `ToDo.md`(진행), `classification_rules.md`(체인지 매뉴얼), `SD_space_analysis.md`, `AA_space_design_plan.md`, `PROJECT_STATUS.md`(옛, 참고용) |
 | `config/` | `analysis_rules.json`(SSOT), `migration_candidates.json`, `spaces_config.json` |

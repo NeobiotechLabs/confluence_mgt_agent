@@ -1,6 +1,6 @@
 # 프로젝트 할일 / 진행 상황 (ToDo)
 
-> 마지막 갱신: 2026-07-31 (작업 12 — §4 AI 권고 LLM화 + §4/§5 중복 제거 + §3 표 from→top, 작업 13-15 계획 수립)
+> 마지막 갱신: 2026-07-31 (작업 13-14 완료 — 외부 이관 결과 부록 통합 + 워크플로우 단일화)
 >
 > 이 문서는 **현재 정책과 상태**를 기준으로 작성되었습니다. 옛 정책(Dify, human 큐, v1 폴더 규칙 등)은 더 이상 사실이 아니므로 이 문서에 남아 있지 않습니다.
 
@@ -9,8 +9,8 @@
 ## 0. 한 줄 요약
 
 - **목표**: 사내 Confluence 신규 스페이스(AA)를 잘 구조화해서, MPS(Planning/Evaluation) 작성용 RAG 원천으로 유지.
-- **현재 상태**: AA 스페이스 이관 + 일일 자동 리포트 + 자가 정화(audit·reorganize) 동작 중. 분류 체인 **human → structural → llm(본문) → fallback(미분류+의견)** 완전 재구현(작업 11). §4 AI 권고판을 LLM 생성 분석으로 전환(작업 12). 유틸 스크립트 5종(작업 10). 테스트 237/237 PASS.
-- **다음 큰 작업**: **작업 13 — 외부 이관 결과 부록 통합** (`migrator.js` export 리팩터 → §2 루프 A 표). 그 후 작업 14(워크플로우 순서), 작업 15(탈락 후보).
+- **현재 상태**: AA 스페이스 이관 + 일일 자동 리포트 + 자가 정화(audit·reorganize) 동작 중. 분류 체인 **human → structural → llm(본문) → fallback(미분류+의견)** 완전 재구현(작업 11). §4 AI 권고판을 LLM 생성 분석으로 전환(작업 12). **§2 루프 A 외부 이관 결과 부록 통합**(작업 13). **워크플로우 단일화**(작업 14 — migrate→daily-report 통합). 유틸 스크립트 5종(작업 10). 테스트 250/250 PASS.
+- **다음 큰 작업**: **작업 15 — 탈락 후보 판정** (LLM 이관 가치 판단).
 - **사내 LLM 게이트웨이(작업 6)**: 사용자 명시 지시로 **폐기** — "사내 LLM은 현재 관심없어 나중에 필요하면 다시 추가할게". `scripts/utils/llm_api.js`의 공식 Anthropic SDK 경로만 유지.
 
 ---
@@ -159,7 +159,21 @@
 - **폐기된 단계**: `rule` 단계는 분류 체인에서 제거. `scripts/classifiers/rule.js` 모듈은 보존하되 리포트 unmatched 추적에만 사용. `audit_aa_space.js`에서도 ruleClassifier 의존 제거 완료.
 - **신규 필드**: `confidence?: 'high'`, `llmOpinion?: string|null`, `suggestedFolderId?: string|null`.
 - **SSOT 변경**: 분류 판단 기준은 `config/analysis_rules.json` → `reference/classification_guidelines.md`.
-- **잔여 작업**: (1) §4 advisory 키워드-가중치 → LLM 분석 대체, (2) 사람 검토 이동 → 지침 업데이트 학습 루프, (3) 워크플로우 순서 변경(`migrate → daily-report`).
+- **잔여 작업**: (1) §4 advisory 키워드-가중치 → LLM 분석 대체 ✅ (작업 12), (2) 사람 검토 이동 → 지침 업데이트 학습 루프, (3) 워크플로우 순서 변경 ✅ (작업 14).
+
+### 3-9. 외부 이관 결과 부록 통합 (작업 13) — 2026-07-31
+- **목표**: `migrator.js`의 이관 결과를 리포트 §2 표에 통합.
+- **구현**:
+  - `scripts/migrator.js`: `runMigrate({dryRun, deps})` export 추가. 모든 외부 의존(deps) 주입 가능. `{items: [{kind:'migrate-a', pageId, title, sourceSpace, targetFolderId, status, classifierSource, reason, ...}]}` 반환.
+  - `scripts/report_aa_daily.js`: `runMigrate({dryRun})` 호출 → `migrateResult.items`를 부록 `items[]`에 머지.
+  - `scripts/report/render.js`: `migrateSection(items)` — §2 표 렌더 (페이지/소스스페이스/대상폴더/상태/분류소스/사유). 상태: created(신규), synced(동기화), skipped(스킵), failed(실패).
+- **테스트(TDD)**: 13건 신규. `tests/migrator/run_migrate.test.js` 8건 + `tests/report/render_migrate_a.test.js` 5건. **250/250 PASS**.
+- **변경 파일**: `scripts/migrator.js`, `scripts/report_aa_daily.js`, `scripts/report/render.js`, 2건 신규 테스트.
+
+### 3-10. 워크플로우 단일화 (작업 14) — 2026-07-31
+- **목표**: 마이그레이션을 `report_aa_daily.js`에 통합하여 별도 `migrate` job 제거.
+- **구현**: `.github/workflows/confluence_automation.yml`에서 `migrate` job 삭제, `notify-failure` needs를 `daily-report`만 참조. 실행 순서: `migrate → audit → reorganize → report` (단일 프로세스).
+- **변경 파일**: `.github/workflows/confluence_automation.yml`.
 
 ---
 
@@ -248,24 +262,26 @@
   - 237/237 PASS.
 - **변경 파일**: `scripts/report/render.js`, `scripts/report/report_lib.js`, `scripts/report_aa_daily.js`, `tests/report/render.test.js`, `tests/report/generate_space_advisory.test.js`.
 
-### 작업 13 — 외부 이관 결과 부록 통합 (§2 루프 A) — 미착수
+### 작업 13 — 외부 이관 결과 부록 통합 (§2 루프 A) — ✅ 2026-07-31 완료
 - **목표**: `migrator.js`의 이관 결과를 리포트 §2 표에 통합. ideation 문서 §2의 "이관 후보 페이지 표" 구현.
-- **필요 변경**:
-  1. `migrator.js`에 `runMigrate({dryRun, deps})` export 추가 — 현재는 CLI only (main 함수).
-  2. export된 결과를 `report_aa_daily.js`에서 호출해 부록 items에 `kind: 'migrate-a'` 머지.
-  3. `render.js`에 §2 표 렌더 (이관 후보/이관 성공/탈락 후보를 한 표에).
-- **의존성**: `migrator.js` 리팩터가 선행 — export 추가 + stdout 로그 제거 + 구조화된 반환값.
+- **구현**:
+  1. `migrator.js`에 `runMigrate({dryRun, deps})` export 추가 — 모든 외부 의존 deps 주입 가능(테스트 밀폐).
+  2. `report_aa_daily.js`에서 `runMigrate({dryRun})` 호출 → `kind: 'migrate-a'` items를 부록에 머지.
+  3. `render.js`에 `migrateSection(items)` — §2 표 렌더 (페이지/소스스페이스/대상폴더/상태/분류소스/사유).
+- **상태 매핑**: `created`(신규 이관) / `synced`(동기화) / `skipped`(분류 실패) / `failed`(오류).
+- **테스트(TDD)**: 13건 신규 (`tests/migrator/run_migrate.test.js` 8건 + `tests/report/render_migrate_a.test.js` 5건). **250/250 PASS**.
 - **스펙 참조**: `docs/ideation/autoloop_and_report.md` §2.
 
-### 작업 14 — 워크플로우 순서 변경 — 미착수
-- **목표**: `migrate → daily-report → notify-failure` (현재: `daily-report → migrate → notify-failure`).
-- **의미**: 외부 이관을 먼저 실행하고, 그 결과를 리포트에 반영.
-- **선행**: 작업 13 완료 후.
+### 작업 14 — 워크플로우 단일화 — ✅ 2026-07-31 완료
+- **목표**: 마이그레이션을 `report_aa_daily.js`에 통합하여 별도 `migrate` job 제거.
+- **구현**: `.github/workflows/confluence_automation.yml`에서 `migrate` job 삭제, `notify-failure` needs를 `daily-report`만 참조.
+- **의미**: `migrate → audit → reorganize → report`가 단일 프로세스에서 순차 실행. 별도 job 간 checkout/install 중복 제거.
+- **변경 파일**: `.github/workflows/confluence_automation.yml`.
 
 ### 작업 15 — 탈락 후보 판정 — 미착수
 - **목표**: LLM이 "너무 의미없는 페이지"를 판별해 탈락 사유를 부록에 표시.
 - **의미**: 모든 이관 후보 페이지에 대해 분류만 하는 게 아니라, 이관 여부 자체를 판단.
-- **구현**: `callLLMForClassification`에 "이관 가치 없음" 옵션 추가 또는 별도 프롬프트.
+- **구현**: `runMigrate` 내 `classifyWithChain` 호출 시 "이관 가치 없음" 옵션 추가 또는 별도 프롬프트.
 - **스펙 참조**: `docs/ideation/autoloop_and_report.md` §4-§7.
 
 ---
