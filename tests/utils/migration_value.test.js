@@ -64,7 +64,9 @@ test('assessMigrationValue: llm deps 없음 → verdict=create 보수 fallback',
   );
   assert.strictEqual(r.ok, false);
   assert.strictEqual(r.verdict, 'create');
-  assert.ok(r.reason.includes('no-llm-deps'));
+  // reason은 sanitizeReason이 'no-llm-deps' (시스템 코드) → 한국어 일반화 텍스트로 치환.
+  // 단, sanitizeReason의 INTERNAL 코드 매칭이 2차 분류 기본 텍스트보다 우선 — 양쪽 모두 같은 일반화 텍스트.
+  assert.strictEqual(r.reason, '분류 근거는 폴더 적합성만으로 충분');
 });
 
 test('assessMigrationValue: 모르는 verdict enum → create로 정규화', async () => {
@@ -94,5 +96,7 @@ test('assessMigrationValue: llm 응답 ok=false → create 보수 fallback', asy
   );
   assert.strictEqual(r.ok, false);
   assert.strictEqual(r.verdict, 'create');
-  assert.strictEqual(r.reason, 'no-folder-id');
+  // reason은 sanitizeReason이 'no-folder-id' (시스템 코드) → 한국어 일반화 텍스트로 치환.
+  // sanitizeReason의 INTERNAL 코드 매칭이 2차 분류 기본 텍스트보다 우선.
+  assert.strictEqual(r.reason, '분류 근거는 폴더 적합성만으로 충분');
 });

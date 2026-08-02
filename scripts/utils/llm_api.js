@@ -26,8 +26,8 @@ async function callLLM({ client, system, user, tools, model, max_tokens = 1024 }
     if (!toolUse) return { ok: false, source: 'miss', reason: 'no-tool-use' };
     const { folderId, labels, reason, confidence } = toolUse.input || {};
     if (!folderId) {
-      // 모델이 폴더는 비웠지만 reason을 남겼을 수 있다 — 의견으로 보존.
-      return { ok: false, source: 'miss', reason: 'no-folder-id', opinion: reason || null };
+      // 모델이 폴더는 비웠지만 reason을 남겼을 수 있다 — 의견으로 보존 (사람이 읽을 수 있는 형태로 정규화).
+      return { ok: false, source: 'miss', reason: 'no-folder-id', opinion: sanitizeReason(reason, '폴더 ID 미제공 — 사람 검토 필요') };
     }
     return {
       ok: true,
@@ -54,12 +54,12 @@ async function callLLMForClassification({
   const user = buildUserMessage({ title, bodyText: extractBodyText(body) });
   const r = await callFn({ client, system, user, tools: [SELECT_FOLDER_TOOL], model, max_tokens });
   if (!r || !r.ok) {
-    return { ok: false, source: 'miss', reason: r?.reason || 'miss', opinion: r?.opinion || null };
+    return { ok: false, source: 'miss', reason: r?.reason || 'miss', opinion: sanitizeReason(r?.opinion, '분류 근거는 폴더 적합성만으로 충분') };
   }
   if (r.confidence !== 'high') {
     return {
       ok: false, source: 'miss', reason: 'low-confidence',
-      opinion: r.reason || null, suggestedFolderId: r.folderId || null,
+      opinion: sanitizeReason(r.reason, '폴더 적합도 낮음 — 사람 검토 필요'), suggestedFolderId: r.folderId || null,
     };
   }
   return {

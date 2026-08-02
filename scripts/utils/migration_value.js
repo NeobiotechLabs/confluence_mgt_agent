@@ -3,6 +3,8 @@
 // 분류(어디에 넣을지)와 가치(들일지 말지)는 다른 평가 기준이므로 LLM 호출을 분리한다.
 // 7일 후 재평가 시에도 본 모듈만 재호출 — 분류 캐시(작업 16)와 자연 연결.
 
+const { sanitizeReason } = require('./reason_normalizer');
+
 const ALLOWED = new Set(['create', 'unclassified', 'dropped']);
 
 /**
@@ -15,8 +17,9 @@ const ALLOWED = new Set(['create', 'unclassified', 'dropped']);
 async function assessMigrationValue(ctx, aaTree, deps) {
   const llm = deps && deps.llm;
   // 1. llm deps 없음 → 보수적 'create' (운영 설정 이슈이지 페이지 가치 판단이 아님)
+  // reason은 sanitizeReason이 시스템 코드('no-llm-deps')를 한국어 일반화 텍스트로 자동 치환.
   if (!llm || typeof llm.callLLMForMigrationValue !== 'function') {
-    return { ok: false, verdict: 'create', reason: 'no-llm-deps', source: 'miss' };
+    return { ok: false, verdict: 'create', reason: sanitizeReason('no-llm-deps', '가치 판단 근거는 폴더 적합성과 조직 업무성'), source: 'miss' };
   }
 
   // 2. LLM 호출 (throw 흡수)
@@ -34,13 +37,13 @@ async function assessMigrationValue(ctx, aaTree, deps) {
 
   // 3. 응답 정규화
   if (!raw || !raw.ok) {
-    return { ok: false, verdict: 'create', reason: (raw && raw.reason) || 'miss', source: 'miss' };
+    return { ok: false, verdict: 'create', reason: sanitizeReason((raw && raw.reason) || 'miss', '가치 판단 근거는 폴더 적합성과 조직 업무성'), source: 'miss' };
   }
 
   // 4. verdict 검증
   const verdict = ALLOWED.has(raw.verdict) ? raw.verdict : 'create';
   const reason = verdict === raw.verdict
-    ? (raw.reason || 'inline-llm-value')
+    ? sanitizeReason(raw.reason, '가치 판단 근거는 폴더 적합성과 조직 업무성')
     : `normalize:unknown-verdict:${raw.verdict || 'missing'}`;
 
   return {

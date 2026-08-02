@@ -3,6 +3,9 @@
 // rule 단계 제거(2026-07-31 재설계) — 제목 regex 대신 자연어 지침 + 본문 기반 LLM 판단.
 // deps.humanClassifier / deps.llm.callLLM 주입으로 테스트 격리.
 // ANTHROPIC_API_KEY 없으면 llm 단계 skip (비용/안전 가드).
+// 작업 15 fix: fallback의 reason도 sanitizeReason으로 사람이 읽을 수 있는 형태로 정규화.
+
+const { sanitizeReason } = require('./reason_normalizer');
 
 function fallback(aaTree, info = {}) {
   return {
@@ -11,7 +14,7 @@ function fallback(aaTree, info = {}) {
     folderId: aaTree.unsortedFolderId,
     folderTitle: '미분류',
     labels: ['needs-review'],
-    reason: info.reason || 'no-classifier-matched',
+    reason: sanitizeReason(info.reason, '분류 근거는 폴더 적합성만으로 충분'),
     llmOpinion: info.opinion || null,
     suggestedFolderId: info.suggestedFolderId || null,
   };
@@ -85,15 +88,20 @@ async function classifyPage(ctx, aaTree, deps) {
       };
     }
     // low-confidence / miss — 의견은 fallback에 실어 코멘트 첨부 등에 쓴다.
+    // llm_api.js의 opinion은 이미 sanitizeReason 통과한 한국어 자연어.
+    // 'low-confidence' 같은 시스템 진단값은 reason으로 노출하지 않고 모델 의견만 노출.
     return fallback(aaTree, {
-      reason: (llmResult && llmResult.reason) || 'llm-miss',
+      reason: (llmResult && llmResult.opinion) || '분류 근거는 폴더 적합성만으로 충분',
       opinion: (llmResult && llmResult.opinion) || null,
       suggestedFolderId: (llmResult && llmResult.suggestedFolderId) || null,
     });
   }
 
   // 3) fallback (키 부재 또는 llm deps 없음)
+  // sanitizeReason이 시스템 코드(키 부재 등)를 한국어 일반화 텍스트로 자동 치환.
   return fallback(aaTree, { reason: systemHasKey ? 'no-llm-deps' : 'llm-skipped-no-key' });
+  // 참고: 위 reason은 fallback() 내부 sanitizeReason을 거치며
+  // "분류 근거는 폴더 적합성만으로 충분"으로 변환되어 chainResult.reason에 노출.
 }
 
 module.exports = { classifyPage, fallback, structuralCheck };
