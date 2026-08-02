@@ -501,16 +501,20 @@ async function generateSpaceAdvisory(ctx, opts, deps) {
       model,
       max_tokens,
       system: SPACE_ADVISORY_SYSTEM,
+      thinking: { type: 'disabled' },
       messages: [{ role: 'user', content: buildSpaceAdvisoryUserMessage(ctx || {}) }],
     });
     const blocks = Array.isArray(msg.content) ? msg.content : [];
     const textBlock = blocks.find(b => b && b.type === 'text');
     if (typeof process !== 'undefined' && process.env?.DEBUG_LLM_ADVISORY) {
-      console.log(`[DEBUG_LLM_ADVISORY] blocks=${blocks.length} hasText=${!!textBlock} textLen=${textBlock?.text?.length || 0}`);
+      console.log(`[DEBUG_LLM_ADVISORY] blocks=${blocks.length} types=${blocks.map(b => b.type).join(',')} hasText=${!!textBlock} textLen=${textBlock?.text?.length || 0}`);
       if (textBlock?.text) console.log(`[DEBUG_LLM_ADVISORY] text preview: ${textBlock.text.slice(0, 200)}`);
     }
-    if (!textBlock || typeof textBlock.text !== 'string') return [];
-    return parseAdvisoryText(textBlock.text);
+    // text 블록이 없으면 모든 블록에서 text를 찾아 fallback
+    const fallbackText = blocks.find(b => b && typeof b.text === 'string');
+    const effectiveText = textBlock || fallbackText;
+    if (!effectiveText || typeof effectiveText.text !== 'string') return [];
+    return parseAdvisoryText(effectiveText.text);
   } catch (_) {
     return [];
   }
