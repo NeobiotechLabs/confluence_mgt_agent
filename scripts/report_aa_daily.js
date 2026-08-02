@@ -588,6 +588,10 @@ async function main() {
     }
   }
 
+  // metrics.advisories/actionRequiredCount는 룰 변경·LLM 권고 등 이후에 갱신
+  metrics.advisories = advisories.length;
+  metrics.actionRequiredCount = (topLevelOrphans > 0 ? 1 : 0) + failedMoves.length + advisories.length;
+
   const appendix = {
     v: 1, runAt, runId, mode, policyHash: hash, model, gitSha,
     metrics, items, advisories,
