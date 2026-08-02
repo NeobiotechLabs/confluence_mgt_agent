@@ -55,15 +55,17 @@ function reqForCandidates() {
   };
 }
 
-test('verdict=create (캐시 미스) → status=created', async () => {
+test('verdict=create (캐시 미스) → status=created + assessMigrationValue 호출', async () => {
+  let valueCallCount = 0;
   const result = await runMigrate({
     dryRun: false,
     deps: makeDeps({
       confluenceRequest: reqForCandidates(),
-      assessMigrationValue: async () => ({ ok: true, verdict: 'create', reason: 'ok', source: 'inline-llm-value' }),
+      assessMigrationValue: async () => { valueCallCount++; return { ok: true, verdict: 'create', reason: 'ok', source: 'inline-llm-value' }; },
     }),
   });
   assert.strictEqual(result.items[0].status, 'created');
+  assert.strictEqual(valueCallCount, 1, 'assessMigrationValue must be called once per page (verdict gate)');
 });
 
 test('verdict=dropped (캐시 미스) → status=dropped, cacheUpdates push', async () => {
@@ -103,19 +105,26 @@ test('캐시 적중 → assessMigrationValue 호출 안 됨', async () => {
   assert.strictEqual(callCount, 0);
 });
 
-test('7일 후 재평가 → dropped 유지 → lastSeen 갱신', async () => {
+test('7일 후 재평가 → dropped 유지 → lastSeen 갱신 (merge update에 lastSeen=today 전달)', async () => {
+  const updates = [];
   const result = await runMigrate({
     dryRun: false,
     deps: makeDeps({
       confluenceRequest: reqForCandidates(),
       consultDroppedCache: () => ({
-        cached: true, reevaluate: true, entry: { pageId: '10', hash: 'h1', nextReevalAt: '2026-07-30' },
+        cached: true, reevaluate: true, entry: { pageId: '10', hash: 'h1', firstSeen: '2026-07-01', lastSeen: '2026-07-30', nextReevalAt: '2026-07-30' },
       }),
       assessMigrationValue: async () => ({ ok: true, verdict: 'dropped', reason: '재평가도 dropped', source: 'inline-llm-value' }),
+      mergeDroppedCache: (cache, ups) => { updates.push(...ups); return cache.concat(ups); },
     }),
   });
   assert.strictEqual(result.items[0].status, 'dropped');
   assert.strictEqual(result.items[0].cacheHit, false);
+  assert.ok(updates.length > 0, 'merge must receive a cache update');
+  const upd = updates.find(u => u.pageId === '10' && !u.remove);
+  assert.ok(upd, 'must have a non-remove update for reeval-dropped');
+  assert.strictEqual(upd.lastSeen, '2026-08-02', 'lastSeen must be refreshed to today on reeval');
+  assert.strictEqual(upd.nextReevalAt, '2026-08-09', 'nextReevalAt must advance by 7 days');
 });
 
 test('7일 후 재평가 → unclassified → 캐시 제거, 미분류 이관', async () => {
@@ -136,9 +145,9 @@ test('7일 후 재평가 → unclassified → 캐시 제거, 미분류 이관', 
   assert.ok(updates.some(u => u.remove && u.pageId === '10'));
 });
 
-test('dryRun=true → 캐시 저장 안 됨', async () => {
+test('dryRun=true → status=dropped, 캐시 저장 안 됨', async () => {
   let saveCalled = false;
-  await runMigrate({
+  const result = await runMigrate({
     dryRun: true,
     deps: makeDeps({
       confluenceRequest: reqForCandidates(),
@@ -146,7 +155,8 @@ test('dryRun=true → 캐시 저장 안 됨', async () => {
       saveDroppedCache: async () => { saveCalled = true; },
     }),
   });
-  assert.strictEqual(saveCalled, false);
+  assert.strictEqual(result.items[0].status, 'dropped', 'dryRun must still produce status=dropped in items[]');
+  assert.strictEqual(saveCalled, false, 'dryRun must skip saveDroppedCache');
 });
 
 test('chainResult.ok=false + verdict=create → 강제 unclassified', async () => {
