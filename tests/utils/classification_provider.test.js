@@ -85,7 +85,7 @@ test('chain: llm이 트리 미지 folderId를 주면 fallback + 의견 보존', 
   const out = await classifyPage(baseCtx, aaTree, { llm });
   assert.strictEqual(out.source, 'fallback');
   assert.strictEqual(out.folderId, 'u-1');
-  assert.strictEqual(out.reason, 'llm-unknown-folder');
+  assert.strictEqual(out.reason, 'LLM이 알 수 없는 폴더 지정');
   assert.strictEqual(out.llmOpinion, '환상의 폴더');
 });
 
@@ -118,7 +118,7 @@ test('chain: ANTHROPIC_API_KEY 없으면 llm skip → fallback(llm-skipped-no-ke
     const llm = { callLLM: async () => { llmCalled = true; return { ok: false }; } };
     const out = await classifyPage(baseCtx, aaTree, { llm });
     assert.strictEqual(out.source, 'fallback');
-    assert.strictEqual(out.reason, 'llm-skipped-no-key');
+    assert.strictEqual(out.reason, 'API 키 없음으로 LLM 건너뜀');
     assert.strictEqual(llmCalled, false, '키 없으면 LLM 호출 금지');
   } finally {
     process.env.ANTHROPIC_API_KEY = prev;
