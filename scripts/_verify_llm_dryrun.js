@@ -87,12 +87,13 @@ async function main() {
   // ── 2차 분류: 가치 평가 (assessMigrationValue) ──
   console.log('=== 4) assessMigrationValue (가치 평가 2차) ===');
   const start2 = Date.now();
+  const client2 = new Anthropic();
   const r2 = await assessMigrationValue({
     pageId: TEST_PAGE.pageId,
     title: TEST_PAGE.title,
     body: TEST_PAGE.body,
     classifyHint: { folderId: r1.folderId, labels: r1.labels || [] },
-  }, aaTree);
+  }, aaTree, { llm: { callLLMForMigrationValue: (opts) => require('./utils/llm_api').callLLMForMigrationValue({ ...opts, client: client2 }) } });
   const ms2 = Date.now() - start2;
   console.log(`  소요: ${ms2}ms`);
   console.log(`  ok: ${r2.ok}`);
