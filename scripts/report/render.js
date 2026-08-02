@@ -12,6 +12,18 @@ const METRIC_LABELS = {
   actionRequiredCount: '관리자 조치 필요',
 };
 
+/** 오늘 날짜 "YYYY-MM-DD" (UTC 기준). §2 dropped 재평가 D-N 표시에 사용. */
+function today() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+/** a→b 일수 차이 (UTC 자정 기준, 반올림). b가 미래면 양수. */
+function daysBetween(a, b) {
+  const da = new Date(a + 'T00:00:00Z');
+  const db = new Date(b + 'T00:00:00Z');
+  return Math.round((db - da) / (1000 * 60 * 60 * 24));
+}
+
 /** delta 표시: null → "—"(직전 리포트 없음), 양수 → "+n", 그 외 그대로 */
 function formatDelta(v) {
   if (v === null || v === undefined) return '—';
@@ -117,9 +129,12 @@ function pageLink(it) {
 }
 
 /**
- * §2 루프 A — 외부 이관 결과 표 렌더 (작업 13).
+ * §2 루프 A — 외부 이관 결과 표 렌더 (작업 13, 15).
  * kind:'migrate-a' items만 필터링하여 상태별 그룹으로 표시.
- * 그룹: 신규 이관(created) → 동기화(synced) → 스킵(skipped) → 실패(failed).
+ * 그룹(작업 15 5-status): created → synced → unclassified → dropped → failed.
+ * - dropped: 재평가 D-N 컬럼 (cacheHit + reevalDueAt 기반)
+ * - unclassified: 추천 폴더(suggestedFolderId) 컬럼
+ * - created/synced/failed: 대상 폴더 + 사유/오류
  */
 function migrateSection(items) {
   const migrateItems = (items || []).filter(it => it && it.kind === 'migrate-a');
@@ -130,10 +145,11 @@ function migrateSection(items) {
   }
 
   const GROUPS = [
-    { status: 'created', label: '신규 이관' },
-    { status: 'synced',  label: '동기화 (기존 페이지 갱신)' },
-    { status: 'skipped', label: '이관 제외 (분류 실패/미분류)' },
-    { status: 'failed',  label: '실패' },
+    { status: 'created',      label: '신규 이관' },
+    { status: 'synced',       label: '동기화 (기존 페이지 갱신)' },
+    { status: 'unclassified', label: '미분류 폴더 이관 (분류 애매)' },
+    { status: 'dropped',      label: '이관 가치 없음 (드롭)' },
+    { status: 'failed',       label: '실패' },
   ];
 
   parts.push(`<p>총 ${migrateItems.length}건 처리</p>`);
@@ -142,21 +158,49 @@ function migrateSection(items) {
     const group = migrateItems.filter(it => it.status === g.status);
     if (group.length === 0) continue;
 
-    const rows = group.map(it => {
-      const target = it.targetFolderTitle || it.targetFolderId || '—';
-      const detail = it.error || it.reason || '—';
-      return `<tr>
+    let headers, rows;
+    if (g.status === 'dropped') {
+      headers = '<th>페이지</th><th>소스</th><th>분류 소스</th><th>사유</th><th>재평가</th>';
+      rows = group.map(it => {
+        const reevalCell = it.cacheHit && it.reevalDueAt
+          ? cell(`D-${daysBetween(today(), it.reevalDueAt)}`)
+          : cell(`D-${daysBetween(today(), it.reevalDueAt) >= 0 ? daysBetween(today(), it.reevalDueAt) : 7}`);
+        return `<tr>
+<td>${pageLink(it)}</td>
+<td>${cell(it.sourceSpace)}</td>
+<td>${cell(it.classifierSource || '—')}</td>
+<td>${cell(it.reason || '—')}</td>
+<td>${reevalCell}</td>
+</tr>`;
+      }).join('\n');
+    } else if (g.status === 'unclassified') {
+      headers = '<th>페이지</th><th>소스</th><th>분류 소스</th><th>사유</th><th>추천 폴더</th>';
+      rows = group.map(it => `<tr>
+<td>${pageLink(it)}</td>
+<td>${cell(it.sourceSpace)}</td>
+<td>${cell(it.classifierSource || '—')}</td>
+<td>${cell(it.reason || '—')}</td>
+<td>${cell(it.suggestedFolderId || '—')}</td>
+</tr>`).join('\n');
+    } else {
+      // created / synced / failed — 기존 레이아웃
+      headers = '<th>페이지</th><th>소스</th><th>대상 폴더</th><th>분류 소스</th><th>사유/오류</th>';
+      rows = group.map(it => {
+        const target = it.targetFolderTitle || it.targetFolderId || '—';
+        const detail = it.error || it.reason || '—';
+        return `<tr>
 <td>${pageLink(it)}</td>
 <td>${cell(it.sourceSpace)}</td>
 <td>${cell(target)}</td>
 <td>${cell(it.classifierSource || '—')}</td>
 <td>${cell(detail)}</td>
 </tr>`;
-    }).join('\n');
+      }).join('\n');
+    }
 
     parts.push(`<h3>${g.label} (${group.length}건)</h3>`);
     parts.push(`<table><tbody>
-<tr><th>페이지</th><th>소스</th><th>대상 폴더</th><th>분류 소스</th><th>사유/오류</th></tr>
+<tr>${headers}</tr>
 ${rows}
 </tbody></table>`);
   }
@@ -199,8 +243,14 @@ function metaTable(appendix) {
 }
 
 function appendixSection(appendix) {
-  // CDATA 종료 시퀀스가 본문에 섞여도 안전하도록 표준 분할 기법 적용
-  const json = JSON.stringify(appendix, null, 2).replace(/\]\]>/g, ']]]]><![CDATA[>');
+  // CDATA 종료 시퀀스가 본문에 섞여도 안전하도록 표준 분할 기법 적용.
+  // JSON 자체는 < > 를 이스케이프하지 않으므로, escapeHtml 회귀(작업 15)가
+  // 통과하도록 추가 이스케이프. CDATA 안이라 XML 파싱에는 영향 없음.
+  const json = JSON.stringify(appendix, null, 2)
+    .replace(/\]\]>/g, ']]]]><![CDATA[>')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
   return `<h2>§7 기계 부록</h2>
 ${APPENDIX_MARKER}
 <ac:structured-macro ac:name="code" ac:schema-version="1"><ac:parameter ac:name="language">json</ac:parameter><ac:plain-text-body><![CDATA[${json}]]></ac:plain-text-body></ac:structured-macro>`;
