@@ -87,7 +87,7 @@ function renderAdvisoriesSection(advisories) {
   const parts = ['<h2>§4 AI 권고판</h2>'];
   const items = Array.isArray(advisories) ? advisories : [];
   if (items.length === 0) {
-    parts.push('<p><em>미실행 (Phase 2 예정)</em></p>');
+    parts.push('<p><em>권고 없음 — 운영 데이터 부족 또는 LLM 호출 실패</em></p>');
     return parts.join('\n');
   }
   const strings = items.filter(a => typeof a === 'string');
@@ -112,7 +112,7 @@ ${rows}
 </tbody></table>`);
   }
   if (strings.length === 0 && structured.length === 0) {
-    parts.push('<p><em>미실행 (Phase 2 예정)</em></p>');
+    parts.push('<p><em>권고 없음 — 운영 데이터 부족 또는 LLM 호출 실패</em></p>');
   }
   return parts.join('\n');
 }
