@@ -17,7 +17,7 @@ test('RED 1 — 입력이 undefined/null/빈 배열이면 자리표시 단락만
   const c = renderAdvisoriesSection([]);
   for (const out of [a, b, c]) {
     assert.ok(out.includes('<h2>§4 AI 권고판</h2>'), '헤더 포함');
-    assert.ok(out.includes('Phase 2'), '자리표시 문구 포함');
+    assert.ok(out.includes('권고 없음'), '자리표시 문구 포함');
     assert.ok(!out.includes('<table'), '표 없음');
     assert.ok(!out.includes('<li>'), '리스트 없음');
   }
@@ -148,9 +148,9 @@ test('RED 6 — 문자열 + misplacement-suspect 혼합: 문자열→<li>, 구�
   assert.ok(!xssOut.includes('<script>alert(1)</script>'));
 });
 
-test('RED 7 — §4 자리표시 <p><em>미실행 (Phase 2 예정)</em></p> 텍스트는 데이터가 있을 때 빠진다', () => {
+test('RED 7 — §4 자리표시 텍스트는 데이터가 있을 때 빠진다', () => {
   const out = renderAdvisoriesSection(['어떤 권고']);
-  assert.ok(!out.includes('미실행 (Phase 2 예정)'), '자리표시 문구 미노출');
+  assert.ok(!out.includes('권고 없음'), '자리표시 문구 미노출');
   const empty = renderAdvisoriesSection([]);
-  assert.ok(empty.includes('미실행 (Phase 2 예정)'), '빈 배열에선 자리표시 노출');
+  assert.ok(empty.includes('권고 없음'), '빈 배열에선 자리표시 노출');
 });

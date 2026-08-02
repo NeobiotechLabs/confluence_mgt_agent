@@ -72,7 +72,7 @@ test('empty run: no-moves message, §2 이관 결과 없음, §4 미실행, no �
   const html = renderReportStorage({ appendix, deltas: {} });
   assert.ok(html.includes('오늘 자동 이동 없음'), '§3 이동 없음 문구');
   assert.ok(html.includes('이관 결과 없음'), '§2 이관 결과 없음 문구');
-  assert.ok(html.includes('미실행 (Phase 2 예정)'), '§4 AI 권고 미실행 문구');
+  assert.ok(html.includes('권고 없음'), '§4 AI 권고 미실행 문구');
   assert.ok(!html.includes('§5'), '§5 omitted when nothing to notify');
 });
 
