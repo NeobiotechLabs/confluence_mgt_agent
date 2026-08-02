@@ -9,7 +9,7 @@ const { extractBodyText } = require('./content_extractor');
 
 const DEFAULT_MODEL = 'claude-haiku-4-5-20251001';
 
-async function callLLM({ client, system, user, tools, model, max_tokens = 1024, toolName = 'select_folder', valueMode = false } = {}) {
+async function callLLM({ client, system, user, tools, model, max_tokens = 1024 } = {}) {
   const useModel = model || process.env.ANTHROPIC_MODEL || DEFAULT_MODEL;
   if (!client) return { ok: false, source: 'miss', reason: 'no-client' };
   try {
@@ -21,19 +21,8 @@ async function callLLM({ client, system, user, tools, model, max_tokens = 1024, 
       messages: [{ role: 'user', content: user }],
     });
     const blocks = Array.isArray(msg.content) ? msg.content : [];
-    const expectedName = valueMode ? 'select_migration_value' : (toolName || 'select_folder');
-    const toolUse = blocks.find(b => b && b.type === 'tool_use' && b.name === expectedName);
+    const toolUse = blocks.find(b => b && b.type === 'tool_use' && b.name === 'select_folder');
     if (!toolUse) return { ok: false, source: 'miss', reason: 'no-tool-use' };
-    if (valueMode) {
-      const { verdict, reason, suggestedFolderId } = toolUse.input || {};
-      return {
-        ok: true,
-        source: 'inline-llm-value',
-        verdict,
-        reason: reason || 'inline-llm-value',
-        suggestedFolderId: suggestedFolderId || null,
-      };
-    }
     const { folderId, labels, reason, confidence } = toolUse.input || {};
     if (!folderId) {
       // 모델이 폴더는 비웠지만 reason을 남겼을 수 있다 — 의견으로 보존.
@@ -81,27 +70,36 @@ async function callLLMForClassification({
 /**
  * 이관 가치 평가 전용 LLM 호출. 2차 분류 단계(작업 15).
  * 본문 + 1차 분류 힌트 → verdict 정규화. 실패는 throw하지 않고 {ok:false}로 흡수.
+ * callLLM과 분리된 자체 구현 — select_migration_value tool 정규화를 인라인한다.
  */
 async function callLLMForMigrationValue({
-  client, title, body, treeText, classifyHint, guidelines, model, max_tokens = 512, callFn = callLLM,
+  client, title, body, treeText, classifyHint, guidelines, model, max_tokens = 512,
 } = {}) {
-  const system = buildValueSystemPrompt({ treeText, guidelines });
-  const user = buildValueUserMessage({ title, bodyText: extractBodyText(body), classifyHint });
-  const isDefaultCallFn = callFn === callLLM;
-  const r = await callFn({
-    client, system, user, tools: [SELECT_MIGRATION_VALUE_TOOL], model, max_tokens,
-    ...(isDefaultCallFn ? { valueMode: true } : {}),
-  });
-  if (!r || !r.ok) {
-    return { ok: false, reason: (r && r.reason) || 'miss' };
+  const useModel = model || process.env.ANTHROPIC_MODEL || DEFAULT_MODEL;
+  if (!client) return { ok: false, reason: 'no-client' };
+  try {
+    const system = buildValueSystemPrompt({ treeText, guidelines });
+    const user = buildValueUserMessage({ title, bodyText: extractBodyText(body), classifyHint });
+    const msg = await client.messages.create({
+      model: useModel,
+      max_tokens,
+      system,
+      tools: [SELECT_MIGRATION_VALUE_TOOL],
+      messages: [{ role: 'user', content: user }],
+    });
+    const blocks = Array.isArray(msg.content) ? msg.content : [];
+    const toolUse = blocks.find(b => b && b.type === 'tool_use' && b.name === 'select_migration_value');
+    if (!toolUse) return { ok: false, reason: 'no-tool-use' };
+    const { verdict, reason, suggestedFolderId } = toolUse.input || {};
+    return {
+      ok: true,
+      verdict,
+      reason: reason || 'inline-llm-value',
+      suggestedFolderId: suggestedFolderId || null,
+    };
+  } catch (e) {
+    return { ok: false, reason: `api-error:${e.message}` };
   }
-  const { verdict, reason, suggestedFolderId } = r;
-  return {
-    ok: true,
-    verdict,
-    reason: reason || 'inline-llm-value',
-    suggestedFolderId: suggestedFolderId || null,
-  };
 }
 
 module.exports = { callLLM, callLLMForClassification, callLLMForMigrationValue, DEFAULT_MODEL };
