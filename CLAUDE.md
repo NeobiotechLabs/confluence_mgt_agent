@@ -51,6 +51,7 @@ Claude Code(`claude.ai/code`)가 이 저장소에서 작업할 때 읽는 안내
 | `tests/` | `node:test` 기반. `classifiers/`, `migrator/`, `report/`, `utils/` (총 250 PASS) |
 | `docs/` | `AUTOMATION_GUIDE.md`, `HANDOFF.md`, `STATUS.md`, `spec_auto_report.md`, `superpowers/` |
 | `reference/` | `ToDo.md`(진행), `classification_rules.md`(체인지 매뉴얼), `SD_space_analysis.md`, `AA_space_design_plan.md`, `PROJECT_STATUS.md`(옛, 참고용) |
+| `test_results/` | **로컬 dry-run 산출물 전용** — `aa_report_dryrun_YYYY-MM-DD_HHMM.html` 형식. .gitignore 대상. `reference/`에 dryrun 결과 절대 두지 않음. |
 | `config/` | `analysis_rules.json`(SSOT), `migration_candidates.json`, `spaces_config.json` |
 
 ---
@@ -92,7 +93,7 @@ Claude Code(`claude.ai/code`)가 이 저장소에서 작업할 때 읽는 안내
 - **대량 작업**: rate limit 고려. `report_aa_daily`는 `aa_pages.js`로 `listAAPages` 1회 공유.
 - **스페이스 구조**: AA는 페이지 + 폴더(`is-folder` 라벨) 혼용. 폴더는 최대 3단계 중첩. 리포트 페이지는 `bot-report` + `auto-report` 라벨로 자기 배제.
 - **테스트 규약**: `node:test` + `node:assert`. 모든 외부 의존은 deps 주입. 새 코드는 **TDD(RED → GREEN → REFACTOR)**.
-- **dry-run 우선**: 새로 만든 변경은 `*:dryrun` 스크립트로 안전 확인 후 실실행.
+- **dry-run 우선**: 새로 만든 변경은 `*:dryrun` 스크립트로 안전 확인 후 실실행. dry-run 산출물은 `test_results/`에만 저장 (`aa_report_dryrun_YYYY-MM-DD_HHMM.html` 형식). `reference/`는 SSOT/문서 전용 — 테스트 결과 두지 않음.
 
 ---
 

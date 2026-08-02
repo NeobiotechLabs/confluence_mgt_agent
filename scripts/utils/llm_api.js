@@ -5,6 +5,7 @@
 // callLLMForClassification: 본문 기반 분류 전용 — prompt 조립 + confidence 해석을 추가한다.
 const { buildSystemPrompt, buildUserMessage, SELECT_FOLDER_TOOL } = require('./classification_prompt');
 const { buildValueSystemPrompt, buildValueUserMessage, SELECT_MIGRATION_VALUE_TOOL } = require('./value_prompt');
+const { sanitizeReason } = require('./reason_normalizer');
 const { extractBodyText } = require('./content_extractor');
 
 const DEFAULT_MODEL = 'claude-haiku-4-5-20251001';
@@ -33,7 +34,7 @@ async function callLLM({ client, system, user, tools, model, max_tokens = 1024 }
       source: 'inline-llm',
       folderId: String(folderId),
       labels: Array.isArray(labels) ? labels.filter(Boolean) : [],
-      reason: reason || 'inline-llm',
+      reason: sanitizeReason(reason, '분류 근거는 폴더 적합성만으로 충분'),
       confidence, // passthrough — 미상이면 undefined
     };
   } catch (e) {
@@ -63,7 +64,7 @@ async function callLLMForClassification({
   }
   return {
     ok: true, source: 'inline-llm', folderId: r.folderId,
-    labels: r.labels || [], reason: r.reason || 'inline-llm', confidence: 'high',
+    labels: r.labels || [], reason: sanitizeReason(r.reason, '분류 근거는 폴더 적합성만으로 충분'), confidence: 'high',
   };
 }
 
@@ -94,7 +95,7 @@ async function callLLMForMigrationValue({
     return {
       ok: true,
       verdict,
-      reason: reason || 'inline-llm-value',
+      reason: sanitizeReason(reason, '가치 판단 근거는 폴더 적합성과 조직 업무성'),
       suggestedFolderId: suggestedFolderId || null,
     };
   } catch (e) {
