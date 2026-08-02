@@ -106,9 +106,20 @@ ${rows}
 }
 
 /**
+ * Confluence 페이지 링크 생성.
+ * destPageId(AA 페이지)가 있으면 AA 링크, 없으면 소스 페이지 링크.
+ */
+function pageLink(it) {
+  const base = 'https://neobiotech.atlassian.net/wiki/pages/viewpage.action?pageId=';
+  const id = it.destPageId || it.pageId;
+  const title = escapeHtml(it.title || '—');
+  return `<a href="${base}${id}">${title}</a>`;
+}
+
+/**
  * §2 루프 A — 외부 이관 결과 표 렌더 (작업 13).
- * kind:'migrate-a' items만 필터링하여 표로 표시.
- * 상태별 그룹: created → synced → skipped → failed.
+ * kind:'migrate-a' items만 필터링하여 상태별 그룹으로 표시.
+ * 그룹: 신규 이관(created) → 동기화(synced) → 스킵(skipped) → 실패(failed).
  */
 function migrateSection(items) {
   const migrateItems = (items || []).filter(it => it && it.kind === 'migrate-a');
@@ -118,26 +129,38 @@ function migrateSection(items) {
     return parts.join('\n');
   }
 
-  const STATUS_LABEL = { created: '신규 이관', synced: '동기화', skipped: '스킵', failed: '실패' };
-  const rows = migrateItems.map(it => {
-    const statusLabel = STATUS_LABEL[it.status] || it.status;
-    const target = it.targetFolderTitle || it.targetFolderId || '—';
-    const detail = it.error || it.reason || '—';
-    return `<tr>
-<td>${cell(it.title)}</td>
+  const GROUPS = [
+    { status: 'created', label: '신규 이관' },
+    { status: 'synced',  label: '동기화 (기존 페이지 갱신)' },
+    { status: 'skipped', label: '이관 제외 (분류 실패/미분류)' },
+    { status: 'failed',  label: '실패' },
+  ];
+
+  parts.push(`<p>총 ${migrateItems.length}건 처리</p>`);
+
+  for (const g of GROUPS) {
+    const group = migrateItems.filter(it => it.status === g.status);
+    if (group.length === 0) continue;
+
+    const rows = group.map(it => {
+      const target = it.targetFolderTitle || it.targetFolderId || '—';
+      const detail = it.error || it.reason || '—';
+      return `<tr>
+<td>${pageLink(it)}</td>
 <td>${cell(it.sourceSpace)}</td>
 <td>${cell(target)}</td>
-<td>${cell(statusLabel)}</td>
 <td>${cell(it.classifierSource || '—')}</td>
 <td>${cell(detail)}</td>
 </tr>`;
-  }).join('\n');
+    }).join('\n');
 
-  parts.push(`<p>총 ${migrateItems.length}건 처리</p>`);
-  parts.push(`<table><tbody>
-<tr><th>페이지</th><th>소스 스페이스</th><th>대상 폴더</th><th>상태</th><th>분류 소스</th><th>사유/오류</th></tr>
+    parts.push(`<h3>${g.label} (${group.length}건)</h3>`);
+    parts.push(`<table><tbody>
+<tr><th>페이지</th><th>소스</th><th>대상 폴더</th><th>분류 소스</th><th>사유/오류</th></tr>
 ${rows}
 </tbody></table>`);
+  }
+
   return parts.join('\n');
 }
 

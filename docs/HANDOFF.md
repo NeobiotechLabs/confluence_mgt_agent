@@ -1,6 +1,6 @@
 # 세션 인수인계 (Handoff)
 
-> 작성: 2026-07-31 (작업 13-14 완료 후)
+> 작성: 2026-07-31 (작업 13-14 완료 + §2 표 개선 + metrics 수정)
 > 받는 사람: 다음 세션을 여는 작업자
 
 ---
@@ -24,7 +24,7 @@ AA 스페이스 이관 + 일일 자동 리포트 + 자가 정화(audit·reorgani
 §2 루프 A 외부 이관 결과 부록 통합 (migrator.js → report_aa_daily.js in-process).
 워크플로우 단일화 (별도 migrate job 제거, migrate→audit→reorganize→report 단일 프로세스).
 
-- 테스트: **250/250 PASS**
+- 테스트: **253/253 PASS**
 - 미커밋 변경: 없음 (전체 커밋 완료)
 
 ---
