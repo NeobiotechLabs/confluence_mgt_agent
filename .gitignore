@@ -1,4 +1,5 @@
 .claude/*
 .env
 scripts/result_json/*
+test_results/
 node_modules/

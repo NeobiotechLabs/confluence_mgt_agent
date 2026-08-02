@@ -64,7 +64,7 @@ test('assessMigrationValue: llm deps 없음 → verdict=create 보수 fallback',
   );
   assert.strictEqual(r.ok, false);
   assert.strictEqual(r.verdict, 'create');
-  assert.ok(r.reason.includes('no-llm-deps'));
+  assert.strictEqual(r.reason, 'LLM 의존성 없음');
 });
 
 test('assessMigrationValue: 모르는 verdict enum → create로 정규화', async () => {

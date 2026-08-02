@@ -1,6 +1,6 @@
 // scripts/utils/aa_pages.js
 'use strict';
-require('dotenv').config({ path: require('path').join(__dirname, '..', '..', '.env') });
+require('../utils/load_env');
 const { confluenceRequest, nextPagePath } = require('./confluence_api');
 
 /**

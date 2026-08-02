@@ -1,6 +1,6 @@
 'use strict';
 
-require('dotenv').config({ path: require('path').join(__dirname, '..', '..', '.env') });
+require('../utils/load_env');
 const https = require('https');
 
 const BASE_URL = 'https://neobiotech.atlassian.net';

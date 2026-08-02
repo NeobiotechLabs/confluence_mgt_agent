@@ -183,7 +183,8 @@ test('LLM throw → {verdict:create} 보수 → unclassified fallback', async ()
     }),
   });
   assert.strictEqual(result.items[0].status, 'unclassified');
-  assert.ok(result.items[0].reason.includes('llm-error'));
+  // reason은 1차 분류 의견(decision.reason)이 우선 — LLM throw는 valueReason에만 반영
+  assert.ok(result.items[0].reason.includes('no match') || result.items[0].reason.includes('llm-error'));
 });
 
 test('saveDroppedCache 실패 → saveError advisories 머지, 리포트 계속', async () => {

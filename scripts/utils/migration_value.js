@@ -5,6 +5,19 @@
 
 const ALLOWED = new Set(['create', 'unclassified', 'dropped']);
 
+// 시스템 내부 코드 → 사람이 읽을 수 있는 한국어 설명 (리포트 노출용)
+const CODE_TO_KOREAN = {
+  'no-llm-deps': 'LLM 의존성 없음',
+  'no-client': 'LLM 클라이언트 없음',
+  'no-tool-use': 'LLM 도구 호출 실패',
+  'miss': '가치 판단 실패',
+};
+
+function humanizeReason(reason) {
+  if (typeof reason !== 'string') return reason || '가치 판단 실패';
+  return CODE_TO_KOREAN[reason.trim()] || reason;
+}
+
 /**
  * 이관 가치 평가.
  * @param {Object} ctx - {pageId, title, body, classifyHint?: {folderId, labels}}
@@ -16,7 +29,7 @@ async function assessMigrationValue(ctx, aaTree, deps) {
   const llm = deps && deps.llm;
   // 1. llm deps 없음 → 보수적 'create' (운영 설정 이슈이지 페이지 가치 판단이 아님)
   if (!llm || typeof llm.callLLMForMigrationValue !== 'function') {
-    return { ok: false, verdict: 'create', reason: 'no-llm-deps', source: 'miss' };
+    return { ok: false, verdict: 'create', reason: humanizeReason('no-llm-deps'), source: 'miss' };
   }
 
   // 2. LLM 호출 (throw 흡수)
@@ -34,13 +47,13 @@ async function assessMigrationValue(ctx, aaTree, deps) {
 
   // 3. 응답 정규화
   if (!raw || !raw.ok) {
-    return { ok: false, verdict: 'create', reason: (raw && raw.reason) || 'miss', source: 'miss' };
+    return { ok: false, verdict: 'create', reason: humanizeReason((raw && raw.reason) || 'miss'), source: 'miss' };
   }
 
   // 4. verdict 검증
   const verdict = ALLOWED.has(raw.verdict) ? raw.verdict : 'create';
   const reason = verdict === raw.verdict
-    ? (raw.reason || 'inline-llm-value')
+    ? (raw.reason || null)
     : `normalize:unknown-verdict:${raw.verdict || 'missing'}`;
 
   return {

@@ -4,6 +4,25 @@
 // deps.humanClassifier / deps.llm.callLLM 주입으로 테스트 격리.
 // ANTHROPIC_API_KEY 없으면 llm 단계 skip (비용/안전 가드).
 
+// 시스템 내부 코드 → 사람이 읽을 수 있는 한국어 설명 (리포트 노출용)
+const CODE_TO_KOREAN = {
+  'inline-llm': 'LLM 기반 분류 수행',
+  'llm-unknown-folder': 'LLM이 알 수 없는 폴더 지정',
+  'no-llm-deps': 'LLM 의존성 없음',
+  'llm-skipped-no-key': 'API 키 없음으로 LLM 건너뜀',
+  'no-client': 'LLM 클라이언트 없음',
+  'no-tool-use': 'LLM 도구 호출 실패',
+  'no-folder-id': '폴더 ID 미지정',
+  'low-confidence': 'LLM 신뢰도 부족',
+  'miss': '분류 실패',
+  'api-error': 'API 호출 오류',
+};
+
+function humanizeReason(reason) {
+  if (typeof reason !== 'string') return reason || '분류 실패';
+  return CODE_TO_KOREAN[reason.trim()] || reason;
+}
+
 function fallback(aaTree, info = {}) {
   return {
     ok: true,
@@ -11,7 +30,7 @@ function fallback(aaTree, info = {}) {
     folderId: aaTree.unsortedFolderId,
     folderTitle: '미분류',
     labels: ['needs-review'],
-    reason: info.reason || 'no-classifier-matched',
+    reason: humanizeReason(info.reason) || '분류 실패',
     llmOpinion: info.opinion || null,
     suggestedFolderId: info.suggestedFolderId || null,
   };
@@ -80,13 +99,13 @@ async function classifyPage(ctx, aaTree, deps) {
         folderId,
         folderTitle,
         labels: Array.isArray(llmResult.labels) ? llmResult.labels.filter(Boolean) : [],
-        reason: llmResult.reason || 'inline-llm',
+        reason: llmResult.reason || humanizeReason('inline-llm'),
         confidence: 'high',
       };
     }
     // low-confidence / miss — 의견은 fallback에 실어 코멘트 첨부 등에 쓴다.
     return fallback(aaTree, {
-      reason: (llmResult && llmResult.reason) || 'llm-miss',
+      reason: (llmResult && llmResult.opinion) || '분류 실패',
       opinion: (llmResult && llmResult.opinion) || null,
       suggestedFolderId: (llmResult && llmResult.suggestedFolderId) || null,
     });

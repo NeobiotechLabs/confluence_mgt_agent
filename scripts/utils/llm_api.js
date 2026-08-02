@@ -25,7 +25,6 @@ async function callLLM({ client, system, user, tools, model, max_tokens = 1024 }
     if (!toolUse) return { ok: false, source: 'miss', reason: 'no-tool-use' };
     const { folderId, labels, reason, confidence } = toolUse.input || {};
     if (!folderId) {
-      // 모델이 폴더는 비웠지만 reason을 남겼을 수 있다 — 의견으로 보존.
       return { ok: false, source: 'miss', reason: 'no-folder-id', opinion: reason || null };
     }
     return {
@@ -33,7 +32,7 @@ async function callLLM({ client, system, user, tools, model, max_tokens = 1024 }
       source: 'inline-llm',
       folderId: String(folderId),
       labels: Array.isArray(labels) ? labels.filter(Boolean) : [],
-      reason: reason || 'inline-llm',
+      reason: reason || null,
       confidence, // passthrough — 미상이면 undefined
     };
   } catch (e) {
@@ -63,7 +62,7 @@ async function callLLMForClassification({
   }
   return {
     ok: true, source: 'inline-llm', folderId: r.folderId,
-    labels: r.labels || [], reason: r.reason || 'inline-llm', confidence: 'high',
+    labels: r.labels || [], reason: r.reason || 'LLM 기반 분류 수행', confidence: 'high',
   };
 }
 
@@ -94,7 +93,7 @@ async function callLLMForMigrationValue({
     return {
       ok: true,
       verdict,
-      reason: reason || 'inline-llm-value',
+      reason: reason || null,
       suggestedFolderId: suggestedFolderId || null,
     };
   } catch (e) {

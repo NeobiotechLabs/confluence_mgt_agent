@@ -1,6 +1,6 @@
 // scripts/report_aa_daily.js
 'use strict';
-require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
+require('./utils/load_env');
 const { execSync } = require('child_process');
 const { confluenceRequest } = require('./utils/confluence_api');
 const { fetchAATree, fetchAASpaceHomepageId } = require('./utils/aa_space_tree');
@@ -616,9 +616,15 @@ async function main() {
     console.log(JSON.stringify({ metrics, deltas, items: items.length, advisories, unmatchedItems: merge.items.length, migrateItems: migrateResult.items.length }, null, 2));
 
     // dry-run 결과를 로컬 파일로 저장 (사용자가 브라우저에서 확인 가능)
-    const dryRunPath = require('path').join(__dirname, '..', 'reference', 'aa_report_dryrun.html');
+    // test_results/ 디렉토리에 날짜 + 인덱스 형식으로 저장 (같은 날 여러 번 돌릴 때 충돌 방지)
+    const path = require('path');
+    const fs = require('fs');
+    const testResultsDir = path.join(__dirname, '..', 'test_results');
+    try { fs.mkdirSync(testResultsDir, { recursive: true }); } catch (_) { /* ignore */ }
+    const stamp = new Date().toISOString().replace(/T/, '_').replace(/:/g, '').replace(/\..+/, '').slice(0, 16); // YYYY-MM-DD_HHMM
+    const dryRunPath = path.join(testResultsDir, `aa_report_dryrun_${stamp}.html`);
     try {
-      require('fs').writeFileSync(dryRunPath, html, 'utf8');
+      fs.writeFileSync(dryRunPath, html, 'utf8');
       console.log(`\n📄 dry-run 리포트 저장: ${dryRunPath}`);
     } catch (e) {
       console.warn(`\n⚠️ dry-run 파일 저장 실패: ${e.message}`);

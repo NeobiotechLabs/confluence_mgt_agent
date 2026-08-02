@@ -1,5 +1,5 @@
 'use strict';
-require('dotenv').config({ path: require('path').join(__dirname, '..', '..', '.env') });
+require('../utils/load_env');
 const { confluenceRequest } = require('./confluence_api');
 
 const UNSORTED_TITLES = ['미분류', '분류 보류', 'Unsorted'];
