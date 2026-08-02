@@ -4,11 +4,12 @@
 // per-page try/catch와 호환되게 한다.
 // callLLMForClassification: 본문 기반 분류 전용 — prompt 조립 + confidence 해석을 추가한다.
 const { buildSystemPrompt, buildUserMessage, SELECT_FOLDER_TOOL } = require('./classification_prompt');
+const { buildValueSystemPrompt, buildValueUserMessage, SELECT_MIGRATION_VALUE_TOOL } = require('./value_prompt');
 const { extractBodyText } = require('./content_extractor');
 
 const DEFAULT_MODEL = 'claude-haiku-4-5-20251001';
 
-async function callLLM({ client, system, user, tools, model, max_tokens = 1024 } = {}) {
+async function callLLM({ client, system, user, tools, model, max_tokens = 1024, toolName = 'select_folder', valueMode = false } = {}) {
   const useModel = model || process.env.ANTHROPIC_MODEL || DEFAULT_MODEL;
   if (!client) return { ok: false, source: 'miss', reason: 'no-client' };
   try {
@@ -20,8 +21,19 @@ async function callLLM({ client, system, user, tools, model, max_tokens = 1024 }
       messages: [{ role: 'user', content: user }],
     });
     const blocks = Array.isArray(msg.content) ? msg.content : [];
-    const toolUse = blocks.find(b => b && b.type === 'tool_use' && b.name === 'select_folder');
+    const expectedName = valueMode ? 'select_migration_value' : (toolName || 'select_folder');
+    const toolUse = blocks.find(b => b && b.type === 'tool_use' && b.name === expectedName);
     if (!toolUse) return { ok: false, source: 'miss', reason: 'no-tool-use' };
+    if (valueMode) {
+      const { verdict, reason, suggestedFolderId } = toolUse.input || {};
+      return {
+        ok: true,
+        source: 'inline-llm-value',
+        verdict,
+        reason: reason || 'inline-llm-value',
+        suggestedFolderId: suggestedFolderId || null,
+      };
+    }
     const { folderId, labels, reason, confidence } = toolUse.input || {};
     if (!folderId) {
       // 모델이 폴더는 비웠지만 reason을 남겼을 수 있다 — 의견으로 보존.
@@ -66,4 +78,30 @@ async function callLLMForClassification({
   };
 }
 
-module.exports = { callLLM, callLLMForClassification, DEFAULT_MODEL };
+/**
+ * 이관 가치 평가 전용 LLM 호출. 2차 분류 단계(작업 15).
+ * 본문 + 1차 분류 힌트 → verdict 정규화. 실패는 throw하지 않고 {ok:false}로 흡수.
+ */
+async function callLLMForMigrationValue({
+  client, title, body, treeText, classifyHint, guidelines, model, max_tokens = 512, callFn = callLLM,
+} = {}) {
+  const system = buildValueSystemPrompt({ treeText, guidelines });
+  const user = buildValueUserMessage({ title, bodyText: extractBodyText(body), classifyHint });
+  const isDefaultCallFn = callFn === callLLM;
+  const r = await callFn({
+    client, system, user, tools: [SELECT_MIGRATION_VALUE_TOOL], model, max_tokens,
+    ...(isDefaultCallFn ? { valueMode: true } : {}),
+  });
+  if (!r || !r.ok) {
+    return { ok: false, reason: (r && r.reason) || 'miss' };
+  }
+  const { verdict, reason, suggestedFolderId } = r;
+  return {
+    ok: true,
+    verdict,
+    reason: reason || 'inline-llm-value',
+    suggestedFolderId: suggestedFolderId || null,
+  };
+}
+
+module.exports = { callLLM, callLLMForClassification, callLLMForMigrationValue, DEFAULT_MODEL };
