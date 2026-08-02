@@ -80,13 +80,12 @@ test('chain: llm high-confidence hit → 정규화 결과 + confidence + folderT
   assert.ok(received.ctx === baseCtx && received.aaTree === aaTree, 'deps.llm은 {ctx, aaTree}로 호출');
 });
 
-test('chain: llm이 트리 미지 folderId를 주면 fallback + 의견 보존 (reason 정규화)', async () => {
+test('chain: llm이 트리 미지 folderId를 주면 fallback + 의견 보존', async () => {
   const llm = { callLLM: async () => ({ ok: true, folderId: 'not-in-tree', reason: '환상의 폴더', confidence: 'high' }) };
   const out = await classifyPage(baseCtx, aaTree, { llm });
   assert.strictEqual(out.source, 'fallback');
   assert.strictEqual(out.folderId, 'u-1');
-  // reason은 sanitizeReason이 'llm-unknown-folder' (시스템 코드) → 일반화 텍스트로 치환.
-  assert.strictEqual(out.reason, '분류 근거는 폴더 적합성만으로 충분');
+  assert.strictEqual(out.reason, 'llm-unknown-folder');
   assert.strictEqual(out.llmOpinion, '환상의 폴더');
 });
 
@@ -103,12 +102,11 @@ test('chain: llm low-confidence miss → fallback + opinion + suggestedFolderId'
   assert.strictEqual(out.suggestedFolderId, 'f-42');
 });
 
-test('chain: 기계적 miss(no-tool-use) → fallback, 의견은 기본 일반화 텍스트', async () => {
-  // 의견이 null이면 sanitizeReason의 기본값으로 fallback.
+test('chain: 기계적 miss(no-tool-use) → fallback, 의견 없으면 분류 실패', async () => {
   const llm = { callLLM: async () => ({ ok: false, source: 'miss', reason: 'no-tool-use', opinion: null }) };
   const out = await classifyPage(baseCtx, aaTree, { llm });
   assert.strictEqual(out.source, 'fallback');
-  assert.strictEqual(out.reason, '분류 근거는 폴더 적합성만으로 충분', 'opinion 없으면 기본 일반화 텍스트');
+  assert.strictEqual(out.reason, '분류 실패', 'opinion 없으면 분류 실패');
   assert.strictEqual(out.llmOpinion, null);
 });
 
@@ -120,8 +118,7 @@ test('chain: ANTHROPIC_API_KEY 없으면 llm skip → fallback(llm-skipped-no-ke
     const llm = { callLLM: async () => { llmCalled = true; return { ok: false }; } };
     const out = await classifyPage(baseCtx, aaTree, { llm });
     assert.strictEqual(out.source, 'fallback');
-    // reason은 sanitizeReason이 'llm-skipped-no-key' (시스템 코드) → 일반화 텍스트로 치환.
-    assert.strictEqual(out.reason, '분류 근거는 폴더 적합성만으로 충분');
+    assert.strictEqual(out.reason, 'llm-skipped-no-key');
     assert.strictEqual(llmCalled, false, '키 없으면 LLM 호출 금지');
   } finally {
     process.env.ANTHROPIC_API_KEY = prev;
@@ -150,8 +147,7 @@ test('fallback: info 없으면 기본 reason, labels는 needs-review', () => {
   assert.strictEqual(out.folderId, 'u-1');
   assert.strictEqual(out.folderTitle, '미분류');
   assert.deepStrictEqual(out.labels, ['needs-review']);
-  // reason은 sanitizeReason이 'no-classifier-matched' (시스템 코드) → 일반화 텍스트로 치환.
-  assert.strictEqual(out.reason, '분류 근거는 폴더 적합성만으로 충분');
+  assert.strictEqual(out.reason, '분류 실패');
   assert.strictEqual(out.llmOpinion, null);
   assert.strictEqual(out.suggestedFolderId, null);
 });

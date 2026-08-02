@@ -10,12 +10,12 @@ const {
 } = require('../../scripts/utils/reason_normalizer');
 
 // ── normalizeReason ────────────────────────────────────────────────────
-test('normalizeReason: 시스템 내부 코드명 → 일반화 텍스트로 치환', () => {
-  assert.strictEqual(normalizeReason('no-llm-deps'), '분류 근거는 폴더 적합성만으로 충분');
-  assert.strictEqual(normalizeReason('inline-llm'), '분류 근거는 폴더 적합성만으로 충분');
-  assert.strictEqual(normalizeReason('miss'), '분류 근거는 폴더 적합성만으로 충분');
-  assert.strictEqual(normalizeReason('llm-miss'), '분류 근거는 폴더 적합성만으로 충분');
-  assert.strictEqual(normalizeReason('low-confidence'), '분류 근거는 폴더 적합성만으로 충분');
+test('normalizeReason: 시스템 내부 코드명 → 한국어 설명으로 치환', () => {
+  assert.strictEqual(normalizeReason('no-llm-deps'), 'LLM 의존성 없음');
+  assert.strictEqual(normalizeReason('inline-llm'), 'LLM 기반 분류 수행');
+  assert.strictEqual(normalizeReason('miss'), '분류 실패');
+  assert.strictEqual(normalizeReason('llm-miss'), 'LLM 분류 실패');
+  assert.strictEqual(normalizeReason('low-confidence'), 'LLM 신뢰도 부족');
 });
 
 test('normalizeReason: 정상 한국어 reason은 그대로', () => {
@@ -91,28 +91,18 @@ test('sanitizeReason: 정상 reason → 그대로', () => {
   );
 });
 
-test('sanitizeReason: 내부 코드 → 일반화', () => {
+test('sanitizeReason: 내부 코드 → 한국어 설명으로 변환', () => {
   assert.strictEqual(
     sanitizeReason('no-llm-deps'),
-    '분류 근거는 폴더 적합성만으로 충분'
+    'LLM 의존성 없음'
   );
 });
 
-test('sanitizeReason: 짧은 노이즈 → fallback', () => {
+test('sanitizeReason: 짧은 노이즈(시스템 코드 아님) → fallback', () => {
+  // "ok"는 2자로 원본 보존 조건(3자 이상) 미달 → fallback
   assert.strictEqual(
     sanitizeReason('ok', '폴더 분류 불가, 사람 검토 필요'),
     '폴더 분류 불가, 사람 검토 필요'
-  );
-  assert.strictEqual(
-    sanitizeReason('yes', '폴더 분류 불가, 사람 검토 필요'),
-    '폴더 분류 불가, 사람 검토 필요'
-  );
-});
-
-test('sanitizeReason: 정상 + 기본 fallback 미지정 → 기본 텍스트', () => {
-  assert.strictEqual(
-    sanitizeReason('ok'),
-    '분류 근거는 폴더 적합성만으로 충분'
   );
 });
 
@@ -123,15 +113,16 @@ test('sanitizeReason: 빈 reason → fallback', () => {
   );
 });
 
-test('sanitizeReason: 200자 정확히 → true (경계값)', () => {
+test('sanitizeReason: 200자 정확히 → 통과 (경계값)', () => {
   const t = '가'.repeat(200);
   assert.strictEqual(isReasonHealthy(t), true);
   assert.strictEqual(sanitizeReason(t), t);
 });
 
-test('sanitizeReason: 201자 → fallback', () => {
+test('sanitizeReason: 201자 → 원본 보존 (시스템 코드 아님)', () => {
   const t = '가'.repeat(201);
-  assert.strictEqual(sanitizeReason(t, 'fallback'), 'fallback');
+  // 201자는 isReasonHealthy 실패하지만, 시스템 코드가 아니므로 원본 보존
+  assert.strictEqual(sanitizeReason(t, 'fallback'), t);
 });
 
 // ── INTERNAL_CODES set ────────────────────────────────────────────────

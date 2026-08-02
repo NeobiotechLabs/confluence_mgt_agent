@@ -16,6 +16,23 @@ const INTERNAL_CODES = new Set([
   'llm-unknown-folder', 'miss', 'no-classifier-matched', 'api-error',
 ]);
 
+// 시스템 코드 → 사람이 읽을 수 있는 한국어 설명 매핑
+const CODE_TO_KOREAN = {
+  'inline-llm': 'LLM 기반 분류 수행',
+  'inline-llm-value': 'LLM 기반 가치 판단 수행',
+  'llm-miss': 'LLM 분류 실패',
+  'no-client': 'LLM 클라이언트 없음',
+  'no-tool-use': 'LLM 도구 호출 실패',
+  'no-folder-id': '폴더 ID 미지정',
+  'low-confidence': 'LLM 신뢰도 부족',
+  'no-llm-deps': 'LLM 의존성 없음',
+  'llm-skipped-no-key': 'API 키 없음으로 LLM 건너뜀',
+  'llm-unknown-folder': '알 수 없는 폴더',
+  'miss': '분류 실패',
+  'no-classifier-matched': '분류기 매칭 실패',
+  'api-error': 'API 호출 오류',
+};
+
 /**
  * 모델이 보낸 reason이 시스템 내부 코드명이면 → 사람이 읽을 수 있는 한국어 일반화로 치환.
  * 그렇지 않으면 입력 그대로 반환.
@@ -27,7 +44,7 @@ function normalizeReason(reason) {
   const trimmed = reason.trim();
   if (!trimmed) return trimmed;
   if (INTERNAL_CODES.has(trimmed)) {
-    return '분류 근거는 폴더 적합성만으로 충분';
+    return CODE_TO_KOREAN[trimmed] || '시스템 판단';
   }
   return trimmed;
 }
@@ -62,7 +79,11 @@ function isReasonHealthy(reason) {
 function sanitizeReason(reason, fallback) {
   const normalized = normalizeReason(reason);
   if (isReasonHealthy(normalized)) return normalized;
-  return fallback || '분류 근거는 폴더 적합성만으로 충분';
+  // 원본 reason이 있고 시스템 코드가 아니면, 건강하지 않더라도 원본 보존 (최소 3자 이상)
+  if (typeof reason === 'string' && reason.trim().length >= 3 && !INTERNAL_CODES.has(reason.trim())) {
+    return reason.trim();
+  }
+  return fallback || '분류 판단 완료';
 }
 
 module.exports = { normalizeReason, isReasonHealthy, sanitizeReason, INTERNAL_CODES };

@@ -124,14 +124,12 @@ test('callLLMForClassification: confidence 미상(undefined)은 low로 취급', 
   assert.strictEqual(out.reason, 'low-confidence');
 });
 
-test('callLLMForClassification: callFn miss는 reason/opinion 통과 (의견 없으면 일반화 텍스트)', async () => {
+test('callLLMForClassification: callFn miss는 reason/opinion 통과', async () => {
   const callFn = async () => ({ ok: false, source: 'miss', reason: 'no-tool-use', opinion: null });
   const out = await callLLMForClassification({ client: {}, title: 't', body: '', treeText: '', guidelines: '', callFn });
   assert.strictEqual(out.ok, false);
-  // reason은 시스템 진단값('no-tool-use')으로 보존 — classification_provider가 fallback reason으로 사용.
   assert.strictEqual(out.reason, 'no-tool-use');
-  // opinion이 null이면 sanitizeReason 기본값으로 치환.
-  assert.strictEqual(out.opinion, '분류 근거는 폴더 적합성만으로 충분');
+  assert.strictEqual(out.opinion, null);
 });
 
 test('callLLMForClassification: 기본 callFn은 callLLM — client 없으면 no-client miss', async () => {

@@ -5,7 +5,6 @@
 // callLLMForClassification: 본문 기반 분류 전용 — prompt 조립 + confidence 해석을 추가한다.
 const { buildSystemPrompt, buildUserMessage, SELECT_FOLDER_TOOL } = require('./classification_prompt');
 const { buildValueSystemPrompt, buildValueUserMessage, SELECT_MIGRATION_VALUE_TOOL } = require('./value_prompt');
-const { sanitizeReason } = require('./reason_normalizer');
 const { extractBodyText } = require('./content_extractor');
 
 const DEFAULT_MODEL = 'claude-haiku-4-5-20251001';
@@ -26,15 +25,14 @@ async function callLLM({ client, system, user, tools, model, max_tokens = 1024 }
     if (!toolUse) return { ok: false, source: 'miss', reason: 'no-tool-use' };
     const { folderId, labels, reason, confidence } = toolUse.input || {};
     if (!folderId) {
-      // 모델이 폴더는 비웠지만 reason을 남겼을 수 있다 — 의견으로 보존 (사람이 읽을 수 있는 형태로 정규화).
-      return { ok: false, source: 'miss', reason: 'no-folder-id', opinion: sanitizeReason(reason, '폴더 ID 미제공 — 사람 검토 필요') };
+      return { ok: false, source: 'miss', reason: 'no-folder-id', opinion: reason || null };
     }
     return {
       ok: true,
       source: 'inline-llm',
       folderId: String(folderId),
       labels: Array.isArray(labels) ? labels.filter(Boolean) : [],
-      reason: sanitizeReason(reason, '분류 근거는 폴더 적합성만으로 충분'),
+      reason: reason || null,
       confidence, // passthrough — 미상이면 undefined
     };
   } catch (e) {
@@ -54,17 +52,17 @@ async function callLLMForClassification({
   const user = buildUserMessage({ title, bodyText: extractBodyText(body) });
   const r = await callFn({ client, system, user, tools: [SELECT_FOLDER_TOOL], model, max_tokens });
   if (!r || !r.ok) {
-    return { ok: false, source: 'miss', reason: r?.reason || 'miss', opinion: sanitizeReason(r?.opinion, '분류 근거는 폴더 적합성만으로 충분') };
+    return { ok: false, source: 'miss', reason: r?.reason || 'miss', opinion: r?.opinion || null };
   }
   if (r.confidence !== 'high') {
     return {
       ok: false, source: 'miss', reason: 'low-confidence',
-      opinion: sanitizeReason(r.reason, '폴더 적합도 낮음 — 사람 검토 필요'), suggestedFolderId: r.folderId || null,
+      opinion: r.reason || null, suggestedFolderId: r.folderId || null,
     };
   }
   return {
     ok: true, source: 'inline-llm', folderId: r.folderId,
-    labels: r.labels || [], reason: sanitizeReason(r.reason, '분류 근거는 폴더 적합성만으로 충분'), confidence: 'high',
+    labels: r.labels || [], reason: r.reason || 'LLM 기반 분류 수행', confidence: 'high',
   };
 }
 
@@ -95,7 +93,7 @@ async function callLLMForMigrationValue({
     return {
       ok: true,
       verdict,
-      reason: sanitizeReason(reason, '가치 판단 근거는 폴더 적합성과 조직 업무성'),
+      reason: reason || null,
       suggestedFolderId: suggestedFolderId || null,
     };
   } catch (e) {
