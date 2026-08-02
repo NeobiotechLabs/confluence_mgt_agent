@@ -1,6 +1,6 @@
 // scripts/classifiers/rule.js
 'use strict';
-require('dotenv').config({ path: require('path').join(__dirname, '..', '..', '.env') });
+require('../utils/load_env');
 const fs = require('fs');
 const path = require('path');
 

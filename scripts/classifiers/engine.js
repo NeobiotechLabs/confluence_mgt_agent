@@ -3,7 +3,7 @@
 // 내부 체인: human → structural → inline-llm(본문) → fallback(미분류+의견).
 // 2026-07-31 재설계: ANTHROPIC_API_KEY가 있으면 실 client를 지연 생성해 LLM 단계를 실제로 구동.
 'use strict';
-require('dotenv').config({ path: require('path').join(__dirname, '..', '..', '.env') });
+require('../utils/load_env');
 const { classifyPage } = require('../utils/classification_provider');
 const { humanClassifier } = require('./human');
 const { callLLMForClassification } = require('../utils/llm_api');

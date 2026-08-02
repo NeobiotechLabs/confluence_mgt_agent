@@ -1,5 +1,5 @@
 'use strict';
-require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
+require('./utils/load_env');
 const fs = require('fs');
 const path = require('path');
 const { confluenceRequest } = require('./utils/confluence_api');
@@ -357,7 +357,7 @@ async function runMigrate(opts = {}) {
             targetFolderTitle: decision.target_folder_title || null,
             status: isSync ? 'synced' : 'created',
             classifierSource: decision.classifier_source,
-            reason: valueReason || decision.reason,
+            reason: decision.reason || valueReason,
             ...(isSync ? { destPageId: existing.id } : {}),
             ...(verdict === 'unclassified' && suggestedFolderId ? { suggestedFolderId } : {}),
           });
@@ -410,7 +410,7 @@ async function runMigrate(opts = {}) {
           targetFolderTitle: decision.target_folder_title || null,
           status: finalStatus,
           classifierSource: decision.classifier_source,
-          reason: valueReason || decision.reason,
+          reason: decision.reason || valueReason,
           destPageId: destId,
           ...(verdict === 'unclassified' && suggestedFolderId ? { suggestedFolderId } : {}),
         });

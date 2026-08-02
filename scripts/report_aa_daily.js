@@ -1,6 +1,6 @@
 // scripts/report_aa_daily.js
 'use strict';
-require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
+require('./utils/load_env');
 const { execSync } = require('child_process');
 const { confluenceRequest } = require('./utils/confluence_api');
 const { fetchAATree, fetchAASpaceHomepageId } = require('./utils/aa_space_tree');
