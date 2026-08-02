@@ -162,3 +162,13 @@ seenCount = 오늘 부록 진입 횟수. **3회 이상**이면 "반복 권고" �
 ### 8-5. Phase 2-B 자리표시 (§2 루프 A 실데이터)
 
 부록 `kind:'move-a'`(외부→AA 이관) 항목의 seenCount + 권고. 범위는 별도 작업.
+
+## §9. 이관 탈락 후보 (작업 15, 2026-08-02)
+
+`runMigrate`는 3상태로 분기한다:
+
+- `created` / `synced` — 정상 이관
+- `unclassified` — 분류 의향 O, 미분류 폴더로 이관 + LLM 의견 코멘트
+- `dropped` — 이관 가치 없음 (끄적임, 임시 스크랩) → AA에 들어오지 않음
+
+`reference/dropped_pages.json` SSOT에 dropped 페이지 캐시. 7일 후 자동 재평가. 운영 CLI: `npm run migration:dropped:list`.
