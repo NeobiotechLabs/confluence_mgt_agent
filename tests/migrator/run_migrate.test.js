@@ -19,6 +19,15 @@ function makeDeps(overrides = {}) {
       ok: true, source: 'inline-llm', folderId: '100', folderTitle: 'Target',
       labels: ['label-a'], reason: 'test reason',
     })),
+    assessMigrationValue: overrides.assessMigrationValue || (async () => ({
+      ok: true, verdict: 'create', reason: 'test value', source: 'inline-llm-value',
+    })),
+    loadDroppedCache: overrides.loadDroppedCache || (async () => []),
+    saveDroppedCache: overrides.saveDroppedCache || (async () => {}),
+    consultDroppedCache: overrides.consultDroppedCache || (() => ({ cached: false, reevaluate: false })),
+    mergeDroppedCache: overrides.mergeDroppedCache || ((cache, updates) => cache.concat(updates)),
+    hashFor: overrides.hashFor || (() => 'h1'),
+    today: overrides.today || '2026-08-02',
     createPage: overrides.createPage || (async () => ({
       id: '999', title: 'New Page', webUrl: 'https://new',
     })),
@@ -118,7 +127,7 @@ test('runMigrate: 동기화(동명 페이지 존재) — status=synced 반환', 
   assert.strictEqual(result.items[0].destPageId, '500');
 });
 
-test('runMigrate: 분류 실패(is_valid=false) — status=skipped 반환', async () => {
+test('runMigrate: 분류 실패(is_valid=false) + value verdict=create — status=unclassified (chain-fail 강제)', async () => {
   const candidates = [
     { id: '10', title: 'Skip Page', body: { storage: { value: '<p>skip</p>' } }, _links: { webui: '/x' } },
   ];
@@ -126,17 +135,21 @@ test('runMigrate: 분류 실패(is_valid=false) — status=skipped 반환', asyn
     confluenceRequest: async (method, url) => {
       if (url.includes('content/search')) return { results: candidates };
       if (url.includes('spaces?keys')) return { results: [{ id: '1' }] };
+      if (url.includes('/label')) return { results: [] };
       return {};
     },
     classifyWithChain: async () => ({
       ok: false, source: 'miss', folderId: null, reason: 'no match',
     }),
+    assessMigrationValue: async () => ({ ok: true, verdict: 'create', reason: '값짐', source: 'inline-llm-value' }),
+    createPage: async () => ({ id: '999', title: 'Skip Page', webUrl: '' }),
+    fetchAATree: async () => ({ toText: () => 'tree', unsortedFolderId: '9999' }),
   });
 
   const result = await runMigrate({ dryRun: false, deps });
   assert.strictEqual(result.items.length, 1);
-  assert.strictEqual(result.items[0].status, 'skipped');
-  assert.strictEqual(result.items[0].reason, 'no match');
+  assert.strictEqual(result.items[0].status, 'unclassified');
+  assert.strictEqual(result.items[0].targetFolderId, '9999');
 });
 
 test('runMigrate: needs_new_category — status=skipped 반환', async () => {

@@ -4,6 +4,7 @@
 // per-page try/catch와 호환되게 한다.
 // callLLMForClassification: 본문 기반 분류 전용 — prompt 조립 + confidence 해석을 추가한다.
 const { buildSystemPrompt, buildUserMessage, SELECT_FOLDER_TOOL } = require('./classification_prompt');
+const { buildValueSystemPrompt, buildValueUserMessage, SELECT_MIGRATION_VALUE_TOOL } = require('./value_prompt');
 const { extractBodyText } = require('./content_extractor');
 
 const DEFAULT_MODEL = 'claude-haiku-4-5-20251001';
@@ -66,4 +67,39 @@ async function callLLMForClassification({
   };
 }
 
-module.exports = { callLLM, callLLMForClassification, DEFAULT_MODEL };
+/**
+ * 이관 가치 평가 전용 LLM 호출. 2차 분류 단계(작업 15).
+ * 본문 + 1차 분류 힌트 → verdict 정규화. 실패는 throw하지 않고 {ok:false}로 흡수.
+ * callLLM과 분리된 자체 구현 — select_migration_value tool 정규화를 인라인한다.
+ */
+async function callLLMForMigrationValue({
+  client, title, body, treeText, classifyHint, guidelines, model, max_tokens = 512,
+} = {}) {
+  const useModel = model || process.env.ANTHROPIC_MODEL || DEFAULT_MODEL;
+  if (!client) return { ok: false, reason: 'no-client' };
+  try {
+    const system = buildValueSystemPrompt({ treeText, guidelines });
+    const user = buildValueUserMessage({ title, bodyText: extractBodyText(body), classifyHint });
+    const msg = await client.messages.create({
+      model: useModel,
+      max_tokens,
+      system,
+      tools: [SELECT_MIGRATION_VALUE_TOOL],
+      messages: [{ role: 'user', content: user }],
+    });
+    const blocks = Array.isArray(msg.content) ? msg.content : [];
+    const toolUse = blocks.find(b => b && b.type === 'tool_use' && b.name === 'select_migration_value');
+    if (!toolUse) return { ok: false, reason: 'no-tool-use' };
+    const { verdict, reason, suggestedFolderId } = toolUse.input || {};
+    return {
+      ok: true,
+      verdict,
+      reason: reason || 'inline-llm-value',
+      suggestedFolderId: suggestedFolderId || null,
+    };
+  } catch (e) {
+    return { ok: false, reason: `api-error:${e.message}` };
+  }
+}
+
+module.exports = { callLLM, callLLMForClassification, callLLMForMigrationValue, DEFAULT_MODEL };

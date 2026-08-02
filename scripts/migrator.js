@@ -5,18 +5,34 @@ const path = require('path');
 const { confluenceRequest } = require('./utils/confluence_api');
 const { fetchAATree } = require('./utils/aa_space_tree');
 const { classifyWithChain } = require('./classifiers/engine');
+const { assessMigrationValue } = require('./utils/migration_value');
+const {
+  loadDroppedCache,
+  saveDroppedCache,
+  consultDroppedCache,
+  mergeDroppedCache,
+  hashFor,
+} = require('./migrator/dropped_cache');
 
-const { 
-  fetchPageDetail, 
-  createPage, 
-  updatePageBody, 
-  addLabels, 
-  copyAttachments, 
-  buildBanner, 
-  fixBodyReferences 
+const {
+  fetchPageDetail,
+  createPage,
+  updatePageBody,
+  addLabels,
+  copyAttachments,
+  buildBanner,
+  fixBodyReferences
 } = require('./utils/migration_utils');
 
 const AA_SPACE_KEY = 'AA';
+const DROPPED_CACHE_PATH = path.join(__dirname, '..', 'reference', 'dropped_pages.json');
+
+// YYYY-MM-DD + days → YYYY-MM-DD (UTC). addDays 시드(source) 기준.
+function addDays(yyyyMmDd, days) {
+  const d = new Date(yyyyMmDd + 'T00:00:00Z');
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+}
 
 // API Rate Limit 방지를 위한 대기 함수
 const delay = ms => new Promise(res => setTimeout(res, ms));
@@ -75,6 +91,13 @@ async function runMigrate(opts = {}) {
   const _fetchPageDetail = deps.fetchPageDetail || fetchPageDetail;
   const _fetchPageLabels = deps.fetchPageLabels || fetchPageLabels;
   const _classifyWithChain = deps.classifyWithChain || classifyWithChain;
+  const _assessMigrationValue = deps.assessMigrationValue || assessMigrationValue;
+  const _loadDroppedCache = deps.loadDroppedCache || loadDroppedCache;
+  const _saveDroppedCache = deps.saveDroppedCache || saveDroppedCache;
+  const _consultDroppedCache = deps.consultDroppedCache || consultDroppedCache;
+  const _mergeDroppedCache = deps.mergeDroppedCache || mergeDroppedCache;
+  const _hashFor = deps.hashFor || hashFor;
+  const _today = deps.today || new Date().toISOString().slice(0, 10);
   const _createPage = deps.createPage || createPage;
   const _updatePageBody = deps.updatePageBody || updatePageBody;
   const _addLabels = deps.addLabels || addLabels;
@@ -122,6 +145,18 @@ async function runMigrate(opts = {}) {
   const sinceDateStr = sinceDate.toISOString().split('T')[0];
 
   // 5. 스페이스 순회
+  // 4-0. Dropped 캐시 로드 (graceful — 부재/깨짐 모두 []로 퇴화)
+  let droppedCache = [];
+  let saveError = null;
+  try {
+    droppedCache = await _loadDroppedCache(DROPPED_CACHE_PATH);
+  } catch (e) {
+    droppedCache = [];
+    saveError = `load-dropped-cache:${e.message}`;
+  }
+  const cacheUpdates = [];
+  const today = _today;
+
   for (const sourceSpace of activeSpaceKeys) {
     const cql = encodeURIComponent(
       `space="${sourceSpace}" AND type="page" AND lastmodified >= "${sinceDateStr}" order by lastmodified desc`);
@@ -159,7 +194,12 @@ async function runMigrate(opts = {}) {
           existingLabels,
         }, aaTree);
 
-        const decision = chainResult.ok ? {
+        // ── 1차: 분류 verdict 정규화
+        // chainResult.ok=true & folderId=null → needs_new_category (true chain failure과 구분)
+        // chainResult.ok=false → chain-fail (분류 자체 실패)
+        const needsNewCategory = chainResult.ok === true && !chainResult.folderId;
+        const classificationOk = chainResult.ok && !!chainResult.folderId;
+        const decision = classificationOk ? {
           is_valid: true,
           target_folder_id: chainResult.folderId,
           target_folder_title: chainResult.folderTitle,
@@ -170,13 +210,13 @@ async function runMigrate(opts = {}) {
         } : {
           is_valid: false,
           target_folder_id: null,
-          needs_new_category: false,
+          needs_new_category: needsNewCategory,
           reason: chainResult.reason || 'no-classifier-matched',
           classifier_source: chainResult.source || 'miss',
         };
 
-        // needs_new_category 또는 invalid → skip
-        if (decision.needs_new_category || !decision.is_valid || !decision.target_folder_id) {
+        // needs_new_category (chain이 ok=true지만 folderId 없음) → skip
+        if (decision.needs_new_category) {
           items.push({
             kind: 'migrate-a',
             pageId: page.id,
@@ -188,6 +228,115 @@ async function runMigrate(opts = {}) {
             classifierSource: decision.classifier_source || 'miss',
             reason: decision.reason,
           });
+          if (!dryRun) await delay(1500);
+          continue;
+        }
+
+        // ── 2차: 캐시 조회
+        const hash = _hashFor({ id: page.id, title: page.title, body: truncatedBody });
+        const cacheResult = _consultDroppedCache(page.id, hash, today, droppedCache);
+
+        // ── 3차: 가치 평가 (캐시 적중 + 재평가 미도래면 skip)
+        let verdict;
+        let valueReason;
+        let valueSource;
+        let suggestedFolderId = null;
+        let cacheHit = false;
+        let reevalDueAt = null;
+        let valueError = null;
+
+        if (cacheResult.cached && !cacheResult.reevaluate) {
+          verdict = 'dropped';
+          valueReason = cacheResult.entry.reason;
+          valueSource = 'cache';
+          cacheHit = true;
+          reevalDueAt = cacheResult.entry.nextReevalAt;
+        } else {
+          let value;
+          try {
+            value = await _assessMigrationValue({
+              pageId: page.id,
+              title: page.title,
+              body: truncatedBody,
+              classifyHint: {
+                folderId: decision.target_folder_id,
+                labels: decision.labels || [],
+              },
+            }, aaTree);
+          } catch (e) {
+            valueError = e;
+            value = { ok: false, verdict: 'create', reason: `llm-error:${e.message}`, source: 'miss' };
+          }
+          verdict = value.verdict;
+          valueReason = value.reason;
+          valueSource = value.source;
+          suggestedFolderId = value.suggestedFolderId || null;
+          reevalDueAt = addDays(today, 7);
+
+          // 분류 실패 + 가치 create → 강제 unclassified
+          if (!classificationOk && verdict === 'create') {
+            verdict = 'unclassified';
+            valueReason = `${valueReason} + chain-fail`;
+          }
+
+          // dropped → 캐시 upsert, unclassified/create (재평가) → 캐시에서 제거
+          if (verdict === 'dropped') {
+            cacheUpdates.push({
+              pageId: page.id,
+              sourceSpace,
+              title: page.title,
+              hash,
+              reason: valueReason,
+              firstSeen: cacheResult.entry ? cacheResult.entry.firstSeen : today,
+              lastSeen: today,
+              nextReevalAt: reevalDueAt,
+            });
+          } else if (cacheResult.cached) {
+            // unclassified 또는 create로 부활 → 캐시에서 제거
+            cacheUpdates.push({ remove: true, pageId: page.id, hash });
+          }
+        }
+
+        // ── 4차: 분기
+        if (verdict === 'dropped') {
+          items.push({
+            kind: 'migrate-a',
+            pageId: page.id,
+            title: page.title,
+            sourceSpace,
+            targetFolderId: null,
+            targetFolderTitle: null,
+            status: 'dropped',
+            classifierSource: decision.classifier_source,
+            reason: valueReason,
+            reevalDueAt,
+            cacheHit,
+          });
+          if (!dryRun) await delay(1500);
+          continue;
+        }
+
+        if (verdict === 'unclassified') {
+          // 미분류 폴더에 이관. 폴더를 미분류로 강제 보정.
+          decision.target_folder_id = aaTree.unsortedFolderId;
+          decision.target_folder_title = '미분류';
+          decision.labels = (decision.labels || []).filter(l => l !== 'needs-review');
+        }
+
+        // needs_new_category → skip
+        if (decision.needs_new_category) {
+          items.push({
+            kind: 'migrate-a',
+            pageId: page.id,
+            title: page.title,
+            sourceSpace,
+            targetFolderId: null,
+            targetFolderTitle: null,
+            status: 'skipped',
+            classifierSource: decision.classifier_source || 'miss',
+            reason: decision.reason,
+          });
+          if (!dryRun) await delay(1500);
           continue;
         }
 
@@ -199,7 +348,6 @@ async function runMigrate(opts = {}) {
         let destTitle;
 
         if (dryRun) {
-          // dry-run: 후보만 items에 추가, 실제 생성/업데이트 안 함
           items.push({
             kind: 'migrate-a',
             pageId: page.id,
@@ -209,8 +357,9 @@ async function runMigrate(opts = {}) {
             targetFolderTitle: decision.target_folder_title || null,
             status: isSync ? 'synced' : 'created',
             classifierSource: decision.classifier_source,
-            reason: decision.reason,
+            reason: valueReason || decision.reason,
             ...(isSync ? { destPageId: existing.id } : {}),
+            ...(verdict === 'unclassified' && suggestedFolderId ? { suggestedFolderId } : {}),
           });
           continue;
         }
@@ -251,6 +400,7 @@ async function runMigrate(opts = {}) {
           await _addLabels(destId, decision.labels);
         }
 
+        const finalStatus = verdict === 'unclassified' ? 'unclassified' : (isSync ? 'synced' : 'created');
         items.push({
           kind: 'migrate-a',
           pageId: page.id,
@@ -258,10 +408,11 @@ async function runMigrate(opts = {}) {
           sourceSpace,
           targetFolderId: decision.target_folder_id,
           targetFolderTitle: decision.target_folder_title || null,
-          status: isSync ? 'synced' : 'created',
+          status: finalStatus,
           classifierSource: decision.classifier_source,
-          reason: decision.reason,
+          reason: valueReason || decision.reason,
           destPageId: destId,
+          ...(verdict === 'unclassified' && suggestedFolderId ? { suggestedFolderId } : {}),
         });
 
       } catch (e) {
@@ -283,6 +434,19 @@ async function runMigrate(opts = {}) {
     }
   }
 
+  // 5. dropped 캐시 머지 + 저장 (실실행 시)
+  if (!dryRun && cacheUpdates.length > 0) {
+    try {
+      const merged = _mergeDroppedCache(droppedCache, cacheUpdates);
+      await _saveDroppedCache(DROPPED_CACHE_PATH, merged);
+    } catch (e) {
+      saveError = `save-dropped-cache:${e.message}`;
+      console.warn(`⚠️ dropped_pages.json 저장 실패: ${e.message}`);
+    }
+  }
+  if (saveError) {
+    return { items, saveError };
+  }
   return { items };
 }
 

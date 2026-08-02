@@ -1,6 +1,6 @@
 # 프로젝트 할일 / 진행 상황 (ToDo)
 
-> 마지막 갱신: 2026-07-31 (작업 13-14 완료 + §2 표 개선 + metrics 타이밍 수정 + 작업 15-16 등록)
+> 마지막 갱신: 2026-08-02 (작업 15 완료 — 탈락 후보 판정 + 운영 CLI + §2 5-group)
 >
 > 이 문서는 **현재 정책과 상태**를 기준으로 작성되었습니다. 옛 정책(Dify, human 큐, v1 폴더 규칙 등)은 더 이상 사실이 아니므로 이 문서에 남아 있지 않습니다.
 
@@ -9,8 +9,8 @@
 ## 0. 한 줄 요약
 
 - **목표**: 사내 Confluence 신규 스페이스(AA)를 잘 구조화해서, MPS(Planning/Evaluation) 작성용 RAG 원천으로 유지.
-- **현재 상태**: AA 스페이스 이관 + 일일 자동 리포트 + 자가 정화(audit·reorganize) 동작 중. 분류 체인 **human → structural → llm(본문) → fallback(미분류+의견)** 완전 재구현(작업 11). §4 AI 권고판을 LLM 생성 분석으로 전환(작업 12). **§2 루프 A 외부 이관 결과 부록 통합**(작업 13). **워크플로우 단일화**(작업 14 — migrate→daily-report 통합). §2 표 개선(링크+상태별 그룹). metrics 타이밍 수정. 유틸 스크립트 5종(작업 10). 테스트 253/253 PASS.
-- **다음 작업**: **작업 15 — 탈락 후보 판정** (LLM 이관 가치 판단), 작업 16(LLM 캐싱, 낮은 우선순위).
+- **현재 상태**: AA 스페이스 이관 + 일일 자동 리포트 + 자가 정화(audit·reorganize) 동작 중. 분류 체인 **human → structural → llm(본문) → fallback(미분류+의견)** 완전 재구현(작업 11). §4 AI 권고판을 LLM 생성 분석으로 전환(작업 12). **§2 루프 A 외부 이관 결과 부록 통합**(작업 13). **워크플로우 단일화**(작업 14 — migrate→daily-report 통합). **탈락 후보 판정**(작업 15 — 3-status 분기 + dropped_cache + 운영 CLI). §2 표 개선(링크+상태별 그룹). metrics 타이밍 수정. 유틸 스크립트 5종(작업 10). 테스트 287/287 PASS.
+- **다음 작업**: 작업 16(LLM 캐싱, 낮은 우선순위).
 - **사내 LLM 게이트웨이(작업 6)**: 사용자 명시 지시로 **폐기** — "사내 LLM은 현재 관심없어 나중에 필요하면 다시 추가할게". `scripts/utils/llm_api.js`의 공식 Anthropic SDK 경로만 유지.
 
 ---
@@ -278,11 +278,14 @@
 - **의미**: `migrate → audit → reorganize → report`가 단일 프로세스에서 순차 실행. 별도 job 간 checkout/install 중복 제거.
 - **변경 파일**: `.github/workflows/confluence_automation.yml`.
 
-### 작업 15 — 탈락 후보 판정 — 미착수
-- **목표**: LLM이 "너무 의미없는 페이지"를 판별해 탈락 사유를 부록에 표시.
-- **의미**: 모든 이관 후보 페이지에 대해 분류만 하는 게 아니라, 이관 여부 자체를 판단.
-- **구현**: `runMigrate` 내 `classifyWithChain` 호출 시 "이관 가치 없음" 옵션 추가 또는 별도 프롬프트.
-- **스펙 참조**: `docs/ideation/autoloop_and_report.md` §4-§7.
+### 작업 15 — 탈락 후보 판정 — ✅ 2026-08-02 완료
+- LLM 가치 평가 단계 추가 (분류와 분리). 3-status 분기 (`created/synced` / `unclassified` / `dropped`).
+- SSOT 캐시: `reference/dropped_pages.json` (pageId+hash 키, 7일 자동 재평가).
+- §2 부록 5-group (신규/동기화/미분류/드롭/실패) + dropped는 `재평가 D-N` 컬럼, unclassified는 `추천 폴더` 컬럼.
+- 신규 모듈: `scripts/utils/migration_value.js`, `scripts/utils/value_prompt.js`, `scripts/migrator/dropped_cache.js`.
+- 신규 테스트 34건 + 기존 253건 → `npm test` 287/287 PASS.
+- 운영 CLI: `npm run migration:dropped:list`.
+- 스펙: `docs/superpowers/specs/2026-08-02-migration-dropout-screen-design.md`.
 
 ### 작업 16 — LLM 분류 결과 캐싱 (낮은 우선순위) — 미착수
 - **목표**: 같은 페이지를 반복 이관 시 LLM 호출을 캐싱하여 비용/시간 절감.
