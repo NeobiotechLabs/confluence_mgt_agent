@@ -97,10 +97,78 @@ Claude Code(`claude.ai/code`)가 이 저장소에서 작업할 때 읽는 안내
 
 ---
 
-## 6. 핸드오프 체크리스트 (다른 PC/세션에서 이어받기)
+## 6. Git 워크플로우 (필수)
+
+### 6-1. 브랜치 규칙 (main 직접 커밋 금지)
+
+- **`main`은 작업 브랜치가 아님** — 항상 작업마다 별도 feature 브랜치를 만든다.
+- 새 작업 시작 시:
+  ```bash
+  git fetch origin
+  git checkout -b feature/<short-name> origin/main
+  ```
+- 작업 완료 후:
+  ```bash
+  git push -u origin feature/<short-name>
+  gh pr create --base main --head feature/<short-name>
+  ```
+- PR 머지 후 정리:
+  ```bash
+  git checkout main
+  git fetch origin
+  git reset --hard origin/main
+  git branch -d feature/<short-name>
+  ```
+
+### 6-2. `git reset --hard origin/main`을 쓰는 이유
+
+`git pull`은 기본적으로 merge 또는 rebase로 동작한다. 이 저장소처럼 **로컬 main에 cherry-pick 0의 직선 commit이 있는 상태**에서 `git pull`을 쓰면:
+
+- rebase 모드: `skipped previously applied commit` 경고가 7~14줄씩 출력 (가독성 ↓)
+- merge 모드: 불필요한 머지 커밋이 생김 (history ↑)
+
+`git reset --hard origin/main`은 rebase도 merge도 하지 않고 **로컬을 origin과 정확히 일치**시킨다. cherry-pick이 들어간 PR을 머지한 직후의 표준 동기화 방법.
+
+> ⚠️ `reset --hard`는 로컬 untracked/uncommitted 변경을 모두 삭제한다. PR 머지 후에는 안전한데, 작업 중에는 절대 사용 금지.
+
+### 6-3. 충돌/오염 처리
+
+- **로컬 main이 origin과 어긋남** (`Your branch is ahead` 또는 `behind`): 작업 브랜치를 따로 만들었는데 main에 뭔가 더해진 경우
+  ```bash
+  # 안전한 진단
+  git fetch origin
+  git log --oneline origin/main..main  # 로컬에만 있는 commit
+  git log --oneline main..origin/main  # origin에만 있는 commit
+  ```
+- **의미 있는 로컬 commit이 없다면** → `git reset --hard origin/main`
+- **의미 있는 로컬 commit이 있다면** → 새 feature 브랜치로 옮긴 뒤 main 리셋:
+  ```bash
+  git branch rescue/local-work
+  git reset --hard origin/main
+  # 이후 rescue/local-work에서 cherry-pick으로 복구
+  ```
+
+### 6-4. PR 분할 (4-PR 패턴)
+
+1개 작업이 4+ commit을 넘으면 PR을 분할한다 (예: 작업 15 — 가치 평가 모듈 / SSOT / 통합 / 운영). 절차는 [`reference/JOB15_PR_SPLIT.md`](reference/JOB15_PR_SPLIT.md)가 예시.
+
+### 6-5. 머지 후 검증
+
+PR 머지 직후 main에서:
+```bash
+git reset --hard origin/main
+npm install
+npm test
+```
+
+기대값(작업 15 후): 302/304 PASS + 2 baseline RED (`tests/report/orchestrator_llm_wire.test.js` — 작업 15 무관).
+
+---
+
+## 7. 핸드오프 체크리스트 (다른 PC/세션에서 이어받기)
 
 1. `git pull` 후 `npm install`.
 2. `reference/ToDo.md` §0 "한 줄 요약" + §4 "진행 중 / 다음 작업" 확인.
 3. `reference/classification_rules.md`에서 체인·룰 의도 확인.
-4. `npm test`로 baseline 통과 확인 (현재 56/56).
+4. `npm test`로 baseline 통과 확인 (작업 15 후: 302/304 PASS + 2 baseline RED).
 5. 작업 4(워크플로우 YAML 재편) 또는 작업 5(룰 자동화) 시작.
